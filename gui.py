@@ -6,7 +6,7 @@
  Descrição...: Janela principal da aplicação
 =========================================================
 """
-
+from ui.pages.dashboard import DashboardPage
 from PySide6.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -101,25 +101,10 @@ class SmartRackGUI(QMainWindow):
         self.paginas = QStackedWidget()
 
 
-        pagina_inicio = QLabel(
-            """
-            <h1>Dashboard</h1>
-            
-            Sistema iniciado.
-
-            <br><br>
-
-            Aguardando conexão com a MKS DLC32.
-            """
-        )
-
-        pagina_inicio.setAlignment(
-            Qt.AlignCenter
-        )
-
+        dashboard = DashboardPage()
 
         self.paginas.addWidget(
-            pagina_inicio
+        dashboard
         )
 
 
