@@ -410,6 +410,7 @@ class Database:
         cursor.execute(
             """
             SELECT 
+                id,
                 data,
                 origem,
                 destino,
@@ -511,45 +512,7 @@ class Database:
         return resultado[0] == 0
 
 
-
     # =====================================
-    # ATUALIZAR STATUS MOVIMENTO
-    # =====================================
-
-    def atualizar_status_movimento(
-            self,
-            id_movimento,
-            status
-    ):
-
-        conexao = self.conectar()
-
-        cursor = conexao.cursor()
-
-
-
-        cursor.execute(
-            """
-            UPDATE movimentos
-
-            SET status = ?
-
-            WHERE id = ?
-
-            """,
-            (
-                status,
-                id_movimento
-            )
-        )
-
-
-
-        conexao.commit()
-
-        conexao.close()
-
-            # =====================================
     # BUSCAR MOVIMENTO POR ID
     # =====================================
 
