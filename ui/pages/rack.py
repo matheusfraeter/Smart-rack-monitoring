@@ -7,16 +7,24 @@ from PySide6.QtWidgets import (
 )
 
 from database import Database
+
 from ui.widgets.pallet_dialog import PalletDialog
 
 
+
 class RackPage(QWidget):
+
 
     def __init__(self):
 
         super().__init__()
 
+
         self.db = Database()
+
+
+        self.botoes = {}
+
 
         self.criar_interface()
 
@@ -27,15 +35,18 @@ class RackPage(QWidget):
         layout = QVBoxLayout()
 
 
+
         titulo = QLabel(
             "📦 Mapa do Rack"
         )
 
 
-        titulo.setStyleSheet("""
+        titulo.setStyleSheet(
+            """
             font-size:26px;
             font-weight:bold;
-        """)
+            """
+        )
 
 
 
@@ -44,25 +55,58 @@ class RackPage(QWidget):
         )
 
 
-        self.selecionado.setStyleSheet("""
+
+        self.selecionado.setStyleSheet(
+            """
             font-size:18px;
-        """)
+            """
+        )
 
 
 
-        grade = QGridLayout()
+        self.grade = QGridLayout()
 
 
 
-        # =====================================
-        # CARREGA POSIÇÕES DO BANCO
-        # =====================================
+        layout.addWidget(
+            titulo
+        )
+
+
+        layout.addWidget(
+            self.selecionado
+        )
+
+
+        layout.addLayout(
+            self.grade
+        )
+
+
+
+        self.setLayout(
+            layout
+        )
+
+
+
+        self.carregar_rack()
+
+
+
+    # =====================================
+    # CARREGAR POSIÇÕES DO BANCO
+    # =====================================
+
+    def carregar_rack(self):
+
 
         posicoes = self.db.listar_posicoes()
 
 
 
         for indice, dados in enumerate(posicoes):
+
 
             endereco = dados[0]
 
@@ -84,27 +128,10 @@ class RackPage(QWidget):
 
 
 
-            # Cor conforme estado
-
-            if ocupado:
-
-                botao.setStyleSheet(
-                    """
-                    background-color:#c0392b;
-                    color:white;
-                    font-weight:bold;
-                    """
-                )
-
-            else:
-
-                botao.setStyleSheet(
-                    """
-                    background-color:#27ae60;
-                    color:white;
-                    font-weight:bold;
-                    """
-                )
+            self.atualizar_cor(
+                botao,
+                ocupado
+            )
 
 
 
@@ -121,7 +148,7 @@ class RackPage(QWidget):
 
 
 
-            grade.addWidget(
+            self.grade.addWidget(
                 botao,
                 linha,
                 coluna
@@ -129,50 +156,111 @@ class RackPage(QWidget):
 
 
 
-        layout.addWidget(
-            titulo
-        )
+            self.botoes[endereco] = botao
 
 
-        layout.addWidget(
-            self.selecionado
-        )
+
+    # =====================================
+    # ATUALIZA COR DO BOTÃO
+    # =====================================
+
+    def atualizar_cor(
+            self,
+            botao,
+            ocupado
+    ):
 
 
-        layout.addLayout(
-            grade
-        )
+        if ocupado:
+
+            botao.setStyleSheet(
+                """
+                background-color:#c0392b;
+                color:white;
+                font-weight:bold;
+                """
+            )
 
 
-        self.setLayout(
-            layout
-        )
+        else:
+
+            botao.setStyleSheet(
+                """
+                background-color:#27ae60;
+                color:white;
+                font-weight:bold;
+                """
+            )
 
 
+
+    # =====================================
+    # SELECIONAR POSIÇÃO
+    # =====================================
 
     def selecionar(self, endereco):
 
-     dialog = PalletDialog(
-        endereco
-     )
+
+        dialog = PalletDialog(
+            endereco
+        )
 
 
-     resultado = dialog.exec()
+        resultado = dialog.exec()
 
 
-     if resultado:
 
-        pallet = dialog.obter_pallet()
-
-
-        if pallet:
-
-            self.db.ocupar_posicao(
-                endereco,
-                pallet
-            )
+        if resultado:
 
 
-            self.selecionado.setText(
-                f"{endereco} ocupado com {pallet}"
-            )
+            pallet = dialog.obter_pallet()
+
+
+
+            if pallet:
+
+
+                self.db.ocupar_posicao(
+                    endereco,
+                    pallet
+                )
+
+
+                self.selecionado.setText(
+                    f"{endereco} → {pallet}"
+                )
+
+
+
+                self.atualizar_tela()
+
+
+
+
+    # =====================================
+    # ATUALIZAR VISUAL
+    # =====================================
+
+    def atualizar_tela(self):
+
+
+        posicoes = self.db.listar_posicoes()
+
+
+
+        for dados in posicoes:
+
+
+            endereco = dados[0]
+
+            ocupado = dados[1]
+
+
+
+            if endereco in self.botoes:
+
+
+                self.atualizar_cor(
+                    self.botoes[endereco],
+                    ocupado
+                )
