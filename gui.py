@@ -30,6 +30,7 @@ from ui.pages.manual import ManualPage
 from ui.pages.rack import RackPage
 from ui.pages.automation import AutomationPage
 from ui.pages.history import HistoryPage
+from ui.pages.diagnostics import DiagnosticsPage
 
 
 
@@ -105,6 +106,8 @@ class SmartRackGUI(QMainWindow):
 
         history = HistoryPage()
 
+        diagnostics = DiagnosticsPage()
+
 
         self.paginas.addWidget(
             dashboard
@@ -125,6 +128,10 @@ class SmartRackGUI(QMainWindow):
 
         self.paginas.addWidget(
         history
+        )
+
+        self.paginas.addWidget(
+        diagnostics
         )
 
 
@@ -293,6 +300,12 @@ class SmartRackGUI(QMainWindow):
 
                 botao.clicked.connect(
                    lambda: self.paginas.setCurrentIndex(4)
+                )
+
+            elif indice == 5:
+
+                botao.clicked.connect(
+                   lambda: self.paginas.setCurrentIndex(5)
                 )
 
 
