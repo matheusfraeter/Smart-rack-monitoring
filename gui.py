@@ -51,8 +51,8 @@ class SmartRackGUI(QMainWindow):
 
 
         self.resize(
-            1200,
-            700
+            1400,
+            850
         )
 
 
