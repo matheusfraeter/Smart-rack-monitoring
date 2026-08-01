@@ -18,6 +18,9 @@ from PySide6.QtWidgets import (
 )
 
 
+from PySide6.QtCore import QTimer
+
+
 from controllers.history_controller import HistoryController
 
 
@@ -35,6 +38,20 @@ class HistoryPage(QWidget):
 
 
         self.criar_interface()
+
+
+        # Atualização automática
+
+        self.timer = QTimer()
+
+        self.timer.timeout.connect(
+            self.carregar_historico
+        )
+
+
+        self.timer.start(
+            2000
+        )
 
 
 
@@ -78,6 +95,7 @@ class HistoryPage(QWidget):
                 "Status"
             ]
         )
+
 
 
         self.tabela.horizontalHeader().setSectionResizeMode(
@@ -129,7 +147,7 @@ class HistoryPage(QWidget):
 
 
                 item = QTableWidgetItem(
-                str(valor)
+                    str(valor)
                 )
 
 
@@ -138,6 +156,8 @@ class HistoryPage(QWidget):
                     coluna,
                     item
                 )
+
+
 
     # =====================================
     # ATUALIZA AO ABRIR A TELA
