@@ -548,3 +548,74 @@ class Database:
         conexao.commit()
 
         conexao.close()
+
+            # =====================================
+    # BUSCAR MOVIMENTO POR ID
+    # =====================================
+
+    def buscar_movimento(self, id_movimento):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+
+        cursor.execute(
+            """
+            SELECT id, origem, destino, data, status
+
+            FROM movimentos
+
+            WHERE id = ?
+
+            """,
+            (
+                id_movimento,
+            )
+        )
+
+
+        dados = cursor.fetchone()
+
+
+        conexao.close()
+
+
+        return dados
+
+
+
+    # =====================================
+    # ATUALIZAR STATUS POR ID
+    # =====================================
+
+    def alterar_status_movimento(
+            self,
+            id_movimento,
+            status
+    ):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+
+        cursor.execute(
+            """
+            UPDATE movimentos
+
+            SET status = ?
+
+            WHERE id = ?
+
+            """,
+            (
+                status,
+                id_movimento
+            )
+        )
+
+
+        conexao.commit()
+
+        conexao.close()

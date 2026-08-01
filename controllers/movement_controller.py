@@ -163,6 +163,52 @@ class MovementController:
 
         }
 
+            # =====================================
+    # INICIAR MOVIMENTO
+    # =====================================
+
+    def iniciar_movimento(
+            self,
+            id_movimento
+    ):
+
+        self.db.alterar_status_movimento(
+            id_movimento,
+            "Em movimento"
+        )
+
+
+
+    # =====================================
+    # FINALIZAR MOVIMENTO
+    # =====================================
+
+    def finalizar_movimento(
+            self,
+            id_movimento
+    ):
+
+        self.db.alterar_status_movimento(
+            id_movimento,
+            "Concluído"
+        )
+
+
+
+    # =====================================
+    # CANCELAR MOVIMENTO
+    # =====================================
+
+    def cancelar_movimento(
+            self,
+            id_movimento
+    ):
+
+        self.db.alterar_status_movimento(
+            id_movimento,
+            "Erro"
+        )
+
 
 
     # =====================================
