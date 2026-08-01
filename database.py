@@ -8,6 +8,7 @@
 """
 
 import sqlite3
+from datetime import datetime
 
 
 class Database:
@@ -351,7 +352,7 @@ class Database:
         return dados
 
     # =====================================
-    # REGISTRAR MOVIMENTO
+    # REGISTRAR MOVIMENTAÇÃO
     # =====================================
 
     def registrar_movimento(
@@ -366,10 +367,13 @@ class Database:
         cursor = conexao.cursor()
 
 
+        data_atual = datetime.now().strftime(
+         "%Y-%m-%d %H:%M:%S"
+        )
+
         cursor.execute(
             """
             INSERT INTO movimentos
-
             (
                 origem,
                 destino,
@@ -377,18 +381,12 @@ class Database:
                 status
             )
 
-            VALUES
-            (
-                ?,
-                ?,
-                datetime('now'),
-                ?
-            )
-
+            VALUES (?, ?, ?, ?)
             """,
             (
                 origem,
                 destino,
+                data_atual,
                 status
             )
         )
@@ -397,41 +395,6 @@ class Database:
         conexao.commit()
 
         conexao.close()
-
-    # =====================================
-    # LISTAR MOVIMENTOS
-    # =====================================
-
-    def listar_movimentos(self):
-
-        conexao = self.conectar()
-
-        cursor = conexao.cursor()
-
-
-        cursor.execute(
-            """
-            SELECT 
-                origem,
-                destino,
-                data,
-                status
-
-            FROM movimentos
-
-            ORDER BY id DESC
-
-            """
-        )
-
-
-        dados = cursor.fetchall()
-
-
-        conexao.close()
-
-
-        return dados
 
     # =====================================
     # LISTAR HISTÓRICO

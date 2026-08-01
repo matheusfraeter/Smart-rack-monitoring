@@ -129,7 +129,7 @@ class HistoryPage(QWidget):
 
 
                 item = QTableWidgetItem(
-                    str(valor)
+                str(valor)
                 )
 
 
@@ -138,3 +138,13 @@ class HistoryPage(QWidget):
                     coluna,
                     item
                 )
+
+    # =====================================
+    # ATUALIZA AO ABRIR A TELA
+    # =====================================
+
+    def showEvent(self, event):
+
+        self.carregar_historico()
+
+        super().showEvent(event)
