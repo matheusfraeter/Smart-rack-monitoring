@@ -315,3 +315,37 @@ class Database:
         conexao.commit()
 
         conexao.close()
+
+            # =====================================
+    # BUSCAR INFORMAÇÃO DA POSIÇÃO
+    # =====================================
+
+    def buscar_posicao(self, endereco):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+
+        cursor.execute(
+            """
+            SELECT endereco, ocupado, pallet
+
+            FROM rack_positions
+
+            WHERE endereco = ?
+
+            """,
+            (
+                endereco,
+            )
+        )
+
+
+        dados = cursor.fetchone()
+
+
+        conexao.close()
+
+
+        return dados
