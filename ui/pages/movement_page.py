@@ -15,7 +15,9 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QComboBox,
-    QMessageBox
+    QMessageBox,
+    QTableWidget,
+    QTableWidgetItem
 )
 
 
@@ -68,12 +70,12 @@ class MovementPage(QWidget):
 
 
 
-        self.status = QLabel(
+        self.info = QLabel(
             "Nenhuma movimentação criada"
         )
 
 
-        self.status.setStyleSheet(
+        self.info.setStyleSheet(
             """
             font-size:18px;
             """
@@ -88,39 +90,6 @@ class MovementPage(QWidget):
 
 
         self.carregar_posicoes()
-
-
-
-        botao_criar = QPushButton(
-            "Criar Movimento"
-        )
-
-
-        botao_criar.clicked.connect(
-            self.criar_movimento
-        )
-
-
-
-        botao_iniciar = QPushButton(
-            "▶ Iniciar"
-        )
-
-
-        botao_iniciar.clicked.connect(
-            self.iniciar
-        )
-
-
-
-        botao_finalizar = QPushButton(
-            "✔ Finalizar"
-        )
-
-
-        botao_finalizar.clicked.connect(
-            self.finalizar
-        )
 
 
 
@@ -148,18 +117,79 @@ class MovementPage(QWidget):
 
 
 
+        criar = QPushButton(
+            "📦 Criar Movimento"
+        )
+
+
+        criar.clicked.connect(
+            self.criar_movimento
+        )
+
+
+
+        iniciar = QPushButton(
+            "▶ Iniciar"
+        )
+
+
+        iniciar.clicked.connect(
+            self.iniciar
+        )
+
+
+
+        finalizar = QPushButton(
+            "✔ Finalizar"
+        )
+
+
+        finalizar.clicked.connect(
+            self.finalizar
+        )
+
+
+
         botoes = QHBoxLayout()
 
-        botoes.addWidget(
-            botao_criar
-        )
 
         botoes.addWidget(
-            botao_iniciar
+            criar
         )
 
+
         botoes.addWidget(
-            botao_finalizar
+            iniciar
+        )
+
+
+        botoes.addWidget(
+            finalizar
+        )
+
+
+
+        # ===============================
+        # HISTÓRICO
+        # ===============================
+
+
+        self.tabela = QTableWidget()
+
+
+        self.tabela.setColumnCount(
+            5
+        )
+
+
+        self.tabela.setHorizontalHeaderLabels(
+            [
+                "ID",
+                "Data",
+                "Origem",
+                "Destino",
+                "Status"
+            ]
         )
 
 
@@ -185,13 +215,29 @@ class MovementPage(QWidget):
 
 
         layout.addWidget(
-            self.status
+            self.info
         )
+
+
+        layout.addWidget(
+            QLabel(
+                "Últimas movimentações:"
+            )
+        )
+
+
+        layout.addWidget(
+            self.tabela
+        )
+
 
 
         self.setLayout(
             layout
         )
+
+
+        self.atualizar_tabela()
 
 
 
@@ -208,9 +254,11 @@ class MovementPage(QWidget):
 
             endereco = dados[0]
 
+
             self.origem.addItem(
                 endereco
             )
+
 
             self.destino.addItem(
                 endereco
@@ -224,10 +272,12 @@ class MovementPage(QWidget):
 
     def criar_movimento(self):
 
+
         resultado = self.controller.criar_movimento(
             self.origem.currentText(),
             self.destino.currentText()
         )
+
 
 
         if resultado["sucesso"]:
@@ -235,21 +285,31 @@ class MovementPage(QWidget):
 
             movimentos = self.db.listar_movimentos()
 
+
             self.id_movimento = movimentos[0][0]
 
 
-            self.status.setText(
-                "Movimento criado: Aguardando"
+
+            self.info.setText(
+                f"ID: {self.id_movimento} | "
+                f"{self.origem.currentText()} → "
+                f"{self.destino.currentText()} | "
+                f"Status: Aguardando"
             )
 
 
         else:
+
 
             QMessageBox.warning(
                 self,
                 "Erro",
                 resultado["mensagem"]
             )
+
+
+
+        self.atualizar_tabela()
 
 
 
@@ -267,9 +327,13 @@ class MovementPage(QWidget):
             )
 
 
-            self.status.setText(
+            self.info.setText(
+                f"ID: {self.id_movimento} | "
                 "Status: Em movimento"
             )
+
+
+        self.atualizar_tabela()
 
 
 
@@ -287,6 +351,43 @@ class MovementPage(QWidget):
             )
 
 
-            self.status.setText(
+            self.info.setText(
+                f"ID: {self.id_movimento} | "
                 "Status: Concluído"
             )
+
+
+        self.atualizar_tabela()
+
+
+
+    # =====================================
+    # ATUALIZAR TABELA
+    # =====================================
+
+    def atualizar_tabela(self):
+
+
+        movimentos = self.db.listar_movimentos()
+
+
+
+        self.tabela.setRowCount(
+            len(movimentos)
+        )
+
+
+
+        for linha, dados in enumerate(movimentos):
+
+
+            for coluna, valor in enumerate(dados):
+
+
+                self.tabela.setItem(
+                    linha,
+                    coluna,
+                    QTableWidgetItem(
+                        str(valor)
+                    )
+                )
