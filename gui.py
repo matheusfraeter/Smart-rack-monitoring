@@ -20,10 +20,10 @@ from PySide6.QtWidgets import (
     QStatusBar
 )
 
-from PySide6.QtCore import Qt
 
 from communication import MKSConnection
 from theme import Theme
+
 
 from ui.pages.dashboard import DashboardPage
 from ui.pages.manual import ManualPage
@@ -32,10 +32,12 @@ from ui.pages.automation import AutomationPage
 from ui.pages.history import HistoryPage
 from ui.pages.diagnostics import DiagnosticsPage
 from ui.pages.settings import SettingsPage
+from ui.pages.movement_page import MovementPage
 
 
 
 class SmartRackGUI(QMainWindow):
+
 
     def __init__(self):
 
@@ -90,11 +92,13 @@ class SmartRackGUI(QMainWindow):
         )
 
 
+
         # =================================================
         # PÁGINAS
         # =================================================
 
         self.paginas = QStackedWidget()
+
 
 
         dashboard = DashboardPage()
@@ -111,6 +115,9 @@ class SmartRackGUI(QMainWindow):
 
         settings = SettingsPage()
 
+        movement = MovementPage()
+
+
 
         self.paginas.addWidget(
             dashboard
@@ -121,24 +128,34 @@ class SmartRackGUI(QMainWindow):
             manual
         )
 
-        self.paginas.addWidget(
-        rack
-        )
 
         self.paginas.addWidget(
-        automation
+            rack
         )
 
-        self.paginas.addWidget(
-        history
-        )
 
         self.paginas.addWidget(
-        diagnostics
+            automation
         )
 
+
         self.paginas.addWidget(
-        settings
+            history
+        )
+
+
+        self.paginas.addWidget(
+            diagnostics
+        )
+
+
+        self.paginas.addWidget(
+            settings
+        )
+
+
+        self.paginas.addWidget(
+            movement
         )
 
 
@@ -168,11 +185,13 @@ class SmartRackGUI(QMainWindow):
         )
 
 
-        header.setStyleSheet("""
+        header.setStyleSheet(
+            """
             font-size:22px;
             font-weight:bold;
             padding:15px;
-        """)
+            """
+        )
 
 
 
@@ -190,7 +209,6 @@ class SmartRackGUI(QMainWindow):
         layout.addLayout(
             area
         )
-
 
 
         principal.setLayout(
@@ -230,11 +248,13 @@ class SmartRackGUI(QMainWindow):
         )
 
 
-        titulo.setStyleSheet("""
+        titulo.setStyleSheet(
+            """
             font-size:18px;
             font-weight:bold;
             padding:20px;
-        """)
+            """
+        )
 
 
         layout.addWidget(
@@ -257,7 +277,9 @@ class SmartRackGUI(QMainWindow):
 
             "🔧 Diagnóstico",
 
-            "⚙ Configurações"
+            "⚙ Configurações",
+
+            "🚜 Movimentação"
 
         ]
 
@@ -280,46 +302,66 @@ class SmartRackGUI(QMainWindow):
             if indice == 0:
 
                 botao.clicked.connect(
-                    lambda: self.paginas.setCurrentIndex(0)
+                    lambda:
+                    self.paginas.setCurrentIndex(0)
                 )
-
 
 
             elif indice == 1:
 
                 botao.clicked.connect(
-                    lambda: self.paginas.setCurrentIndex(1)
+                    lambda:
+                    self.paginas.setCurrentIndex(1)
                 )
+
 
             elif indice == 2:
 
                 botao.clicked.connect(
-                   lambda: self.paginas.setCurrentIndex(2)
+                    lambda:
+                    self.paginas.setCurrentIndex(2)
                 )
-            
+
+
             elif indice == 3:
 
                 botao.clicked.connect(
-                   lambda: self.paginas.setCurrentIndex(3)
+                    lambda:
+                    self.paginas.setCurrentIndex(3)
                 )
+
 
             elif indice == 4:
 
                 botao.clicked.connect(
-                   lambda: self.paginas.setCurrentIndex(4)
+                    lambda:
+                    self.paginas.setCurrentIndex(4)
                 )
+
 
             elif indice == 5:
 
                 botao.clicked.connect(
-                   lambda: self.paginas.setCurrentIndex(5)
+                    lambda:
+                    self.paginas.setCurrentIndex(5)
                 )
+
 
             elif indice == 6:
 
                 botao.clicked.connect(
-                   lambda: self.paginas.setCurrentIndex(6)
+                    lambda:
+                    self.paginas.setCurrentIndex(6)
                 )
+
+
+            elif indice == 7:
+
+                botao.clicked.connect(
+                    lambda:
+                    self.paginas.setCurrentIndex(7)
+                )
+
 
 
             layout.addWidget(
