@@ -432,3 +432,37 @@ class Database:
 
 
         return dados
+
+    # =====================================
+    # LISTAR HISTÓRICO
+    # =====================================
+
+    def listar_movimentos(self):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+
+        cursor.execute(
+            """
+            SELECT 
+                data,
+                origem,
+                destino,
+                status
+
+            FROM movimentos
+
+            ORDER BY id DESC
+            """
+        )
+
+
+        dados = cursor.fetchall()
+
+
+        conexao.close()
+
+
+        return dados

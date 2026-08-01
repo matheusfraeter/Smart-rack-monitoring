@@ -1,24 +1,51 @@
+"""
+=========================================================
+ Smart Rack Monitoring
+---------------------------------------------------------
+ Arquivo.....: history.py
+ Descrição...: Tela de histórico de movimentações
+=========================================================
+"""
+
+
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QLabel,
     QTableWidget,
-    QTableWidgetItem
+    QTableWidgetItem,
+    QHeaderView
 )
 
 
+from controllers.history_controller import HistoryController
+
+
+
+
 class HistoryPage(QWidget):
+
 
     def __init__(self):
 
         super().__init__()
 
+
+        self.controller = HistoryController()
+
+
         self.criar_interface()
 
+
+
+    # =====================================
+    # INTERFACE
+    # =====================================
 
     def criar_interface(self):
 
         layout = QVBoxLayout()
+
 
 
         titulo = QLabel(
@@ -26,21 +53,24 @@ class HistoryPage(QWidget):
         )
 
 
-        titulo.setStyleSheet("""
+        titulo.setStyleSheet(
+            """
             font-size:26px;
             font-weight:bold;
-        """)
+            """
+        )
 
 
-        tabela = QTableWidget()
+
+        self.tabela = QTableWidget()
 
 
-        tabela.setColumnCount(
+        self.tabela.setColumnCount(
             4
         )
 
 
-        tabela.setHorizontalHeaderLabels(
+        self.tabela.setHorizontalHeaderLabels(
             [
                 "Data/Hora",
                 "Origem",
@@ -50,46 +80,9 @@ class HistoryPage(QWidget):
         )
 
 
-        tabela.setRowCount(
-            3
+        self.tabela.horizontalHeader().setSectionResizeMode(
+            QHeaderView.Stretch
         )
-
-
-        dados = [
-
-            [
-                "08:30",
-                "A1",
-                "C3",
-                "Concluído"
-            ],
-
-            [
-                "09:15",
-                "B2",
-                "D4",
-                "Em andamento"
-            ],
-
-            [
-                "10:00",
-                "C1",
-                "A4",
-                "Aguardando"
-            ]
-
-        ]
-
-
-        for linha, valores in enumerate(dados):
-
-            for coluna, valor in enumerate(valores):
-
-                tabela.setItem(
-                    linha,
-                    coluna,
-                    QTableWidgetItem(valor)
-                )
 
 
 
@@ -99,10 +92,49 @@ class HistoryPage(QWidget):
 
 
         layout.addWidget(
-            tabela
+            self.tabela
         )
 
 
         self.setLayout(
             layout
         )
+
+
+        self.carregar_historico()
+
+
+
+    # =====================================
+    # CARREGAR DADOS
+    # =====================================
+
+    def carregar_historico(self):
+
+
+        movimentos = self.controller.listar_movimentos()
+
+
+
+        self.tabela.setRowCount(
+            len(movimentos)
+        )
+
+
+
+        for linha, dados in enumerate(movimentos):
+
+
+            for coluna, valor in enumerate(dados):
+
+
+                item = QTableWidgetItem(
+                    str(valor)
+                )
+
+
+                self.tabela.setItem(
+                    linha,
+                    coluna,
+                    item
+                )
