@@ -582,3 +582,43 @@ class Database:
         conexao.commit()
 
         conexao.close()
+
+    # =====================================
+    # LISTAR MISSÕES PENDENTES
+    # =====================================
+
+    def listar_missoes_pendentes(self):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+
+        cursor.execute(
+            """
+            SELECT 
+                id,
+                origem,
+                destino,
+                status
+
+            FROM movimentos
+
+            WHERE status = ?
+
+            ORDER BY id ASC
+
+            """,
+            (
+                "Aguardando",
+            )
+        )
+
+
+        dados = cursor.fetchall()
+
+
+        conexao.close()
+
+
+        return dados
