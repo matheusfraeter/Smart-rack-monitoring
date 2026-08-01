@@ -429,3 +429,122 @@ class Database:
 
 
         return dados
+
+            # =====================================
+    # VERIFICAR PALLET NA POSIÇÃO
+    # =====================================
+
+    def verificar_pallet(self, endereco):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+
+        cursor.execute(
+            """
+            SELECT pallet
+
+            FROM rack_positions
+
+            WHERE endereco = ?
+            """,
+            (
+                endereco,
+            )
+        )
+
+
+        resultado = cursor.fetchone()
+
+
+        conexao.close()
+
+
+        if resultado and resultado[0]:
+
+            return resultado[0]
+
+
+        return None
+
+
+
+    # =====================================
+    # VERIFICAR SE POSIÇÃO ESTÁ LIVRE
+    # =====================================
+
+    def verificar_posicao_livre(self, endereco):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+
+        cursor.execute(
+            """
+            SELECT ocupado
+
+            FROM rack_positions
+
+            WHERE endereco = ?
+            """,
+            (
+                endereco,
+            )
+        )
+
+
+        resultado = cursor.fetchone()
+
+
+        conexao.close()
+
+
+
+        if resultado is None:
+
+            return False
+
+
+
+        return resultado[0] == 0
+
+
+
+    # =====================================
+    # ATUALIZAR STATUS MOVIMENTO
+    # =====================================
+
+    def atualizar_status_movimento(
+            self,
+            id_movimento,
+            status
+    ):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+
+
+        cursor.execute(
+            """
+            UPDATE movimentos
+
+            SET status = ?
+
+            WHERE id = ?
+
+            """,
+            (
+                status,
+                id_movimento
+            )
+        )
+
+
+
+        conexao.commit()
+
+        conexao.close()
