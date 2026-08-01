@@ -19,6 +19,8 @@ class Database:
 
         self.criar_tabelas()
 
+        self.criar_rack_inicial()
+
 
 
     def conectar(self):
@@ -29,6 +31,10 @@ class Database:
 
 
 
+    # =====================================
+    # CRIAÇÃO DAS TABELAS
+    # =====================================
+
     def criar_tabelas(self):
 
         conexao = self.conectar()
@@ -37,9 +43,7 @@ class Database:
 
 
 
-        # =====================================
         # POSIÇÕES DO RACK
-        # =====================================
 
         cursor.execute(
             """
@@ -47,7 +51,7 @@ class Database:
 
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-                endereco TEXT NOT NULL,
+                endereco TEXT NOT NULL UNIQUE,
 
                 ocupado INTEGER DEFAULT 0,
 
@@ -59,9 +63,7 @@ class Database:
 
 
 
-        # =====================================
         # HISTÓRICO DE MOVIMENTAÇÕES
-        # =====================================
 
         cursor.execute(
             """
@@ -89,6 +91,78 @@ class Database:
 
 
 
+    # =====================================
+    # CRIA RACK INICIAL A1-D4
+    # =====================================
+
+    def criar_rack_inicial(self):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+
+
+        linhas = [
+            "A",
+            "B",
+            "C",
+            "D"
+        ]
+
+
+
+        for letra in linhas:
+
+            for numero in range(1, 5):
+
+                endereco = f"{letra}{numero}"
+
+
+
+                cursor.execute(
+                    """
+                    SELECT endereco
+                    FROM rack_positions
+                    WHERE endereco = ?
+                    """,
+                    (
+                        endereco,
+                    )
+                )
+
+
+
+                existe = cursor.fetchone()
+
+
+
+                if existe is None:
+
+                    cursor.execute(
+                        """
+                        INSERT INTO rack_positions
+                        (endereco)
+
+                        VALUES (?)
+                        """,
+                        (
+                            endereco,
+                        )
+                    )
+
+
+
+        conexao.commit()
+
+        conexao.close()
+
+
+
+    # =====================================
+    # INSERIR NOVA POSIÇÃO
+    # =====================================
+
     def inserir_posicao(
             self,
             endereco
@@ -97,6 +171,7 @@ class Database:
         conexao = self.conectar()
 
         cursor = conexao.cursor()
+
 
 
         cursor.execute(
@@ -110,6 +185,7 @@ class Database:
                 endereco,
             )
         )
+
 
 
         conexao.commit()
