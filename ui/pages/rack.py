@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
 )
 
 from database import Database
+from ui.widgets.pallet_dialog import PalletDialog
 
 
 class RackPage(QWidget):
@@ -151,6 +152,27 @@ class RackPage(QWidget):
 
     def selecionar(self, endereco):
 
-        self.selecionado.setText(
-            f"Posição selecionada: {endereco}"
-        )
+     dialog = PalletDialog(
+        endereco
+     )
+
+
+     resultado = dialog.exec()
+
+
+     if resultado:
+
+        pallet = dialog.obter_pallet()
+
+
+        if pallet:
+
+            self.db.ocupar_posicao(
+                endereco,
+                pallet
+            )
+
+
+            self.selecionado.setText(
+                f"{endereco} ocupado com {pallet}"
+            )
