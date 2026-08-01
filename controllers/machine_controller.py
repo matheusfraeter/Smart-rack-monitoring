@@ -8,9 +8,14 @@
 """
 
 
+from database import Database
+
 from controllers.mission_controller import MissionController
+
 from modules.gcode_generator import GCodeGenerator
+
 from modules.fluidnc_sender import FluidNCSender
+
 
 
 
@@ -18,6 +23,8 @@ class MachineController:
 
 
     def __init__(self):
+
+        self.db = Database()
 
         self.mission = MissionController()
 
@@ -43,8 +50,6 @@ class MachineController:
 
     def executar_proxima_missao(self):
 
-
-        # Busca próxima tarefa
 
         movimento = self.mission.proxima_missao()
 
@@ -72,7 +77,30 @@ class MachineController:
 
 
         # ---------------------------------
-        # Atualiza status
+        # Busca pallet
+        # ---------------------------------
+
+        pallet = self.db.verificar_pallet(
+            origem
+        )
+
+
+
+        if pallet is None:
+
+            return {
+
+                "sucesso": False,
+
+                "mensagem":
+                f"Sem pallet em {origem}"
+
+            }
+
+
+
+        # ---------------------------------
+        # Inicia missão
         # ---------------------------------
 
         self.mission.iniciar_missao(
@@ -103,6 +131,22 @@ class MachineController:
 
 
         # ---------------------------------
+        # Atualiza rack
+        # ---------------------------------
+
+        self.db.liberar_posicao(
+            origem
+        )
+
+
+        self.db.ocupar_posicao(
+            destino,
+            pallet
+        )
+
+
+
+        # ---------------------------------
         # Finaliza missão
         # ---------------------------------
 
@@ -114,18 +158,32 @@ class MachineController:
 
         return {
 
+
             "sucesso": True,
 
+
+            "mensagem":
+
+            f"Pallet {pallet} movido de {origem} para {destino}",
+
+
             "origem":
+
             origem,
 
+
             "destino":
+
             destino,
 
+
             "gcode":
+
             codigo,
 
+
             "resultado":
+
             resultado
 
         }
