@@ -22,7 +22,7 @@ class MovementController:
 
 
     # =====================================
-    # CRIAR MOVIMENTAÇÃO
+    # CRIAR MOVIMENTAÇÃO INTELIGENTE
     # =====================================
 
     def criar_movimento(
@@ -31,11 +31,67 @@ class MovementController:
             destino
     ):
 
+
+        # -----------------------------
+        # Verifica pallet na origem
+        # -----------------------------
+
+        pallet = self.db.verificar_pallet(
+            origem
+        )
+
+
+        if pallet is None:
+
+            return {
+                "sucesso": False,
+                "mensagem":
+                f"Origem {origem} sem pallet"
+            }
+
+
+
+        # -----------------------------
+        # Verifica destino livre
+        # -----------------------------
+
+        destino_livre = self.db.verificar_posicao_livre(
+            destino
+        )
+
+
+        if destino_livre is False:
+
+            return {
+                "sucesso": False,
+                "mensagem":
+                f"Destino {destino} ocupado"
+            }
+
+
+
+        # -----------------------------
+        # Registra movimento
+        # -----------------------------
+
         self.db.registrar_movimento(
             origem,
             destino,
             "Aguardando"
         )
+
+
+        return {
+
+            "sucesso": True,
+
+            "mensagem":
+            f"Movimentação criada: {origem} → {destino}",
+
+            "pallet":
+            pallet
+
+        }
 
 
 
