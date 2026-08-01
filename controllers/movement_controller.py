@@ -93,6 +93,76 @@ class MovementController:
 
         }
 
+    # =====================================
+    # EXECUTAR MOVIMENTAÇÃO
+    # =====================================
+
+    def executar_movimento(
+            self,
+            origem,
+            destino
+    ):
+
+
+        pallet = self.db.verificar_pallet(
+            origem
+        )
+
+
+        if pallet is None:
+
+            return {
+                "sucesso": False,
+                "mensagem":
+                f"Origem {origem} sem pallet"
+            }
+
+
+
+        if self.db.verificar_posicao_livre(destino) is False:
+
+            return {
+                "sucesso": False,
+                "mensagem":
+                f"Destino {destino} ocupado"
+            }
+
+
+
+        # Libera origem
+
+        self.db.liberar_posicao(
+            origem
+        )
+
+
+        # Ocupa destino
+
+        self.db.ocupar_posicao(
+            destino,
+            pallet
+        )
+
+
+        # Registra conclusão
+
+        self.db.registrar_movimento(
+            origem,
+            destino,
+            "Concluído"
+        )
+
+
+
+        return {
+
+            "sucesso": True,
+
+            "mensagem":
+            f"Pallet {pallet} movido de {origem} para {destino}"
+
+        }
+
 
 
     # =====================================
