@@ -316,7 +316,7 @@ class Database:
 
         conexao.close()
 
-            # =====================================
+    # =====================================
     # BUSCAR INFORMAÇÃO DA POSIÇÃO
     # =====================================
 
@@ -343,6 +343,89 @@ class Database:
 
 
         dados = cursor.fetchone()
+
+
+        conexao.close()
+
+
+        return dados
+
+    # =====================================
+    # REGISTRAR MOVIMENTO
+    # =====================================
+
+    def registrar_movimento(
+            self,
+            origem,
+            destino,
+            status
+    ):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+
+        cursor.execute(
+            """
+            INSERT INTO movimentos
+
+            (
+                origem,
+                destino,
+                data,
+                status
+            )
+
+            VALUES
+            (
+                ?,
+                ?,
+                datetime('now'),
+                ?
+            )
+
+            """,
+            (
+                origem,
+                destino,
+                status
+            )
+        )
+
+
+        conexao.commit()
+
+        conexao.close()
+
+    # =====================================
+    # LISTAR MOVIMENTOS
+    # =====================================
+
+    def listar_movimentos(self):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+
+        cursor.execute(
+            """
+            SELECT 
+                origem,
+                destino,
+                data,
+                status
+
+            FROM movimentos
+
+            ORDER BY id DESC
+
+            """
+        )
+
+
+        dados = cursor.fetchall()
 
 
         conexao.close()
