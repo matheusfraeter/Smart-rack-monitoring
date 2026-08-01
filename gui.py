@@ -33,6 +33,7 @@ from ui.pages.history import HistoryPage
 from ui.pages.diagnostics import DiagnosticsPage
 from ui.pages.settings import SettingsPage
 from ui.pages.movement_page import MovementPage
+from ui.pages.mission_queue import MissionQueuePage
 
 
 
@@ -117,6 +118,8 @@ class SmartRackGUI(QMainWindow):
 
         movement = MovementPage()
 
+        mission_queue = MissionQueuePage()
+
 
 
         self.paginas.addWidget(
@@ -156,6 +159,11 @@ class SmartRackGUI(QMainWindow):
 
         self.paginas.addWidget(
             movement
+        )
+
+
+        self.paginas.addWidget(
+            mission_queue
         )
 
 
@@ -279,7 +287,9 @@ class SmartRackGUI(QMainWindow):
 
             "⚙ Configurações",
 
-            "🚜 Movimentação"
+            "🚜 Movimentação",
+
+            "📋 Fila de Missões"
 
         ]
 
@@ -299,68 +309,10 @@ class SmartRackGUI(QMainWindow):
 
 
 
-            if indice == 0:
-
-                botao.clicked.connect(
-                    lambda:
-                    self.paginas.setCurrentIndex(0)
-                )
-
-
-            elif indice == 1:
-
-                botao.clicked.connect(
-                    lambda:
-                    self.paginas.setCurrentIndex(1)
-                )
-
-
-            elif indice == 2:
-
-                botao.clicked.connect(
-                    lambda:
-                    self.paginas.setCurrentIndex(2)
-                )
-
-
-            elif indice == 3:
-
-                botao.clicked.connect(
-                    lambda:
-                    self.paginas.setCurrentIndex(3)
-                )
-
-
-            elif indice == 4:
-
-                botao.clicked.connect(
-                    lambda:
-                    self.paginas.setCurrentIndex(4)
-                )
-
-
-            elif indice == 5:
-
-                botao.clicked.connect(
-                    lambda:
-                    self.paginas.setCurrentIndex(5)
-                )
-
-
-            elif indice == 6:
-
-                botao.clicked.connect(
-                    lambda:
-                    self.paginas.setCurrentIndex(6)
-                )
-
-
-            elif indice == 7:
-
-                botao.clicked.connect(
-                    lambda:
-                    self.paginas.setCurrentIndex(7)
-                )
+            botao.clicked.connect(
+                lambda checked=False, i=indice:
+                self.paginas.setCurrentIndex(i)
+            )
 
 
 
