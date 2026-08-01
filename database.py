@@ -23,6 +23,10 @@ class Database:
 
 
 
+    # =====================================
+    # CONEXÃO COM BANCO
+    # =====================================
+
     def conectar(self):
 
         return sqlite3.connect(
@@ -43,7 +47,9 @@ class Database:
 
 
 
+        # ---------------------------------
         # POSIÇÕES DO RACK
+        # ---------------------------------
 
         cursor.execute(
             """
@@ -63,7 +69,9 @@ class Database:
 
 
 
+        # ---------------------------------
         # HISTÓRICO DE MOVIMENTAÇÕES
+        # ---------------------------------
 
         cursor.execute(
             """
@@ -104,10 +112,12 @@ class Database:
 
 
         linhas = [
+
             "A",
             "B",
             "C",
             "D"
+
         ]
 
 
@@ -123,8 +133,11 @@ class Database:
                 cursor.execute(
                     """
                     SELECT endereco
+
                     FROM rack_positions
+
                     WHERE endereco = ?
+
                     """,
                     (
                         endereco,
@@ -142,9 +155,11 @@ class Database:
                     cursor.execute(
                         """
                         INSERT INTO rack_positions
+
                         (endereco)
 
                         VALUES (?)
+
                         """,
                         (
                             endereco,
@@ -163,10 +178,7 @@ class Database:
     # INSERIR NOVA POSIÇÃO
     # =====================================
 
-    def inserir_posicao(
-            self,
-            endereco
-    ):
+    def inserir_posicao(self, endereco):
 
         conexao = self.conectar()
 
@@ -177,9 +189,11 @@ class Database:
         cursor.execute(
             """
             INSERT INTO rack_positions
+
             (endereco)
 
             VALUES (?)
+
             """,
             (
                 endereco,
@@ -192,6 +206,12 @@ class Database:
 
         conexao.close()
 
+
+
+    # =====================================
+    # LISTAR POSIÇÕES DO RACK
+    # =====================================
+
     def listar_posicoes(self):
 
         conexao = self.conectar()
@@ -199,19 +219,99 @@ class Database:
         cursor = conexao.cursor()
 
 
+
         cursor.execute(
             """
             SELECT endereco, ocupado, pallet
+
             FROM rack_positions
+
             ORDER BY endereco
+
             """
         )
+
 
 
         dados = cursor.fetchall()
 
 
+
         conexao.close()
 
 
+
         return dados
+
+
+
+    # =====================================
+    # OCUPAR POSIÇÃO DO RACK
+    # =====================================
+
+    def ocupar_posicao(self, endereco, pallet):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+
+
+        cursor.execute(
+            """
+            UPDATE rack_positions
+
+            SET ocupado = 1,
+
+                pallet = ?
+
+            WHERE endereco = ?
+
+            """,
+            (
+                pallet,
+                endereco
+            )
+        )
+
+
+
+        conexao.commit()
+
+        conexao.close()
+
+
+
+    # =====================================
+    # LIBERAR POSIÇÃO DO RACK
+    # =====================================
+
+    def liberar_posicao(self, endereco):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+
+
+        cursor.execute(
+            """
+            UPDATE rack_positions
+
+            SET ocupado = 0,
+
+                pallet = NULL
+
+            WHERE endereco = ?
+
+            """,
+            (
+                endereco,
+            )
+        )
+
+
+
+        conexao.commit()
+
+        conexao.close()

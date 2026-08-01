@@ -4,20 +4,33 @@ from database import Database
 db = Database()
 
 
-posicoes = db.listar_posicoes()
+# colocar pallet
+
+db.ocupar_posicao(
+    "A1",
+    "PALLET001"
+)
 
 
-print("POSIÇÕES DO RACK:")
-print("-----------------")
+print("Depois de ocupar:")
 
 
-for posicao in posicoes:
+for item in db.listar_posicoes():
 
-    endereco = posicao[0]
-    ocupado = posicao[1]
-    pallet = posicao[2]
+    print(item)
 
 
-    print(
-        f"{endereco} | Ocupado: {ocupado} | Pallet: {pallet}"
-    )
+
+# liberar
+
+db.liberar_posicao(
+    "A1"
+)
+
+
+print("\nDepois de liberar:")
+
+
+for item in db.listar_posicoes():
+
+    print(item)
