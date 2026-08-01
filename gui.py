@@ -102,69 +102,35 @@ class SmartRackGUI(QMainWindow):
 
 
 
-        dashboard = DashboardPage()
+        paginas = [
 
-        manual = ManualPage()
+            DashboardPage(),
 
-        rack = RackPage()
+            ManualPage(),
 
-        automation = AutomationPage()
+            RackPage(),
 
-        history = HistoryPage()
+            AutomationPage(),
 
-        diagnostics = DiagnosticsPage()
+            HistoryPage(),
 
-        settings = SettingsPage()
+            DiagnosticsPage(),
 
-        movement = MovementPage()
+            SettingsPage(),
 
-        mission_queue = MissionQueuePage()
+            MovementPage(),
 
+            MissionQueuePage()
 
-
-        self.paginas.addWidget(
-            dashboard
-        )
+        ]
 
 
-        self.paginas.addWidget(
-            manual
-        )
 
+        for pagina in paginas:
 
-        self.paginas.addWidget(
-            rack
-        )
-
-
-        self.paginas.addWidget(
-            automation
-        )
-
-
-        self.paginas.addWidget(
-            history
-        )
-
-
-        self.paginas.addWidget(
-            diagnostics
-        )
-
-
-        self.paginas.addWidget(
-            settings
-        )
-
-
-        self.paginas.addWidget(
-            movement
-        )
-
-
-        self.paginas.addWidget(
-            mission_queue
-        )
+            self.paginas.addWidget(
+                pagina
+            )
 
 
 
@@ -186,6 +152,7 @@ class SmartRackGUI(QMainWindow):
         # =================================================
 
         area = QVBoxLayout()
+
 
 
         header = QLabel(
@@ -219,9 +186,11 @@ class SmartRackGUI(QMainWindow):
         )
 
 
+
         principal.setLayout(
             layout
         )
+
 
 
         self.criar_statusbar()
@@ -234,6 +203,7 @@ class SmartRackGUI(QMainWindow):
 
     def criar_menu(self):
 
+
         menu = QFrame()
 
 
@@ -245,6 +215,7 @@ class SmartRackGUI(QMainWindow):
         menu.setStyleSheet(
             Theme.sidebar()
         )
+
 
 
         layout = QVBoxLayout()
@@ -308,12 +279,10 @@ class SmartRackGUI(QMainWindow):
             )
 
 
-
             botao.clicked.connect(
                 lambda checked=False, i=indice:
                 self.paginas.setCurrentIndex(i)
             )
-
 
 
             layout.addWidget(
@@ -341,6 +310,7 @@ class SmartRackGUI(QMainWindow):
     # =====================================================
 
     def criar_statusbar(self):
+
 
         status = QStatusBar()
 
