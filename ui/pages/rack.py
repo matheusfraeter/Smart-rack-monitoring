@@ -6,11 +6,13 @@ from PySide6.QtWidgets import (
     QGridLayout
 )
 
-from database import Database
+
+from controllers.rack_controller import RackController
 
 from ui.widgets.pallet_dialog import PalletDialog
 
 from ui.widgets.rack_action_dialog import RackActionDialog
+
 
 
 
@@ -22,7 +24,7 @@ class RackPage(QWidget):
         super().__init__()
 
 
-        self.db = Database()
+        self.controller = RackController()
 
 
         self.botoes = {}
@@ -41,7 +43,6 @@ class RackPage(QWidget):
         layout = QVBoxLayout()
 
 
-
         titulo = QLabel(
             "📦 Mapa do Rack"
         )
@@ -53,7 +54,6 @@ class RackPage(QWidget):
             font-weight:bold;
             """
         )
-
 
 
         self.selecionado = QLabel(
@@ -74,12 +74,11 @@ class RackPage(QWidget):
         self.grade.setSpacing(20)
 
         self.grade.setContentsMargins(
-           40,
-           40,
-           40,
-           40
+            40,
+            40,
+            40,
+            40
         )
-
 
 
         layout.addWidget(
@@ -102,7 +101,6 @@ class RackPage(QWidget):
         )
 
 
-
         self.carregar_rack()
 
 
@@ -114,7 +112,7 @@ class RackPage(QWidget):
     def carregar_rack(self):
 
 
-        posicoes = self.db.listar_posicoes()
+        posicoes = self.controller.listar_posicoes()
 
 
 
@@ -137,20 +135,11 @@ class RackPage(QWidget):
                 100
             )
 
-            botao.setStyleSheet(
-               """
-               font-size:22px;
-               font-weight:bold;
-               """
-            )
-
-
 
             self.atualizar_cor(
                 botao,
                 ocupado
             )
-
 
 
             botao.clicked.connect(
@@ -177,41 +166,45 @@ class RackPage(QWidget):
 
 
 
+
     # =====================================
     # CORES
     # =====================================
 
     def atualizar_cor(
-        self,
-        botao,
-        ocupado
+            self,
+            botao,
+            ocupado
     ):
 
 
-     if ocupado:
-
-        botao.setStyleSheet(
-            """
-            background-color:#c0392b;
-            color:white;
-            font-size:22px;
-            font-weight:bold;
-            border-radius:10px;
-            """
-        )
+        if ocupado:
 
 
-     else:
+            botao.setStyleSheet(
+                """
+                background-color:#c0392b;
+                color:white;
+                font-size:22px;
+                font-weight:bold;
+                border-radius:10px;
+                """
+            )
 
-        botao.setStyleSheet(
-            """
-            background-color:#27ae60;
-            color:white;
-            font-size:22px;
-            font-weight:bold;
-            border-radius:10px;
-            """
-        )
+
+        else:
+
+
+            botao.setStyleSheet(
+                """
+                background-color:#27ae60;
+                color:white;
+                font-size:22px;
+                font-weight:bold;
+                border-radius:10px;
+                """
+            )
+
 
 
 
@@ -219,13 +212,15 @@ class RackPage(QWidget):
     # CLIQUE NA POSIÇÃO
     # =====================================
 
-    def selecionar(self, endereco):
+    def selecionar(
+            self,
+            endereco
+    ):
 
 
-        dados = self.db.buscar_posicao(
+        dados = self.controller.buscar_posicao(
             endereco
         )
-
 
 
         ocupado = dados[1]
@@ -234,17 +229,12 @@ class RackPage(QWidget):
 
 
 
-        # -----------------------------
-        # POSIÇÃO LIVRE
-        # -----------------------------
-
         if ocupado == 0:
 
 
             dialog = PalletDialog(
                 endereco
             )
-
 
 
             resultado = dialog.exec()
@@ -261,7 +251,7 @@ class RackPage(QWidget):
                 if codigo:
 
 
-                    self.db.ocupar_posicao(
+                    self.controller.armazenar_pallet(
                         endereco,
                         codigo
                     )
@@ -273,10 +263,6 @@ class RackPage(QWidget):
 
 
 
-        # -----------------------------
-        # POSIÇÃO OCUPADA
-        # -----------------------------
-
         else:
 
 
@@ -286,7 +272,6 @@ class RackPage(QWidget):
             )
 
 
-
             resultado = dialog.exec()
 
 
@@ -294,7 +279,7 @@ class RackPage(QWidget):
             if resultado and dialog.remover:
 
 
-                self.db.liberar_posicao(
+                self.controller.retirar_pallet(
                     endereco
                 )
 
@@ -309,6 +294,7 @@ class RackPage(QWidget):
 
 
 
+
     # =====================================
     # ATUALIZA VISUAL
     # =====================================
@@ -316,7 +302,7 @@ class RackPage(QWidget):
     def atualizar_tela(self):
 
 
-        posicoes = self.db.listar_posicoes()
+        posicoes = self.controller.listar_posicoes()
 
 
 
