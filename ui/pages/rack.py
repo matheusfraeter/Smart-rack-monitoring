@@ -6,6 +6,8 @@ from PySide6.QtWidgets import (
     QGridLayout
 )
 
+from database import Database
+
 
 class RackPage(QWidget):
 
@@ -13,7 +15,10 @@ class RackPage(QWidget):
 
         super().__init__()
 
+        self.db = Database()
+
         self.criar_interface()
+
 
 
     def criar_interface(self):
@@ -32,6 +37,7 @@ class RackPage(QWidget):
         """)
 
 
+
         self.selecionado = QLabel(
             "Nenhuma posição selecionada"
         )
@@ -46,47 +52,79 @@ class RackPage(QWidget):
         grade = QGridLayout()
 
 
-        linhas = [
-            "A",
-            "B",
-            "C",
-            "D"
-        ]
 
+        # =====================================
+        # CARREGA POSIÇÕES DO BANCO
+        # =====================================
 
-        colunas = 4
+        posicoes = self.db.listar_posicoes()
 
 
 
-        for linha, letra in enumerate(linhas):
+        for indice, dados in enumerate(posicoes):
 
-            for coluna in range(1, colunas + 1):
+            endereco = dados[0]
 
-                endereco = f"{letra}{coluna}"
+            ocupado = dados[1]
+
+            pallet = dados[2]
 
 
-                botao = QPushButton(
-                    endereco
+
+            botao = QPushButton(
+                endereco
+            )
+
+
+            botao.setMinimumSize(
+                80,
+                60
+            )
+
+
+
+            # Cor conforme estado
+
+            if ocupado:
+
+                botao.setStyleSheet(
+                    """
+                    background-color:#c0392b;
+                    color:white;
+                    font-weight:bold;
+                    """
+                )
+
+            else:
+
+                botao.setStyleSheet(
+                    """
+                    background-color:#27ae60;
+                    color:white;
+                    font-weight:bold;
+                    """
                 )
 
 
-                botao.setMinimumSize(
-                    80,
-                    60
-                )
+
+            botao.clicked.connect(
+                lambda checked=False, e=endereco:
+                self.selecionar(e)
+            )
 
 
-                botao.clicked.connect(
-                    lambda checked=False, e=endereco:
-                    self.selecionar(e)
-                )
+
+            linha = indice // 4
+
+            coluna = indice % 4
 
 
-                grade.addWidget(
-                    botao,
-                    linha,
-                    coluna-1
-                )
+
+            grade.addWidget(
+                botao,
+                linha,
+                coluna
+            )
 
 
 

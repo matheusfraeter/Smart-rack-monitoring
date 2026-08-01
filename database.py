@@ -191,3 +191,27 @@ class Database:
         conexao.commit()
 
         conexao.close()
+
+    def listar_posicoes(self):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+
+        cursor.execute(
+            """
+            SELECT endereco, ocupado, pallet
+            FROM rack_positions
+            ORDER BY endereco
+            """
+        )
+
+
+        dados = cursor.fetchall()
+
+
+        conexao.close()
+
+
+        return dados
