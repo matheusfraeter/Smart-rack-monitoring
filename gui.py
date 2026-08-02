@@ -34,6 +34,7 @@ from ui.pages.settings import SettingsPage
 
 
 
+
 class SmartRackGUI(QMainWindow):
 
 
@@ -74,6 +75,7 @@ class SmartRackGUI(QMainWindow):
 
 
 
+
     # =====================================
     # CONEXÃO AUTOMÁTICA
     # =====================================
@@ -106,44 +108,42 @@ class SmartRackGUI(QMainWindow):
 
 
 
-        if hasattr(
-            self,
-            "statusbar"
-        ):
-
-
-            self.statusbar.showMessage(
-                mensagem
-            )
+        self.statusbar.showMessage(
+            mensagem
+        )
 
 
 
-        if hasattr(
-            self,
-            "dashboard"
-        ):
+        # Atualiza Dashboard
 
-
-            self.dashboard.atualizar_status()
+        self.dashboard.atualizar_status()
 
 
 
-        if hasattr(
-            self,
-            "manual"
-        ):
+        # Atualiza Manual
+
+        if conectado:
 
 
             self.manual.status.setText(
-                mensagem
+                "🟢 MKS DLC32 conectada"
             )
+
+
+        else:
+
+
+            self.manual.status.setText(
+                "🔴 MKS DLC32 desconectada"
+            )
+
 
 
 
 
 
     # =====================================
-    # INTERFACE
+    # INTERFACE PRINCIPAL
     # =====================================
 
     def criar_interface(self):
@@ -180,9 +180,11 @@ class SmartRackGUI(QMainWindow):
 
 
 
+
         # =====================================
         # PÁGINAS
         # =====================================
+
 
         self.paginas = QStackedWidget()
 
@@ -200,19 +202,39 @@ class SmartRackGUI(QMainWindow):
 
 
 
+        self.rack = RackPage()
+
+
+
+        self.history = HistoryPage()
+
+
+
+        self.settings = SettingsPage()
+
+
+
+
         paginas = [
+
 
             self.dashboard,
 
+
             self.manual,
 
-            RackPage(),
 
-            HistoryPage(),
+            self.rack,
 
-            SettingsPage()
+
+            self.history,
+
+
+            self.settings
+
 
         ]
+
 
 
 
@@ -228,7 +250,10 @@ class SmartRackGUI(QMainWindow):
 
 
 
+        # =====================================
         # MENU
+        # =====================================
+
 
         menu = self.criar_menu()
 
@@ -242,7 +267,10 @@ class SmartRackGUI(QMainWindow):
 
 
 
+
+        # =====================================
         # ÁREA CENTRAL
+        # =====================================
 
 
         area = QVBoxLayout()
@@ -295,8 +323,10 @@ class SmartRackGUI(QMainWindow):
 
 
 
+
+
     # =====================================
-    # MENU
+    # MENU LATERAL
     # =====================================
 
     def criar_menu(self):
@@ -344,19 +374,29 @@ class SmartRackGUI(QMainWindow):
 
 
 
+
         botoes = [
+
 
             "🏠 Dashboard",
 
+
             "🎮 Controle Manual",
+
 
             "📦 Rack",
 
+
             "📜 Histórico",
+
 
             "⚙ Configurações"
 
+
         ]
+
+
+
 
 
 
@@ -390,6 +430,8 @@ class SmartRackGUI(QMainWindow):
 
 
 
+
+
         layout.addStretch()
 
 
@@ -401,6 +443,8 @@ class SmartRackGUI(QMainWindow):
 
 
         return menu
+
+
 
 
 
