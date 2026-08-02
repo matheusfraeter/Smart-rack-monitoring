@@ -24,13 +24,20 @@ class MKSConnection:
             if resposta.status_code == 200:
 
                 self.conectado = True
+
+                print("MKS conectada")
+
                 return True
 
 
-        except:
+        except Exception as erro:
 
-            self.conectado = False
+            print("Erro conexão:")
+            print(erro)
 
+
+
+        self.conectado = False
 
         return False
 
@@ -41,7 +48,10 @@ class MKSConnection:
 
         if not self.conectado:
 
+            print("MKS desconectada")
+
             return False
+
 
 
         try:
@@ -53,9 +63,21 @@ class MKSConnection:
             )
 
 
-            return resposta.status_code == 200
+            print("====================")
+            print("Enviado:")
+            print(comando)
+
+            print("Resposta:")
+            print(resposta.text)
 
 
-        except:
+            return True
+
+
+
+        except Exception as erro:
+
+            print("Erro comando:")
+            print(erro)
 
             return False

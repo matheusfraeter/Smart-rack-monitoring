@@ -17,24 +17,31 @@ from PySide6.QtWidgets import (
     QComboBox,
     QMessageBox,
     QTableWidget,
-    QTableWidgetItem
+    QTableWidgetItem,
+    QGridLayout
 )
 
 
 from controllers.movement_controller import MovementController
 from database import Database
+from movement import Movement
 
 
 
 class MovementPage(QWidget):
 
 
-    def __init__(self):
+    def __init__(self, mks):
 
         super().__init__()
 
 
+        # Comunicação com MKS
+        self.movimento = Movement(mks)
+
+
         self.controller = MovementController()
+
 
         self.db = Database()
 
@@ -43,6 +50,7 @@ class MovementPage(QWidget):
 
 
         self.criar_interface()
+
 
 
 
@@ -69,6 +77,11 @@ class MovementPage(QWidget):
         )
 
 
+        layout.addWidget(
+            titulo
+        )
+
+
 
         self.info = QLabel(
             "Nenhuma movimentação criada"
@@ -83,6 +96,126 @@ class MovementPage(QWidget):
 
 
 
+        # ===============================
+        # CONTROLE MANUAL
+        # ===============================
+
+
+        manual_titulo = QLabel(
+            "Controle Manual dos Eixos"
+        )
+
+
+        manual_titulo.setStyleSheet(
+            """
+            font-size:20px;
+            font-weight:bold;
+            """
+        )
+
+
+        layout.addWidget(
+            manual_titulo
+        )
+
+
+
+        grid = QGridLayout()
+
+
+
+        xmais = QPushButton("X +")
+        xmenos = QPushButton("X -")
+
+        ymais = QPushButton("Y +")
+        ymenos = QPushButton("Y -")
+
+        zmais = QPushButton("Z +")
+        zmenos = QPushButton("Z -")
+
+
+
+        xmais.clicked.connect(
+            lambda: self.movimento.mover_x(10)
+        )
+
+
+        xmenos.clicked.connect(
+            lambda: self.movimento.mover_x(-10)
+        )
+
+
+        ymais.clicked.connect(
+            lambda: self.movimento.mover_y(10)
+        )
+
+
+        ymenos.clicked.connect(
+            lambda: self.movimento.mover_y(-10)
+        )
+
+
+        zmais.clicked.connect(
+            lambda: self.movimento.mover_z(10)
+        )
+
+
+        zmenos.clicked.connect(
+            lambda: self.movimento.mover_z(-10)
+        )
+
+
+
+        grid.addWidget(
+            ymais,
+            0,
+            1
+        )
+
+        grid.addWidget(
+            xmenos,
+            1,
+            0
+        )
+
+        grid.addWidget(
+            xmais,
+            1,
+            2
+        )
+
+        grid.addWidget(
+            ymenos,
+            2,
+            1
+        )
+
+        grid.addWidget(
+            zmais,
+            3,
+            1
+        )
+
+        grid.addWidget(
+            zmenos,
+            4,
+            1
+        )
+
+
+
+        layout.addLayout(
+            grid
+        )
+
+
+
+
+        # ===============================
+        # MOVIMENTO RACK
+        # ===============================
+
+
         self.origem = QComboBox()
 
         self.destino = QComboBox()
@@ -95,9 +228,11 @@ class MovementPage(QWidget):
 
         linha_origem = QHBoxLayout()
 
+
         linha_origem.addWidget(
             QLabel("Origem:")
         )
+
 
         linha_origem.addWidget(
             self.origem
@@ -107,9 +242,11 @@ class MovementPage(QWidget):
 
         linha_destino = QHBoxLayout()
 
+
         linha_destino.addWidget(
             QLabel("Destino:")
         )
+
 
         linha_destino.addWidget(
             self.destino
@@ -194,11 +331,6 @@ class MovementPage(QWidget):
 
 
 
-        layout.addWidget(
-            titulo
-        )
-
-
         layout.addLayout(
             linha_origem
         )
@@ -241,8 +373,9 @@ class MovementPage(QWidget):
 
 
 
+
     # =====================================
-    # CARREGAR POSIÇÕES
+    # POSIÇÕES
     # =====================================
 
     def carregar_posicoes(self):
@@ -266,12 +399,12 @@ class MovementPage(QWidget):
 
 
 
+
     # =====================================
     # CRIAR MOVIMENTO
     # =====================================
 
     def criar_movimento(self):
-
 
         resultado = self.controller.criar_movimento(
             self.origem.currentText(),
@@ -279,9 +412,7 @@ class MovementPage(QWidget):
         )
 
 
-
         if resultado["sucesso"]:
-
 
             movimentos = self.db.listar_movimentos()
 
@@ -289,17 +420,12 @@ class MovementPage(QWidget):
             self.id_movimento = movimentos[0][0]
 
 
-
             self.info.setText(
-                f"ID: {self.id_movimento} | "
-                f"{self.origem.currentText()} → "
-                f"{self.destino.currentText()} | "
-                f"Status: Aguardando"
+                f"ID {self.id_movimento} criado"
             )
 
 
         else:
-
 
             QMessageBox.warning(
                 self,
@@ -308,8 +434,8 @@ class MovementPage(QWidget):
             )
 
 
-
         self.atualizar_tabela()
+
 
 
 
@@ -321,19 +447,18 @@ class MovementPage(QWidget):
 
         if self.id_movimento:
 
-
             self.controller.iniciar_movimento(
                 self.id_movimento
             )
 
 
             self.info.setText(
-                f"ID: {self.id_movimento} | "
-                "Status: Em movimento"
+                "Movimento iniciado"
             )
 
 
         self.atualizar_tabela()
+
 
 
 
@@ -345,15 +470,13 @@ class MovementPage(QWidget):
 
         if self.id_movimento:
 
-
             self.controller.finalizar_movimento(
                 self.id_movimento
             )
 
 
             self.info.setText(
-                f"ID: {self.id_movimento} | "
-                "Status: Concluído"
+                "Movimento finalizado"
             )
 
 
@@ -361,15 +484,14 @@ class MovementPage(QWidget):
 
 
 
+
     # =====================================
-    # ATUALIZAR TABELA
+    # TABELA
     # =====================================
 
     def atualizar_tabela(self):
 
-
         movimentos = self.db.listar_movimentos()
-
 
 
         self.tabela.setRowCount(
@@ -377,12 +499,9 @@ class MovementPage(QWidget):
         )
 
 
-
         for linha, dados in enumerate(movimentos):
 
-
             for coluna, valor in enumerate(dados):
-
 
                 self.tabela.setItem(
                     linha,

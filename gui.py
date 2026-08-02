@@ -28,12 +28,9 @@ from theme import Theme
 from ui.pages.dashboard import DashboardPage
 from ui.pages.manual import ManualPage
 from ui.pages.rack import RackPage
-from ui.pages.automation import AutomationPage
 from ui.pages.history import HistoryPage
-from ui.pages.diagnostics import DiagnosticsPage
 from ui.pages.settings import SettingsPage
-from ui.pages.movement_page import MovementPage
-from ui.pages.mission_queue import MissionQueuePage
+
 
 
 
@@ -45,7 +42,13 @@ class SmartRackGUI(QMainWindow):
         super().__init__()
 
 
+
+        # =====================================
+        # COMUNICAÇÃO MKS
+        # =====================================
+
         self.mks = MKSConnection()
+
 
 
         self.setWindowTitle(
@@ -59,22 +62,101 @@ class SmartRackGUI(QMainWindow):
         )
 
 
+
         self.criar_interface()
 
 
 
-    # =====================================================
-    # INTERFACE PRINCIPAL
-    # =====================================================
+        # conecta automaticamente
+
+        self.conectar_mks()
+
+
+
+
+    # =====================================
+    # CONEXÃO AUTOMÁTICA
+    # =====================================
+
+    def conectar_mks(self):
+
+
+        conectado = self.mks.conectar()
+
+
+
+        if conectado:
+
+
+            mensagem = (
+                "🟢 MKS DLC32 conectada"
+            )
+
+
+        else:
+
+
+            mensagem = (
+                "🔴 MKS DLC32 desconectada"
+            )
+
+
+
+        print(mensagem)
+
+
+
+        if hasattr(
+            self,
+            "statusbar"
+        ):
+
+
+            self.statusbar.showMessage(
+                mensagem
+            )
+
+
+
+        if hasattr(
+            self,
+            "dashboard"
+        ):
+
+
+            self.dashboard.atualizar_status()
+
+
+
+        if hasattr(
+            self,
+            "manual"
+        ):
+
+
+            self.manual.status.setText(
+                mensagem
+            )
+
+
+
+
+
+    # =====================================
+    # INTERFACE
+    # =====================================
 
     def criar_interface(self):
+
 
         self.setStyleSheet(
             Theme.application()
         )
 
 
+
         principal = QWidget()
+
 
 
         self.setCentralWidget(
@@ -82,7 +164,9 @@ class SmartRackGUI(QMainWindow):
         )
 
 
+
         layout = QHBoxLayout()
+
 
 
         layout.setContentsMargins(
@@ -94,33 +178,39 @@ class SmartRackGUI(QMainWindow):
 
 
 
-        # =================================================
+
+
+        # =====================================
         # PÁGINAS
-        # =================================================
+        # =====================================
 
         self.paginas = QStackedWidget()
 
 
 
+        self.dashboard = DashboardPage(
+            self.mks
+        )
+
+
+
+        self.manual = ManualPage(
+            self.mks
+        )
+
+
+
         paginas = [
 
-            DashboardPage(),
+            self.dashboard,
 
-            ManualPage(),
+            self.manual,
 
             RackPage(),
 
-            AutomationPage(),
-
             HistoryPage(),
 
-            DiagnosticsPage(),
-
-            SettingsPage(),
-
-            MovementPage(),
-
-            MissionQueuePage()
+            SettingsPage()
 
         ]
 
@@ -128,17 +218,20 @@ class SmartRackGUI(QMainWindow):
 
         for pagina in paginas:
 
+
             self.paginas.addWidget(
                 pagina
             )
 
 
 
-        # =================================================
+
+
+
         # MENU
-        # =================================================
 
         menu = self.criar_menu()
+
 
 
         layout.addWidget(
@@ -147,9 +240,10 @@ class SmartRackGUI(QMainWindow):
 
 
 
-        # =================================================
+
+
         # ÁREA CENTRAL
-        # =================================================
+
 
         area = QVBoxLayout()
 
@@ -158,6 +252,7 @@ class SmartRackGUI(QMainWindow):
         header = QLabel(
             "🚜 SMART RACK MONITORING"
         )
+
 
 
         header.setStyleSheet(
@@ -173,6 +268,7 @@ class SmartRackGUI(QMainWindow):
         area.addWidget(
             header
         )
+
 
 
         area.addWidget(
@@ -197,9 +293,11 @@ class SmartRackGUI(QMainWindow):
 
 
 
-    # =====================================================
-    # MENU LATERAL
-    # =====================================================
+
+
+    # =====================================
+    # MENU
+    # =====================================
 
     def criar_menu(self):
 
@@ -207,9 +305,11 @@ class SmartRackGUI(QMainWindow):
         menu = QFrame()
 
 
+
         menu.setFixedWidth(
             230
         )
+
 
 
         menu.setStyleSheet(
@@ -227,6 +327,7 @@ class SmartRackGUI(QMainWindow):
         )
 
 
+
         titulo.setStyleSheet(
             """
             font-size:18px;
@@ -234,6 +335,7 @@ class SmartRackGUI(QMainWindow):
             padding:20px;
             """
         )
+
 
 
         layout.addWidget(
@@ -250,17 +352,9 @@ class SmartRackGUI(QMainWindow):
 
             "📦 Rack",
 
-            "🤖 Automação",
-
             "📜 Histórico",
 
-            "🔧 Diagnóstico",
-
-            "⚙ Configurações",
-
-            "🚜 Movimentação",
-
-            "📋 Fila de Missões"
+            "⚙ Configurações"
 
         ]
 
@@ -274,15 +368,20 @@ class SmartRackGUI(QMainWindow):
             )
 
 
+
             botao.setStyleSheet(
                 Theme.button()
             )
 
 
+
             botao.clicked.connect(
+
                 lambda checked=False, i=indice:
                 self.paginas.setCurrentIndex(i)
+
             )
+
 
 
             layout.addWidget(
@@ -300,31 +399,36 @@ class SmartRackGUI(QMainWindow):
         )
 
 
+
         return menu
 
 
 
 
-    # =====================================================
-    # BARRA DE STATUS
-    # =====================================================
+
+    # =====================================
+    # STATUS BAR
+    # =====================================
 
     def criar_statusbar(self):
 
 
-        status = QStatusBar()
+        self.statusbar = QStatusBar()
 
 
-        status.showMessage(
-            "Sistema iniciado"
+
+        self.statusbar.showMessage(
+            "Inicializando sistema..."
         )
 
 
-        status.setStyleSheet(
+
+        self.statusbar.setStyleSheet(
             Theme.statusbar()
         )
 
 
+
         self.setStatusBar(
-            status
+            self.statusbar
         )

@@ -8,13 +8,21 @@ from PySide6.QtWidgets import (
 from ui.widgets.card import InfoCard
 
 
+
 class DashboardPage(QWidget):
 
-    def __init__(self):
+
+    def __init__(self, mks):
 
         super().__init__()
 
+
+        self.mks = mks
+
+
         self.criar_interface()
+
+
 
 
     def criar_interface(self):
@@ -22,14 +30,18 @@ class DashboardPage(QWidget):
         layout = QVBoxLayout()
 
 
+
         titulo = QLabel(
             "Dashboard"
         )
 
-        titulo.setStyleSheet("""
+
+        titulo.setStyleSheet(
+            """
             font-size:26px;
             font-weight:bold;
-        """)
+            """
+        )
 
 
         layout.addWidget(
@@ -37,7 +49,14 @@ class DashboardPage(QWidget):
         )
 
 
+
+        # ===============================
+        # LINHA SUPERIOR
+        # ===============================
+
+
         linha1 = QHBoxLayout()
+
 
 
         self.maquina = InfoCard(
@@ -46,10 +65,12 @@ class DashboardPage(QWidget):
         )
 
 
+
         self.conexao = InfoCard(
             "MKS DLC32",
-            "Desconectada"
+            "Verificando..."
         )
+
 
 
         self.estado = InfoCard(
@@ -58,20 +79,31 @@ class DashboardPage(QWidget):
         )
 
 
+
         linha1.addWidget(
             self.maquina
         )
 
+
         linha1.addWidget(
             self.conexao
         )
+
 
         linha1.addWidget(
             self.estado
         )
 
 
+
+
+        # ===============================
+        # EIXOS
+        # ===============================
+
+
         linha2 = QHBoxLayout()
+
 
 
         self.x = InfoCard(
@@ -92,28 +124,66 @@ class DashboardPage(QWidget):
         )
 
 
+
         linha2.addWidget(
             self.x
         )
 
+
         linha2.addWidget(
             self.y
         )
+
 
         linha2.addWidget(
             self.z
         )
 
 
+
+
         layout.addLayout(
             linha1
         )
+
 
         layout.addLayout(
             linha2
         )
 
 
+
         self.setLayout(
             layout
         )
+
+
+
+        # Atualiza estado inicial
+
+        self.atualizar_status()
+
+
+
+
+    # =====================================
+    # ATUALIZA STATUS DA MKS
+    # =====================================
+
+    def atualizar_status(self):
+
+
+        if self.mks.conectado:
+
+
+            self.conexao.atualizar_valor(
+                "🟢 Conectada"
+            )
+
+
+        else:
+
+
+            self.conexao.atualizar_valor(
+                "🔴 Desconectada"
+            )

@@ -1,39 +1,36 @@
 class Movement:
 
-
     def __init__(self, mks):
-
         self.mks = mks
 
 
+    def mover_x(self, valor):
 
-    def mover_x(self, distancia):
+        comando = f"""
+G91
+G1 X{valor} F1000
+"""
 
-        comando = (
-            "G91\n"
-            f"G1 X{distancia} F1000"
-        )
-
-        return self.mks.enviar_comando(comando)
-
-
-
-    def mover_y(self, distancia):
-
-        comando = (
-            "G91\n"
-            f"G1 Y{distancia} F1000"
-        )
-
-        return self.mks.enviar_comando(comando)
+        self.mks.enviar_comando(comando)
 
 
 
-    def mover_z(self, distancia):
+    def mover_y(self, valor):
 
-        comando = (
-            "G91\n"
-            f"G1 Z{distancia} F500"
-        )
+        comando = f"""
+G91
+G1 Y{valor} F1000
+"""
 
-        return self.mks.enviar_comando(comando)
+        self.mks.enviar_comando(comando)
+
+
+
+    def mover_z(self, valor):
+
+        comando = f"""
+G91
+G1 Z{valor} F500
+"""
+
+        self.mks.enviar_comando(comando)
