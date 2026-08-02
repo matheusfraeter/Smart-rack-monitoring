@@ -20,20 +20,28 @@ import time
 class MKSConnection:
 
 
-
     def __init__(self):
-
 
         self.ip = "192.168.4.1"
 
 
+        # HTTP
+
         self.conectado = False
 
 
+
+        # WebSocket
+
         self.websocket = None
 
-
         self.ws_conectado = False
+
+
+
+        # controle thread
+
+        self.executando = True
 
 
 
@@ -53,15 +61,12 @@ class MKSConnection:
 
 
 
-
-
     # =====================================
-    # CONEXÃO HTTP
+    # CONEXÃO PRINCIPAL
     # =====================================
 
 
     def conectar(self):
-
 
         try:
 
@@ -86,9 +91,18 @@ class MKSConnection:
 
 
 
-                # inicia websocket
+                # inicia websocket separado
 
-                self.conectar_websocket()
+                thread = threading.Thread(
+
+                    target=self.monitor_websocket,
+
+                    daemon=True
+
+                )
+
+
+                thread.start()
 
 
 
@@ -96,14 +110,11 @@ class MKSConnection:
 
 
 
-
         except Exception as erro:
 
 
-            print("Erro conexão:")
-
+            print("Erro conexão MKS:")
             print(erro)
-
 
 
 
@@ -116,9 +127,33 @@ class MKSConnection:
 
 
 
+    # =====================================
+    # GERENCIADOR WEBSOCKET
+    # =====================================
+
+
+    def monitor_websocket(self):
+
+
+        while self.executando:
+
+
+            if not self.ws_conectado:
+
+
+                self.conectar_websocket()
+
+
+
+            time.sleep(5)
+
+
+
+
+
 
     # =====================================
-    # WEBSOCKET ESP3D
+    # CONECTA WEBSOCKET
     # =====================================
 
 
@@ -126,6 +161,9 @@ class MKSConnection:
 
 
         try:
+
+
+            print("Conectando WebSocket...")
 
 
             self.websocket = websocket.create_connection(
@@ -146,32 +184,24 @@ class MKSConnection:
 
 
 
-            # ativa atualização
+            # pede atualização
 
             self.websocket.send(
+
                 "subscribe"
-            )
-
-
-
-            thread = threading.Thread(
-
-                target=self.receber_status,
-
-                daemon=True
 
             )
 
 
-            thread.start()
 
+            self.receber_status()
 
 
 
         except Exception as erro:
 
 
-            print("Erro WebSocket:")
+            print("WebSocket desconectado")
 
             print(erro)
 
@@ -181,12 +211,30 @@ class MKSConnection:
 
 
 
+            try:
+
+
+                if self.websocket:
+
+                    self.websocket.close()
+
+
+            except:
+
+
+                pass
+
+
+
+            time.sleep(3)
+
+
 
 
 
 
     # =====================================
-    # RECEBER STATUS
+    # RECEBE STATUS
     # =====================================
 
 
@@ -213,9 +261,7 @@ class MKSConnection:
 
 
 
-                # exemplo:
-                # <Idle|MPos:35.000,0.000,0.000|FS:0,0>
-
+                # posição GRBL
 
                 if "MPos:" in mensagem:
 
@@ -250,6 +296,9 @@ class MKSConnection:
 
 
 
+                # estado máquina
+
+
                 if "Idle" in mensagem:
 
 
@@ -265,11 +314,19 @@ class MKSConnection:
 
 
 
+            except Exception as erro:
 
-            except Exception:
+
+                print(
+                    "Erro recebendo status:",
+                    erro
+                )
 
 
-                time.sleep(1)
+                self.ws_conectado = False
+
+
+                break
 
 
 
@@ -277,7 +334,7 @@ class MKSConnection:
 
 
     # =====================================
-    # ENVIA G-CODE
+    # ENVIA COMANDO G-CODE
     # =====================================
 
 
@@ -304,7 +361,6 @@ class MKSConnection:
         try:
 
 
-
             resposta = requests.post(
 
                 f"http://{self.ip}/command",
@@ -318,15 +374,10 @@ class MKSConnection:
 
 
             print("====================")
-
             print("Enviado:")
-
             print(comando)
 
-
-
             print("Resposta:")
-
             print(resposta.text)
 
 
@@ -341,9 +392,7 @@ class MKSConnection:
 
 
             print("Erro comando:")
-
             print(erro)
-
 
 
             return False
@@ -352,8 +401,9 @@ class MKSConnection:
 
 
 
+
     # =====================================
-    # RETORNA STATUS ATUAL
+    # STATUS PARA DASHBOARD
     # =====================================
 
 
