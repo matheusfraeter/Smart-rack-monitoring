@@ -57,6 +57,7 @@ class MachineController:
 
         if movimento is None:
 
+
             return {
 
                 "sucesso": False,
@@ -77,7 +78,7 @@ class MachineController:
 
 
         # ---------------------------------
-        # Busca pallet
+        # Verifica pallet na origem
         # ---------------------------------
 
         pallet = self.db.verificar_pallet(
@@ -88,12 +89,33 @@ class MachineController:
 
         if pallet is None:
 
+
             return {
 
                 "sucesso": False,
 
                 "mensagem":
                 f"Sem pallet em {origem}"
+
+            }
+
+
+
+        # ---------------------------------
+        # Verifica destino livre
+        # ---------------------------------
+
+        if self.db.verificar_posicao_livre(
+            destino
+        ) is False:
+
+
+            return {
+
+                "sucesso": False,
+
+                "mensagem":
+                f"Destino {destino} já possui pallet"
 
             }
 
@@ -127,6 +149,63 @@ class MachineController:
         resultado = self.fluidnc.enviar_programa(
             codigo
         )
+
+
+
+        # ---------------------------------
+        # Verifica envio
+        # ---------------------------------
+
+        if isinstance(resultado, dict):
+
+
+            if resultado.get("sucesso") is False:
+
+
+                self.mission.cancelar_missao(
+                    id_movimento
+                )
+
+
+                return {
+
+                    "sucesso": False,
+
+                    "mensagem":
+                    "Erro ao enviar G-code",
+
+                    "erro":
+                    resultado
+
+                }
+
+
+
+        else:
+
+
+            for linha in resultado:
+
+
+                if linha.get("sucesso") is False:
+
+
+                    self.mission.cancelar_missao(
+                        id_movimento
+                    )
+
+
+                    return {
+
+                        "sucesso": False,
+
+                        "mensagem":
+                        "Falha na comunicação FluidNC",
+
+                        "erro":
+                        linha
+
+                    }
 
 
 
@@ -175,6 +254,11 @@ class MachineController:
             "destino":
 
             destino,
+
+
+            "pallet":
+
+            pallet,
 
 
             "gcode":

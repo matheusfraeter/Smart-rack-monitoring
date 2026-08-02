@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
 )
 
 
-from controllers.mission_controller import MissionController
+from controllers.machine_controller import MachineController
 
 
 
@@ -33,10 +33,7 @@ class MissionQueuePage(QWidget):
         super().__init__()
 
 
-        self.controller = MissionController()
-
-
-        self.missao_atual = None
+        self.controller = MachineController()
 
 
         self.criar_interface()
@@ -48,6 +45,7 @@ class MissionQueuePage(QWidget):
     # =====================================
 
     def criar_interface(self):
+
 
         layout = QVBoxLayout()
 
@@ -68,7 +66,7 @@ class MissionQueuePage(QWidget):
 
 
         self.info = QLabel(
-            "Nenhuma missão selecionada"
+            "Nenhuma missão executada"
         )
 
 
@@ -105,6 +103,10 @@ class MissionQueuePage(QWidget):
 
 
 
+        # -----------------------------
+        # BOTÃO ATUALIZAR
+        # -----------------------------
+
         botao_atualizar = QPushButton(
             "🔄 Atualizar Fila"
         )
@@ -116,29 +118,23 @@ class MissionQueuePage(QWidget):
 
 
 
-        botao_iniciar = QPushButton(
-            "▶ Iniciar Próxima"
+        # -----------------------------
+        # BOTÃO EXECUTAR
+        # -----------------------------
+
+        botao_executar = QPushButton(
+            "🚜 Executar Próxima Missão"
         )
 
 
-        botao_iniciar.clicked.connect(
-            self.iniciar
-        )
-
-
-
-        botao_finalizar = QPushButton(
-            "✔ Finalizar"
-        )
-
-
-        botao_finalizar.clicked.connect(
-            self.finalizar
+        botao_executar.clicked.connect(
+            self.executar
         )
 
 
 
         botoes = QHBoxLayout()
+
 
 
         botoes.addWidget(
@@ -147,12 +143,7 @@ class MissionQueuePage(QWidget):
 
 
         botoes.addWidget(
-            botao_iniciar
-        )
-
-
-        botoes.addWidget(
-            botao_finalizar
+            botao_executar
         )
 
 
@@ -195,7 +186,7 @@ class MissionQueuePage(QWidget):
     def carregar_fila(self):
 
 
-        missoes = self.controller.listar_fila()
+        missoes = self.controller.mission.listar_fila()
 
 
 
@@ -212,99 +203,66 @@ class MissionQueuePage(QWidget):
 
 
                 self.tabela.setItem(
+
                     linha,
+
                     coluna,
+
                     QTableWidgetItem(
                         str(valor)
                     )
+
                 )
 
 
 
     # =====================================
-    # INICIAR PRÓXIMA
+    # EXECUTAR MISSÃO
     # =====================================
 
-    def iniciar(self):
+    def executar(self):
 
 
-        missao = self.controller.proxima_missao()
-
-
-
-        if missao is None:
-
-
-            QMessageBox.information(
-                self,
-                "Fila vazia",
-                "Não existem missões aguardando."
-            )
-
-            return
+        resultado = self.controller.executar_proxima_missao()
 
 
 
-        self.missao_atual = missao
-
-
-
-        id_missao = missao[0]
-
-
-
-        self.controller.iniciar_missao(
-            id_missao
-        )
-
-
-
-        self.info.setText(
-            f"Missão {id_missao} em movimento: "
-            f"{missao[1]} → {missao[2]}"
-        )
-
-
-        self.carregar_fila()
-
-
-
-    # =====================================
-    # FINALIZAR
-    # =====================================
-
-    def finalizar(self):
-
-
-        if self.missao_atual is None:
+        if resultado["sucesso"] is False:
 
 
             QMessageBox.warning(
+
                 self,
-                "Erro",
-                "Nenhuma missão em execução."
+
+                "Falha",
+
+                resultado["mensagem"]
+
             )
 
             return
 
 
 
-        id_missao = self.missao_atual[0]
-
-
-
-        self.controller.finalizar_missao(
-            id_missao
-        )
-
-
-
         self.info.setText(
-            f"Missão {id_missao} concluída"
+
+            f"Movimento concluído: "
+            f"{resultado['origem']} → "
+            f"{resultado['destino']}"
+
         )
 
 
-        self.missao_atual = None
+
+        QMessageBox.information(
+
+            self,
+
+            "Missão concluída",
+
+            resultado["mensagem"]
+
+        )
 
 
         self.carregar_fila()
