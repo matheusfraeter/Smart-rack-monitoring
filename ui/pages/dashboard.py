@@ -1,3 +1,13 @@
+"""
+=========================================================
+ Smart Rack Monitoring
+---------------------------------------------------------
+ Arquivo.....: dashboard.py
+ Descrição...: Dashboard com status real da MKS DLC32
+=========================================================
+"""
+
+
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -5,7 +15,10 @@ from PySide6.QtWidgets import (
     QLabel
 )
 
+from PySide6.QtCore import QTimer
+
 from ui.widgets.card import InfoCard
+
 
 
 
@@ -24,8 +37,28 @@ class DashboardPage(QWidget):
 
 
 
+        # Atualização automática
+
+        self.timer = QTimer()
+
+        self.timer.timeout.connect(
+            self.atualizar_status
+        )
+
+        self.timer.start(
+            1000
+        )
+
+
+
+
+
+    # =====================================
+    # INTERFACE
+    # =====================================
 
     def criar_interface(self):
+
 
         layout = QVBoxLayout()
 
@@ -51,7 +84,7 @@ class DashboardPage(QWidget):
 
 
         # ===============================
-        # LINHA SUPERIOR
+        # STATUS
         # ===============================
 
 
@@ -65,12 +98,10 @@ class DashboardPage(QWidget):
         )
 
 
-
         self.conexao = InfoCard(
             "MKS DLC32",
             "Verificando..."
         )
-
 
 
         self.estado = InfoCard(
@@ -97,6 +128,7 @@ class DashboardPage(QWidget):
 
 
 
+
         # ===============================
         # EIXOS
         # ===============================
@@ -108,19 +140,19 @@ class DashboardPage(QWidget):
 
         self.x = InfoCard(
             "Eixo X",
-            "0 mm"
+            "0.000 mm"
         )
 
 
         self.y = InfoCard(
             "Eixo Y",
-            "0 mm"
+            "0.000 mm"
         )
 
 
         self.z = InfoCard(
             "Eixo Z",
-            "0 mm"
+            "0.000 mm"
         )
 
 
@@ -142,6 +174,7 @@ class DashboardPage(QWidget):
 
 
 
+
         layout.addLayout(
             linha1
         )
@@ -152,38 +185,131 @@ class DashboardPage(QWidget):
         )
 
 
-
         self.setLayout(
             layout
         )
 
 
 
-        # Atualiza estado inicial
-
-        self.atualizar_status()
-
 
 
 
     # =====================================
-    # ATUALIZA STATUS DA MKS
+    # ATUALIZA STATUS REAL DA MKS
     # =====================================
 
     def atualizar_status(self):
 
 
-        if self.mks.conectado:
+        try:
 
 
-            self.conexao.atualizar_valor(
-                "🟢 Conectada"
+            # -----------------------------
+            # CONEXÃO
+            # -----------------------------
+
+
+            if self.mks.conectado:
+
+
+                self.conexao.atualizar_valor(
+                    "🟢 Conectada"
+                )
+
+
+            else:
+
+
+                self.conexao.atualizar_valor(
+                    "🔴 Desconectada"
+                )
+
+                return
+
+
+
+
+            # -----------------------------
+            # RECEBE DADOS WEBSOCKET
+            # -----------------------------
+
+
+            dados = self.mks.ler_status()
+
+
+
+            if not dados:
+
+                return
+
+
+
+
+            # -----------------------------
+            # ESTADO
+            # -----------------------------
+
+
+            estado = dados["estado"]
+
+
+
+            if estado == "IDLE":
+
+
+                self.maquina.atualizar_valor(
+                    "IDLE"
+                )
+
+
+                self.estado.atualizar_valor(
+                    "Pronto"
+                )
+
+
+
+            elif estado == "MOVENDO":
+
+
+                self.maquina.atualizar_valor(
+                    "MOVENDO"
+                )
+
+
+                self.estado.atualizar_valor(
+                    "Executando"
+                )
+
+
+
+
+
+            # -----------------------------
+            # POSIÇÃO DOS EIXOS
+            # -----------------------------
+
+
+            self.x.atualizar_valor(
+                f'{dados["X"]:.3f} mm'
             )
 
 
-        else:
+            self.y.atualizar_valor(
+                f'{dados["Y"]:.3f} mm'
+            )
 
 
-            self.conexao.atualizar_valor(
-                "🔴 Desconectada"
+            self.z.atualizar_valor(
+                f'{dados["Z"]:.3f} mm'
+            )
+
+
+
+
+        except Exception as erro:
+
+
+            print(
+                "Erro dashboard:",
+                erro
             )
