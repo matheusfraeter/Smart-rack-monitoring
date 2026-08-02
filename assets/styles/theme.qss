@@ -1,0 +1,383 @@
+/* ==========================================================
+   SMART RACK MONITORING
+   Tema Global Industrial
+========================================================== */
+
+
+/* ==========================================================
+   CONFIGURAÇÃO GLOBAL
+========================================================== */
+
+QWidget {
+
+    background-color: #0F172A;
+
+    color: #FFFFFF;
+
+    font-family: "Segoe UI";
+
+    font-size: 11pt;
+
+}
+
+
+
+/* ==========================================================
+   TÍTULOS
+========================================================== */
+
+
+QLabel#title {
+
+    color: #FFFFFF;
+
+    font-size: 26px;
+
+    font-weight: bold;
+
+}
+
+
+
+QLabel#header {
+
+    color: #FFFFFF;
+
+    font-size: 24px;
+
+    font-weight: bold;
+
+}
+
+
+
+/* ==========================================================
+   LABELS
+========================================================== */
+
+
+QLabel {
+
+    color: #FFFFFF;
+
+}
+
+
+
+/* ==========================================================
+   FRAME GERAL
+   (sem caixas cinzas)
+========================================================== */
+
+
+QFrame {
+
+    background-color: transparent;
+
+    border: none;
+
+}
+
+
+
+/* ==========================================================
+   MENU LATERAL
+========================================================== */
+
+
+QFrame#sidebar {
+
+    background-color: #020617;
+
+    border-right: 1px solid #1E293B;
+
+    border-radius: 0px;
+
+}
+
+
+
+QLabel#menuTitle {
+
+    color: #60A5FA;
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+}
+
+
+
+/* ==========================================================
+   BOTÕES DO MENU
+========================================================== */
+
+
+QFrame#sidebar QPushButton {
+
+
+    background-color: transparent;
+
+    color: #FFFFFF;
+
+    text-align: left;
+
+    padding-left: 15px;
+
+    border-radius: 8px;
+
+    height: 40px;
+
+}
+
+
+
+QFrame#sidebar QPushButton:hover {
+
+
+    background-color: #1E3A8A;
+
+}
+
+
+
+QFrame#sidebar QPushButton:pressed {
+
+
+    background-color: #2563EB;
+
+}
+
+
+
+/* ==========================================================
+   BOTÕES GERAIS
+========================================================== */
+
+
+QPushButton {
+
+
+    background-color: #1E40AF;
+
+    color: white;
+
+    border: none;
+
+    border-radius: 8px;
+
+    padding: 10px;
+
+    font-weight: bold;
+
+}
+
+
+
+QPushButton:hover {
+
+
+    background-color: #2563EB;
+
+}
+
+
+
+QPushButton:pressed {
+
+
+    background-color: #1D4ED8;
+
+}
+
+
+
+/* ==========================================================
+   CARDS DO DASHBOARD
+========================================================== */
+
+
+QFrame#infoCard {
+
+
+    background-color: #1E3A8A;
+
+
+    border: none;
+
+
+    border-radius: 12px;
+
+
+    min-width: 220px;
+
+
+    min-height: 120px;
+
+}
+
+
+
+QFrame#infoCard:hover {
+
+
+    background-color: #1E40AF;
+
+}
+
+
+
+/* Título do card */
+
+
+QLabel#cardTitle {
+
+
+    color: #BFDBFE;
+
+
+    font-size: 14px;
+
+
+    font-weight: bold;
+
+}
+
+
+
+/* Valor do card */
+
+
+QLabel#cardValue {
+
+
+    color: #FFFFFF;
+
+
+    font-size: 26px;
+
+
+    font-weight: bold;
+
+}
+
+
+
+/* ==========================================================
+   COMBO BOX
+========================================================== */
+
+
+QComboBox {
+
+
+    background-color: #1E293B;
+
+    color: white;
+
+    border-radius: 6px;
+
+    padding: 6px;
+
+}
+
+
+
+/* ==========================================================
+   SPIN BOX
+========================================================== */
+
+
+QSpinBox {
+
+
+    background-color: #1E293B;
+
+    color: white;
+
+    border-radius: 6px;
+
+    padding: 6px;
+
+}
+
+
+
+/* ==========================================================
+   STATUS BAR
+========================================================== */
+
+
+QStatusBar {
+
+
+    background-color: #020617;
+
+    color: white;
+
+    border-top: 1px solid #1E293B;
+
+}
+
+
+
+/* ==========================================================
+   STATUS ONLINE / OFFLINE
+========================================================== */
+
+
+QLabel#online {
+
+
+    color: #22C55E;
+
+    font-weight: bold;
+
+}
+
+
+
+QLabel#offline {
+
+
+    color: #EF4444;
+
+    font-weight: bold;
+
+}
+
+
+
+/* ==========================================================
+   TABELAS
+========================================================== */
+
+
+QTableWidget {
+
+
+    background-color: #111827;
+
+    color: white;
+
+    gridline-color: #334155;
+
+    border-radius: 8px;
+
+}
+
+
+
+QHeaderView::section {
+
+
+    background-color: #1E3A8A;
+
+    color: white;
+
+    padding: 8px;
+
+    font-weight: bold;
+
+}

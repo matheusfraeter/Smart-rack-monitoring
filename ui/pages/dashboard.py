@@ -21,20 +21,15 @@ from ui.widgets.card import InfoCard
 
 
 
-
 class DashboardPage(QWidget):
-
 
     def __init__(self, mks):
 
         super().__init__()
 
-
         self.mks = mks
 
-
         self.criar_interface()
-
 
 
         # Atualização automática
@@ -45,11 +40,7 @@ class DashboardPage(QWidget):
             self.atualizar_status
         )
 
-        self.timer.start(
-            1000
-        )
-
-
+        self.timer.start(1000)
 
 
 
@@ -59,21 +50,32 @@ class DashboardPage(QWidget):
 
     def criar_interface(self):
 
+        layout = QVBoxLayout(self)
 
-        layout = QVBoxLayout()
 
+        layout.setSpacing(20)
+
+
+        layout.setContentsMargins(
+            20,
+            20,
+            20,
+            20
+        )
+
+
+
+        # =====================================
+        # TÍTULO
+        # =====================================
 
 
         titulo = QLabel(
             "Dashboard"
         )
 
-
-        titulo.setStyleSheet(
-            """
-            font-size:26px;
-            font-weight:bold;
-            """
+        titulo.setObjectName(
+            "title"
         )
 
 
@@ -83,29 +85,34 @@ class DashboardPage(QWidget):
 
 
 
-        # ===============================
-        # STATUS
-        # ===============================
+        # =====================================
+        # STATUS PRINCIPAL
+        # =====================================
 
 
         linha1 = QHBoxLayout()
 
 
+        linha1.setSpacing(
+            20
+        )
+
+
 
         self.maquina = InfoCard(
-            "Máquina",
+            "🏭 Máquina",
             "IDLE"
         )
 
 
         self.conexao = InfoCard(
-            "MKS DLC32",
+            "📡 MKS DLC32",
             "Verificando..."
         )
 
 
         self.estado = InfoCard(
-            "Estado",
+            "⚙ Estado",
             "Pronto"
         )
 
@@ -127,31 +134,40 @@ class DashboardPage(QWidget):
 
 
 
+        layout.addLayout(
+            linha1
+        )
 
 
-        # ===============================
+
+        # =====================================
         # EIXOS
-        # ===============================
+        # =====================================
 
 
         linha2 = QHBoxLayout()
 
 
+        linha2.setSpacing(
+            20
+        )
+
+
 
         self.x = InfoCard(
-            "Eixo X",
+            "↔ Eixo X",
             "0.000 mm"
         )
 
 
         self.y = InfoCard(
-            "Eixo Y",
+            "↕ Eixo Y",
             "0.000 mm"
         )
 
 
         self.z = InfoCard(
-            "Eixo Z",
+            "⬆ Eixo Z",
             "0.000 mm"
         )
 
@@ -173,40 +189,23 @@ class DashboardPage(QWidget):
 
 
 
-
-
-        layout.addLayout(
-            linha1
-        )
-
-
         layout.addLayout(
             linha2
         )
 
 
-        self.setLayout(
-            layout
-        )
 
-
-
+        layout.addStretch()
 
 
 
     # =====================================
-    # ATUALIZA STATUS REAL DA MKS
+    # ATUALIZA STATUS DA MKS
     # =====================================
 
     def atualizar_status(self):
 
-
         try:
-
-
-            # -----------------------------
-            # CONEXÃO
-            # -----------------------------
 
 
             if self.mks.conectado:
@@ -224,14 +223,9 @@ class DashboardPage(QWidget):
                     "🔴 Desconectada"
                 )
 
+
                 return
 
-
-
-
-            # -----------------------------
-            # RECEBE DADOS WEBSOCKET
-            # -----------------------------
 
 
             dados = self.mks.ler_status()
@@ -244,22 +238,19 @@ class DashboardPage(QWidget):
 
 
 
-
-            # -----------------------------
-            # ESTADO
-            # -----------------------------
-
-
             estado = dados["estado"]
 
 
 
+            # Estado da máquina
+
+            self.maquina.atualizar_valor(
+                estado
+            )
+
+
+
             if estado == "IDLE":
-
-
-                self.maquina.atualizar_valor(
-                    "IDLE"
-                )
 
 
                 self.estado.atualizar_valor(
@@ -267,13 +258,7 @@ class DashboardPage(QWidget):
                 )
 
 
-
             elif estado == "MOVENDO":
-
-
-                self.maquina.atualizar_valor(
-                    "MOVENDO"
-                )
 
 
                 self.estado.atualizar_valor(
@@ -281,12 +266,16 @@ class DashboardPage(QWidget):
                 )
 
 
+            else:
+
+
+                self.estado.atualizar_valor(
+                    estado
+                )
 
 
 
-            # -----------------------------
-            # POSIÇÃO DOS EIXOS
-            # -----------------------------
+            # Posição dos eixos
 
 
             self.x.atualizar_valor(
@@ -302,7 +291,6 @@ class DashboardPage(QWidget):
             self.z.atualizar_valor(
                 f'{dados["Z"]:.3f} mm'
             )
-
 
 
 

@@ -1,78 +1,105 @@
+"""
+=========================================================
+ Smart Rack Monitoring
+---------------------------------------------------------
+ Arquivo.....: card.py
+ Descrição...: Widget de cartão de informações
+=========================================================
+"""
+
+
 from PySide6.QtWidgets import (
     QFrame,
     QVBoxLayout,
     QLabel
 )
 
-from theme import Theme
+from PySide6.QtCore import Qt
+
 
 
 class InfoCard(QFrame):
 
-    def __init__(
-        self,
-        titulo,
-        valor
-    ):
+
+    def __init__(self, titulo, valor):
 
         super().__init__()
 
-        self.setStyleSheet(
-            f"""
-            QFrame {{
 
-                background-color: {Theme.CARD};
-
-                border-radius: 12px;
-
-                padding: 15px;
-
-            }}
-            """
+        # Nome usado pelo theme.qss
+        self.setObjectName(
+            "infoCard"
         )
 
 
-        layout = QVBoxLayout()
+        layout = QVBoxLayout(
+            self
+        )
 
+
+        layout.setContentsMargins(
+            15,
+            15,
+            15,
+            15
+        )
+
+
+        layout.setSpacing(
+            10
+        )
+
+
+        # -----------------------------
+        # TÍTULO
+        # -----------------------------
 
         self.titulo = QLabel(
             titulo
         )
 
-        self.titulo.setStyleSheet("""
-            font-size:14px;
-            font-weight:bold;
-        """)
 
+        self.titulo.setObjectName(
+            "cardTitle"
+        )
+
+
+        self.titulo.setAlignment(
+            Qt.AlignCenter
+        )
+
+
+        # -----------------------------
+        # VALOR
+        # -----------------------------
 
         self.valor = QLabel(
             valor
         )
 
-        self.valor.setStyleSheet("""
-            font-size:22px;
-        """)
+
+        self.valor.setObjectName(
+            "cardValue"
+        )
+
+
+        self.valor.setAlignment(
+            Qt.AlignCenter
+        )
 
 
         layout.addWidget(
             self.titulo
         )
 
+
         layout.addWidget(
             self.valor
         )
 
 
-        self.setLayout(
-            layout
-        )
 
-
-
-    def atualizar_valor(
-        self,
-        texto
-    ):
+    def atualizar_valor(self, texto):
 
         self.valor.setText(
             texto
