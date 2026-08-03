@@ -4,11 +4,13 @@
 ---------------------------------------------------------
  Arquivo.....: database.py
  Descrição...: Gerenciamento do banco SQLite
+ Versão......: 0.3
 =========================================================
 """
 
 import sqlite3
 from datetime import datetime
+
 
 
 class Database:
@@ -24,9 +26,9 @@ class Database:
 
 
 
-    # =====================================
-    # CONEXÃO COM BANCO
-    # =====================================
+    # =================================================
+    # CONEXÃO
+    # =================================================
 
     def conectar(self):
 
@@ -36,9 +38,9 @@ class Database:
 
 
 
-    # =====================================
+    # =================================================
     # CRIAÇÃO DAS TABELAS
-    # =====================================
+    # =================================================
 
     def criar_tabelas(self):
 
@@ -48,17 +50,20 @@ class Database:
 
 
 
-        # ---------------------------------
-        # POSIÇÕES DO RACK
-        # ---------------------------------
-
         cursor.execute(
             """
-            CREATE TABLE IF NOT EXISTS rack_positions (
+            CREATE TABLE IF NOT EXISTS rack_positions
+            (
 
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
 
                 endereco TEXT NOT NULL UNIQUE,
+
+                estante TEXT NOT NULL,
+
+                nivel INTEGER NOT NULL,
+
+                coluna INTEGER NOT NULL,
 
                 ocupado INTEGER DEFAULT 0,
 
@@ -70,13 +75,10 @@ class Database:
 
 
 
-        # ---------------------------------
-        # HISTÓRICO DE MOVIMENTAÇÕES
-        # ---------------------------------
-
         cursor.execute(
             """
-            CREATE TABLE IF NOT EXISTS movimentos (
+            CREATE TABLE IF NOT EXISTS movimentos
+            (
 
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -100,9 +102,15 @@ class Database:
 
 
 
-    # =====================================
-    # CRIA RACK INICIAL A1-D4
-    # =====================================
+
+    # =================================================
+    # CRIAR RACK INICIAL
+    #
+    # A11 até A34
+    # B11 até B34
+    #
+    # TOTAL 24 POSIÇÕES
+    # =================================================
 
     def criar_rack_inicial(self):
 
@@ -112,54 +120,29 @@ class Database:
 
 
 
-        linhas = [
-
-            "A",
-            "B",
-            "C",
-            "D"
-
-        ]
+        for estante in ["A", "B"]:
 
 
-
-        for letra in linhas:
-
-            for numero in range(1, 5):
-
-                endereco = f"{letra}{numero}"
+            for nivel in range(1,4):
 
 
+                for coluna in range(1,5):
 
-                cursor.execute(
-                    """
-                    SELECT endereco
 
-                    FROM rack_positions
-
-                    WHERE endereco = ?
-
-                    """,
-                    (
-                        endereco,
+                    endereco = (
+                        f"{estante}"
+                        f"{nivel}"
+                        f"{coluna}"
                     )
-                )
 
-
-
-                existe = cursor.fetchone()
-
-
-
-                if existe is None:
 
                     cursor.execute(
                         """
-                        INSERT INTO rack_positions
+                        SELECT endereco
 
-                        (endereco)
+                        FROM rack_positions
 
-                        VALUES (?)
+                        WHERE endereco = ?
 
                         """,
                         (
@@ -168,38 +151,33 @@ class Database:
                     )
 
 
-
-        conexao.commit()
-
-        conexao.close()
+                    existe = cursor.fetchone()
 
 
 
-    # =====================================
-    # INSERIR NOVA POSIÇÃO
-    # =====================================
-
-    def inserir_posicao(self, endereco):
-
-        conexao = self.conectar()
-
-        cursor = conexao.cursor()
+                    if existe is None:
 
 
+                        cursor.execute(
+                            """
+                            INSERT INTO rack_positions
+                            (
+                                endereco,
+                                estante,
+                                nivel,
+                                coluna
+                            )
 
-        cursor.execute(
-            """
-            INSERT INTO rack_positions
+                            VALUES (?, ?, ?, ?)
 
-            (endereco)
-
-            VALUES (?)
-
-            """,
-            (
-                endereco,
-            )
-        )
+                            """,
+                            (
+                                endereco,
+                                estante,
+                                nivel,
+                                coluna
+                            )
+                        )
 
 
 
@@ -209,9 +187,10 @@ class Database:
 
 
 
-    # =====================================
-    # LISTAR POSIÇÕES DO RACK
-    # =====================================
+
+    # =================================================
+    # LISTAR POSIÇÕES
+    # =================================================
 
     def listar_posicoes(self):
 
@@ -223,11 +202,18 @@ class Database:
 
         cursor.execute(
             """
-            SELECT endereco, ocupado, pallet
+            SELECT
+
+                endereco,
+                ocupado,
+                pallet
 
             FROM rack_positions
 
-            ORDER BY endereco
+            ORDER BY
+                estante,
+                nivel,
+                coluna
 
             """
         )
@@ -237,20 +223,70 @@ class Database:
         dados = cursor.fetchall()
 
 
-
         conexao.close()
-
 
 
         return dados
 
 
 
-    # =====================================
-    # OCUPAR POSIÇÃO DO RACK
-    # =====================================
 
-    def ocupar_posicao(self, endereco, pallet):
+    # =================================================
+    # BUSCAR POSIÇÃO
+    # =================================================
+
+    def buscar_posicao(
+            self,
+            endereco
+    ):
+
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+
+
+        cursor.execute(
+            """
+            SELECT
+
+                endereco,
+                ocupado,
+                pallet
+
+            FROM rack_positions
+
+            WHERE endereco = ?
+
+            """,
+            (
+                endereco,
+            )
+        )
+
+
+        resultado = cursor.fetchone()
+
+
+        conexao.close()
+
+
+        return resultado
+
+
+
+
+    # =================================================
+    # OCUPAR POSIÇÃO
+    # =================================================
+
+    def ocupar_posicao(
+            self,
+            endereco,
+            pallet
+    ):
+
 
         conexao = self.conectar()
 
@@ -262,7 +298,9 @@ class Database:
             """
             UPDATE rack_positions
 
-            SET ocupado = 1,
+            SET
+
+                ocupado = 1,
 
                 pallet = ?
 
@@ -276,18 +314,22 @@ class Database:
         )
 
 
-
         conexao.commit()
 
         conexao.close()
 
 
 
-    # =====================================
-    # LIBERAR POSIÇÃO DO RACK
-    # =====================================
 
-    def liberar_posicao(self, endereco):
+    # =================================================
+    # LIBERAR POSIÇÃO
+    # =================================================
+
+    def liberar_posicao(
+            self,
+            endereco
+    ):
+
 
         conexao = self.conectar()
 
@@ -299,7 +341,9 @@ class Database:
             """
             UPDATE rack_positions
 
-            SET ocupado = 0,
+            SET
+
+                ocupado = 0,
 
                 pallet = NULL
 
@@ -317,43 +361,12 @@ class Database:
 
         conexao.close()
 
-    # =====================================
-    # BUSCAR INFORMAÇÃO DA POSIÇÃO
-    # =====================================
-
-    def buscar_posicao(self, endereco):
-
-        conexao = self.conectar()
-
-        cursor = conexao.cursor()
 
 
-        cursor.execute(
-            """
-            SELECT endereco, ocupado, pallet
 
-            FROM rack_positions
-
-            WHERE endereco = ?
-
-            """,
-            (
-                endereco,
-            )
-        )
-
-
-        dados = cursor.fetchone()
-
-
-        conexao.close()
-
-
-        return dados
-
-    # =====================================
-    # REGISTRAR MOVIMENTAÇÃO
-    # =====================================
+    # =================================================
+    # REGISTRAR MOVIMENTO
+    # =================================================
 
     def registrar_movimento(
             self,
@@ -362,14 +375,18 @@ class Database:
             status
     ):
 
+
         conexao = self.conectar()
 
         cursor = conexao.cursor()
 
 
-        data_atual = datetime.now().strftime(
-         "%Y-%m-%d %H:%M:%S"
+
+        data = datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
         )
+
+
 
         cursor.execute(
             """
@@ -382,11 +399,12 @@ class Database:
             )
 
             VALUES (?, ?, ?, ?)
+
             """,
             (
                 origem,
                 destino,
-                data_atual,
+                data,
                 status
             )
         )
@@ -396,20 +414,26 @@ class Database:
 
         conexao.close()
 
-    # =====================================
+
+
+
+    # =================================================
     # LISTAR HISTÓRICO
-    # =====================================
+    # =================================================
 
     def listar_movimentos(self):
+
 
         conexao = self.conectar()
 
         cursor = conexao.cursor()
 
 
+
         cursor.execute(
             """
-            SELECT 
+            SELECT
+
                 id,
                 data,
                 origem,
@@ -419,200 +443,10 @@ class Database:
             FROM movimentos
 
             ORDER BY id DESC
+
             """
         )
 
-
-        dados = cursor.fetchall()
-
-
-        conexao.close()
-
-
-        return dados
-
-            # =====================================
-    # VERIFICAR PALLET NA POSIÇÃO
-    # =====================================
-
-    def verificar_pallet(self, endereco):
-
-        conexao = self.conectar()
-
-        cursor = conexao.cursor()
-
-
-        cursor.execute(
-            """
-            SELECT pallet
-
-            FROM rack_positions
-
-            WHERE endereco = ?
-            """,
-            (
-                endereco,
-            )
-        )
-
-
-        resultado = cursor.fetchone()
-
-
-        conexao.close()
-
-
-        if resultado and resultado[0]:
-
-            return resultado[0]
-
-
-        return None
-
-
-
-    # =====================================
-    # VERIFICAR SE POSIÇÃO ESTÁ LIVRE
-    # =====================================
-
-    def verificar_posicao_livre(self, endereco):
-
-        conexao = self.conectar()
-
-        cursor = conexao.cursor()
-
-
-        cursor.execute(
-            """
-            SELECT ocupado
-
-            FROM rack_positions
-
-            WHERE endereco = ?
-            """,
-            (
-                endereco,
-            )
-        )
-
-
-        resultado = cursor.fetchone()
-
-
-        conexao.close()
-
-
-
-        if resultado is None:
-
-            return False
-
-
-
-        return resultado[0] == 0
-
-
-    # =====================================
-    # BUSCAR MOVIMENTO POR ID
-    # =====================================
-
-    def buscar_movimento(self, id_movimento):
-
-        conexao = self.conectar()
-
-        cursor = conexao.cursor()
-
-
-        cursor.execute(
-            """
-            SELECT id, origem, destino, data, status
-
-            FROM movimentos
-
-            WHERE id = ?
-
-            """,
-            (
-                id_movimento,
-            )
-        )
-
-
-        dados = cursor.fetchone()
-
-
-        conexao.close()
-
-
-        return dados
-
-
-
-    # =====================================
-    # ATUALIZAR STATUS POR ID
-    # =====================================
-
-    def alterar_status_movimento(
-            self,
-            id_movimento,
-            status
-    ):
-
-        conexao = self.conectar()
-
-        cursor = conexao.cursor()
-
-
-        cursor.execute(
-            """
-            UPDATE movimentos
-
-            SET status = ?
-
-            WHERE id = ?
-
-            """,
-            (
-                status,
-                id_movimento
-            )
-        )
-
-
-        conexao.commit()
-
-        conexao.close()
-
-    # =====================================
-    # LISTAR MISSÕES PENDENTES
-    # =====================================
-
-    def listar_missoes_pendentes(self):
-
-        conexao = self.conectar()
-
-        cursor = conexao.cursor()
-
-
-        cursor.execute(
-            """
-            SELECT 
-                id,
-                origem,
-                destino,
-                status
-
-            FROM movimentos
-
-            WHERE status = ?
-
-            ORDER BY id ASC
-
-            """,
-            (
-                "Aguardando",
-            )
-        )
 
 
         dados = cursor.fetchall()

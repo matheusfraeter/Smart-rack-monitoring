@@ -1,9 +1,22 @@
+"""
+=========================================================
+ Smart Rack Monitoring
+---------------------------------------------------------
+ Arquivo.....: rack.py
+ Descrição...: Visualização e controle do Rack
+ Versão......: 0.3.2
+=========================================================
+"""
+
+
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QLabel,
     QPushButton,
-    QGridLayout
+    QGridLayout,
+    QHBoxLayout,
+    QFrame
 )
 
 
@@ -12,7 +25,6 @@ from controllers.rack_controller import RackController
 from ui.widgets.pallet_dialog import PalletDialog
 
 from ui.widgets.rack_action_dialog import RackActionDialog
-
 
 
 
@@ -26,7 +38,6 @@ class RackPage(QWidget):
 
         self.controller = RackController()
 
-
         self.botoes = {}
 
 
@@ -34,23 +45,23 @@ class RackPage(QWidget):
 
 
 
-    # =====================================
-    # INTERFACE
-    # =====================================
+    # =================================================
+    # INTERFACE PRINCIPAL
+    # =================================================
 
     def criar_interface(self):
+
 
         layout = QVBoxLayout()
 
 
         titulo = QLabel(
-            "📦 Mapa do Rack"
+            "📦 SMART RACK"
         )
-
 
         titulo.setStyleSheet(
             """
-            font-size:26px;
+            font-size:28px;
             font-weight:bold;
             """
         )
@@ -68,16 +79,16 @@ class RackPage(QWidget):
         )
 
 
+        racks = QHBoxLayout()
 
-        self.grade = QGridLayout()
 
-        self.grade.setSpacing(20)
+        racks.addWidget(
+            self.criar_estante("A")
+        )
 
-        self.grade.setContentsMargins(
-            40,
-            40,
-            40,
-            40
+
+        racks.addWidget(
+            self.criar_estante("B")
         )
 
 
@@ -92,7 +103,7 @@ class RackPage(QWidget):
 
 
         layout.addLayout(
-            self.grade
+            racks
         )
 
 
@@ -101,116 +112,157 @@ class RackPage(QWidget):
         )
 
 
-        self.carregar_rack()
+        self.atualizar_tela()
 
 
 
-    # =====================================
-    # CARREGAR RACK
-    # =====================================
+    # =================================================
+    # CRIAR ESTANTE
+    # =================================================
 
-    def carregar_rack(self):
-
-
-        posicoes = self.controller.listar_posicoes()
-
-
-
-        for indice, dados in enumerate(posicoes):
+    def criar_estante(
+            self,
+            estante
+    ):
 
 
-            endereco = dados[0]
-
-            ocupado = dados[1]
+        frame = QFrame()
 
 
+        layout = QVBoxLayout()
 
-            botao = QPushButton(
-                endereco
+
+        titulo = QLabel(
+            f"ESTANTE {estante}"
+        )
+
+
+        titulo.setStyleSheet(
+            """
+            font-size:22px;
+            font-weight:bold;
+            """
+        )
+
+
+        grade = QGridLayout()
+
+        grade.setSpacing(15)
+
+
+
+        for coluna in range(1,5):
+
+
+            coluna_label = QLabel(
+                str(coluna)
             )
 
 
-            botao.setMinimumSize(
-                140,
-                100
+            coluna_label.setStyleSheet(
+                """
+                font-weight:bold;
+                font-size:18px;
+                """
             )
 
 
-            self.atualizar_cor(
-                botao,
-                ocupado
-            )
-
-
-            botao.clicked.connect(
-                lambda checked=False, e=endereco:
-                self.selecionar(e)
-            )
-
-
-
-            linha = indice // 4
-
-            coluna = indice % 4
-
-
-
-            self.grade.addWidget(
-                botao,
-                linha,
+            grade.addWidget(
+                coluna_label,
+                0,
                 coluna
             )
 
 
-            self.botoes[endereco] = botao
+
+        linha = 1
 
 
+        for nivel in [3,2,1]:
 
 
-    # =====================================
-    # CORES
-    # =====================================
-
-    def atualizar_cor(
-            self,
-            botao,
-            ocupado
-    ):
+            nivel_label = QLabel(
+                f"Nível {nivel}"
+            )
 
 
-        if ocupado:
-
-
-            botao.setStyleSheet(
+            nivel_label.setStyleSheet(
                 """
-                background-color:#c0392b;
-                color:white;
-                font-size:22px;
                 font-weight:bold;
-                border-radius:10px;
                 """
             )
 
 
-        else:
-
-
-            botao.setStyleSheet(
-                """
-                background-color:#27ae60;
-                color:white;
-                font-size:22px;
-                font-weight:bold;
-                border-radius:10px;
-                """
+            grade.addWidget(
+                nivel_label,
+                linha,
+                0
             )
 
 
 
+            for coluna in range(1,5):
 
-    # =====================================
-    # CLIQUE NA POSIÇÃO
-    # =====================================
+
+                endereco = (
+                    f"{estante}"
+                    f"{nivel}"
+                    f"{coluna}"
+                )
+
+
+                botao = QPushButton()
+
+
+                botao.setMinimumSize(
+                    90,
+                    70
+                )
+
+
+                botao.clicked.connect(
+                    lambda checked=False, e=endereco:
+                    self.selecionar(e)
+                )
+
+
+                self.botoes[endereco] = botao
+
+
+
+                grade.addWidget(
+                    botao,
+                    linha,
+                    coluna
+                )
+
+
+            linha += 1
+
+
+
+        layout.addWidget(
+            titulo
+        )
+
+
+        layout.addLayout(
+            grade
+        )
+
+
+        frame.setLayout(
+            layout
+        )
+
+
+        return frame
+
+
+
+    # =================================================
+    # SELEÇÃO DA POSIÇÃO
+    # =================================================
 
     def selecionar(
             self,
@@ -223,11 +275,21 @@ class RackPage(QWidget):
         )
 
 
+        if dados is None:
+
+            return
+
+
+
         ocupado = dados[1]
 
         pallet = dados[2]
 
 
+
+        # -------------------------
+        # POSIÇÃO LIVRE
+        # -------------------------
 
         if ocupado == 0:
 
@@ -237,11 +299,7 @@ class RackPage(QWidget):
             )
 
 
-            resultado = dialog.exec()
-
-
-
-            if resultado:
+            if dialog.exec():
 
 
                 codigo = dialog.obter_pallet()
@@ -258,10 +316,14 @@ class RackPage(QWidget):
 
 
                     self.selecionado.setText(
-                        f"{endereco} ocupado com {codigo}"
+                        f"Pallet {codigo} armazenado em {endereco}"
                     )
 
 
+
+        # -------------------------
+        # POSIÇÃO OCUPADA
+        # -------------------------
 
         else:
 
@@ -272,21 +334,21 @@ class RackPage(QWidget):
             )
 
 
-            resultado = dialog.exec()
+
+            if dialog.exec():
 
 
-
-            if resultado and dialog.remover:
-
-
-                self.controller.retirar_pallet(
-                    endereco
-                )
+                if dialog.remover:
 
 
-                self.selecionado.setText(
-                    f"{endereco} liberado"
-                )
+                    self.controller.retirar_pallet(
+                        endereco
+                    )
+
+
+                    self.selecionado.setText(
+                        f"Posição {endereco} liberada"
+                    )
 
 
 
@@ -295,9 +357,9 @@ class RackPage(QWidget):
 
 
 
-    # =====================================
-    # ATUALIZA VISUAL
-    # =====================================
+    # =================================================
+    # ATUALIZAR MAPA
+    # =================================================
 
     def atualizar_tela(self):
 
@@ -306,13 +368,7 @@ class RackPage(QWidget):
 
 
 
-        for dados in posicoes:
-
-
-            endereco = dados[0]
-
-            ocupado = dados[1]
-
+        for endereco, ocupado, pallet in posicoes:
 
 
             if endereco in self.botoes:
@@ -322,3 +378,49 @@ class RackPage(QWidget):
                     self.botoes[endereco],
                     ocupado
                 )
+
+
+
+    # =================================================
+    # CORES DO RACK
+    # =================================================
+
+    def atualizar_cor(
+            self,
+            botao,
+            ocupado
+    ):
+
+
+        if ocupado:
+
+
+            botao.setText(
+                "📦"
+            )
+
+
+            botao.setStyleSheet(
+                """
+                background-color:#c0392b;
+                color:white;
+                font-size:30px;
+                border-radius:10px;
+                """
+            )
+
+
+        else:
+
+
+            botao.setText(
+                ""
+            )
+
+
+            botao.setStyleSheet(
+                """
+                background-color:#27ae60;
+                border-radius:10px;
+                """
+            )
