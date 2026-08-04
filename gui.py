@@ -26,6 +26,7 @@ from ui.pages.manual import ManualPage
 from ui.pages.rack import RackPage
 from ui.pages.history import HistoryPage
 from ui.pages.settings import SettingsPage
+from PySide6.QtCore import QTimer
 
 
 class SmartRackGUI(QMainWindow):
@@ -45,6 +46,13 @@ class SmartRackGUI(QMainWindow):
 
         # Conecta automaticamente
         self.conectar_mks()
+
+        # Monitor de conexão
+        self.timer_status = QTimer()
+        self.timer_status.timeout.connect(
+        self.verificar_conexao
+        )
+        self.timer_status.start(3000)
 
     # =====================================
     # CONEXÃO
@@ -199,3 +207,16 @@ class SmartRackGUI(QMainWindow):
         self.setStatusBar(
             self.statusbar
         )
+
+    def verificar_conexao(self):
+
+     if self.mks.conectado:
+
+        mensagem = "🟢 MKS DLC32 conectada"
+
+     else:
+
+        mensagem = "🔴 MKS DLC32 desconectada"
+
+
+     self.statusbar.showMessage(mensagem)
