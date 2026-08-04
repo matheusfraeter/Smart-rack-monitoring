@@ -38,7 +38,8 @@ class SmartRackGUI(QMainWindow):
         self.mks = MKSConnection()
 
         self.setWindowTitle("Smart Rack Monitoring")
-        self.resize(1400, 850)
+        self.resize(1100, 600)
+        self.setMinimumSize(900, 600)
 
         self.criar_interface()
 
