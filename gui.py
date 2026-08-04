@@ -86,9 +86,12 @@ class SmartRackGUI(QMainWindow):
         # ==============================
 
         self.paginas = QStackedWidget()
-
-        self.dashboard = DashboardPage(self.mks)
         self.manual = ManualPage(self.mks)
+
+        self.dashboard = DashboardPage(
+        self.mks,
+        self.manual
+        )
         self.rack = RackPage()
         self.history = HistoryPage()
         self.settings = SettingsPage()
@@ -130,7 +133,7 @@ class SmartRackGUI(QMainWindow):
 
         self.criar_statusbar()
 
-            # =====================================
+    # =====================================
     # MENU LATERAL
     # =====================================
 

@@ -12,7 +12,8 @@ from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
-    QLabel
+    QLabel,
+    QPushButton
 )
 
 from PySide6.QtCore import QTimer
@@ -23,11 +24,13 @@ from ui.widgets.card import InfoCard
 
 class DashboardPage(QWidget):
 
-    def __init__(self, mks):
+
+    def __init__(self, mks, manual):
 
         super().__init__()
 
         self.mks = mks
+        self.manual = manual
 
         self.criar_interface()
 
@@ -41,6 +44,8 @@ class DashboardPage(QWidget):
         )
 
         self.timer.start(1000)
+
+
 
 
 
@@ -69,7 +74,6 @@ class DashboardPage(QWidget):
         # TÍTULO
         # =====================================
 
-
         titulo = QLabel(
             "Dashboard"
         )
@@ -86,17 +90,10 @@ class DashboardPage(QWidget):
 
 
         # =====================================
-        # STATUS PRINCIPAL
+        # STATUS
         # =====================================
 
-
         linha1 = QHBoxLayout()
-
-
-        linha1.setSpacing(
-            20
-        )
-
 
 
         self.maquina = InfoCard(
@@ -133,7 +130,6 @@ class DashboardPage(QWidget):
         )
 
 
-
         layout.addLayout(
             linha1
         )
@@ -144,13 +140,7 @@ class DashboardPage(QWidget):
         # EIXOS
         # =====================================
 
-
         linha2 = QHBoxLayout()
-
-
-        linha2.setSpacing(
-            20
-        )
 
 
 
@@ -195,12 +185,74 @@ class DashboardPage(QWidget):
 
 
 
+        # =====================================
+        # BOTÕES
+        # =====================================
+
+        linha3 = QHBoxLayout()
+
+
+
+        self.botao_conectar = QPushButton(
+            "🔌 Conectar MKS"
+        )
+
+
+        self.botao_home = QPushButton(
+            "🏠 Zerar Eixos"
+        )
+
+
+
+        self.botao_conectar.setMinimumHeight(
+            50
+        )
+
+
+        self.botao_home.setMinimumHeight(
+            50
+        )
+
+
+
+        linha3.addWidget(
+            self.botao_conectar
+        )
+
+
+        linha3.addWidget(
+            self.botao_home
+        )
+
+
+
+        layout.addLayout(
+            linha3
+        )
+
+
+
+        self.botao_conectar.clicked.connect(
+            self.conectar_mks
+        )
+
+
+        self.botao_home.clicked.connect(
+            self.zerar_eixos
+        )
+
+
+
         layout.addStretch()
 
 
 
+
+
+
+
     # =====================================
-    # ATUALIZA STATUS DA MKS
+    # ATUALIZA STATUS
     # =====================================
 
     def atualizar_status(self):
@@ -223,8 +275,24 @@ class DashboardPage(QWidget):
                     "🔴 Desconectada"
                 )
 
+                self.manual.atualizar_conexao(
+                  False
+                )
+
+
+                self.maquina.atualizar_valor(
+                    "Desligada"
+                )
+
+
+                self.estado.atualizar_valor(
+                    "Sem conexão"
+                )
+
 
                 return
+
+
 
 
 
@@ -238,15 +306,19 @@ class DashboardPage(QWidget):
 
 
 
+
+
             estado = dados["estado"]
 
 
 
-            # Estado da máquina
+
 
             self.maquina.atualizar_valor(
                 estado
             )
+
+
 
 
 
@@ -266,6 +338,14 @@ class DashboardPage(QWidget):
                 )
 
 
+            elif estado == "ZERO":
+
+
+                self.estado.atualizar_valor(
+                    "Eixos zerados"
+                )
+
+
             else:
 
 
@@ -275,7 +355,6 @@ class DashboardPage(QWidget):
 
 
 
-            # Posição dos eixos
 
 
             self.x.atualizar_valor(
@@ -294,10 +373,119 @@ class DashboardPage(QWidget):
 
 
 
+
+
         except Exception as erro:
 
 
             print(
                 "Erro dashboard:",
                 erro
+            )
+
+
+
+
+
+
+
+    # =====================================
+    # CONECTAR MKS
+    # =====================================
+
+    def conectar_mks(self):
+
+
+        conectado = self.mks.conectar()
+
+
+
+        if conectado:
+
+
+            self.conexao.atualizar_valor(
+                "🟢 Conectada"
+            )
+
+            self.manual.atualizar_conexao(
+             True
+            )
+
+
+            # Atualiza todos os mostradores imediatamente
+
+            self.atualizar_status()
+
+
+
+        else:
+
+
+            self.conexao.atualizar_valor(
+                "🔴 Desconectada"
+            )
+
+            self.manual.atualizar_conexao(
+              False
+            )
+
+            self.maquina.atualizar_valor(
+                "Desligada"
+            )
+
+
+            self.estado.atualizar_valor(
+                "Sem conexão"
+            )
+
+
+
+
+
+
+
+    # =====================================
+    # ZERAR EIXOS
+    # =====================================
+
+    def zerar_eixos(self):
+
+
+        if not self.mks.conectado:
+
+
+            self.estado.atualizar_valor(
+                "Sem conexão"
+            )
+
+
+            return
+
+
+
+
+
+        sucesso = self.mks.zerar_eixos()
+
+
+
+
+
+        if sucesso:
+
+
+            self.estado.atualizar_valor(
+                "Eixos zerados"
+            )
+
+
+            self.atualizar_status()
+
+
+
+        else:
+
+
+            self.estado.atualizar_valor(
+                "Erro HOME"
             )
