@@ -32,6 +32,12 @@ class InfoCard(QFrame):
         )
 
 
+        self.setMinimumSize(
+            220,
+            120
+        )
+
+
         layout = QVBoxLayout(
             self
         )

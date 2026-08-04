@@ -17,10 +17,11 @@ from PySide6.QtWidgets import (
     QScrollArea
 )
 
+from PySide6.QtCore import Qt
+
 from controllers.rack_controller import RackController
 from ui.widgets.pallet_dialog import PalletDialog
 from ui.widgets.rack_action_dialog import RackActionDialog
-from PySide6.QtCore import Qt
 
 
 class RackPage(QWidget):
@@ -55,19 +56,24 @@ class RackPage(QWidget):
 
         principal = QVBoxLayout(self)
 
+        principal.setContentsMargins(
+            20,
+            20,
+            20,
+            20
+        )
+
+        principal.setSpacing(20)
+
         titulo = QLabel("📦 SMART RACK")
-        titulo.setStyleSheet("""
-            font-size:28px;
-            font-weight:bold;
-        """)
+        titulo.setObjectName("title")
 
         self.selecionado = QLabel(
             "Nenhuma posição selecionada"
         )
-
-        self.selecionado.setStyleSheet("""
-            font-size:18px;
-        """)
+        self.selecionado.setObjectName(
+            "rackStatus"
+        )
 
         principal.addWidget(titulo)
         principal.addWidget(self.selecionado)
@@ -80,25 +86,39 @@ class RackPage(QWidget):
 
         scroll.setWidgetResizable(True)
 
-        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setFrameShape(
+            QFrame.NoFrame
+        )
 
         conteudo = QWidget()
 
-        self.layout_racks = QVBoxLayout(conteudo)
+        self.layout_racks = QVBoxLayout(
+            conteudo
+        )
 
-        self.layout_racks.setSpacing(30)
+        self.layout_racks.setSpacing(
+            30
+        )
 
         for estante in self.estantes:
 
-            frame = self.criar_estante(estante)
+            frame = self.criar_estante(
+                estante
+            )
 
-            self.layout_racks.addWidget(frame)
+            self.layout_racks.addWidget(
+                frame
+            )
 
         self.layout_racks.addStretch()
 
-        scroll.setWidget(conteudo)
+        scroll.setWidget(
+            conteudo
+        )
 
-        principal.addWidget(scroll)
+        principal.addWidget(
+            scroll
+        )
 
         self.atualizar_tela()
 
@@ -110,39 +130,46 @@ class RackPage(QWidget):
 
         frame = QFrame()
 
-        frame.setStyleSheet("""
-            QFrame{
-                background:#222;
-                border-radius:12px;
-                padding:10px;
-            }
-        """)
+        frame.setObjectName(
+            "rackFrame"
+        )
 
-        layout = QVBoxLayout(frame)
+        layout = QVBoxLayout(
+            frame
+        )
 
-        titulo = QLabel(f"ESTANTE {estante}")
+        titulo = QLabel(
+            f"ESTANTE {estante}"
+        )
 
-        titulo.setStyleSheet("""
-            font-size:22px;
-            font-weight:bold;
-        """)
+        titulo.setObjectName(
+            "rackTitle"
+        )
 
-        layout.addWidget(titulo)
+        layout.addWidget(
+            titulo
+        )
 
         grade = QGridLayout()
 
-        grade.setSpacing(10)
+        grade.setSpacing(
+            10
+        )
 
         # Cabeçalho das colunas
 
-        for coluna in range(1, self.colunas + 1):
+        for coluna in range(
+            1,
+            self.colunas + 1
+        ):
 
-            label = QLabel(str(coluna))
+            label = QLabel(
+                str(coluna)
+            )
 
-            label.setStyleSheet("""
-                font-weight:bold;
-                font-size:18px;
-            """)
+            label.setObjectName(
+                "rackLabel"
+            )
 
             label.setAlignment(
                 Qt.AlignCenter
@@ -166,9 +193,9 @@ class RackPage(QWidget):
                 f"Nível {nivel}"
             )
 
-            nivel_label.setStyleSheet("""
-                font-weight:bold;
-            """)
+            nivel_label.setObjectName(
+                "rackLabel"
+            )
 
             grade.addWidget(
                 nivel_label,
@@ -210,7 +237,9 @@ class RackPage(QWidget):
 
             linha += 1
 
-        layout.addLayout(grade)
+        layout.addLayout(
+            grade
+        )
 
         return frame
 
@@ -220,7 +249,9 @@ class RackPage(QWidget):
 
     def selecionar(self, endereco):
 
-        dados = self.controller.buscar_posicao(endereco)
+        dados = self.controller.buscar_posicao(
+            endereco
+        )
 
         if dados is None:
             return
@@ -234,7 +265,9 @@ class RackPage(QWidget):
 
         if ocupado == 0:
 
-            dialog = PalletDialog(endereco)
+            dialog = PalletDialog(
+                endereco
+            )
 
             if dialog.exec():
 
@@ -308,10 +341,27 @@ class RackPage(QWidget):
             botao.setText("📦")
 
             botao.setStyleSheet("""
-                background:#c0392b;
-                color:white;
-                font-size:30px;
-                border-radius:10px;
+                QPushButton{
+
+                    background-color:#DC2626;
+
+                    color:white;
+
+                    font-size:28px;
+
+                    font-weight:bold;
+
+                    border:none;
+
+                    border-radius:10px;
+
+                }
+
+                QPushButton:hover{
+
+                    background-color:#EF4444;
+
+                }
             """)
 
         else:
@@ -319,6 +369,19 @@ class RackPage(QWidget):
             botao.setText("")
 
             botao.setStyleSheet("""
-                background:#27ae60;
-                border-radius:10px;
+                QPushButton{
+
+                    background-color:#16A34A;
+
+                    border:none;
+
+                    border-radius:10px;
+
+                }
+
+                QPushButton:hover{
+
+                    background-color:#22C55E;
+
+                }
             """)

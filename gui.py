@@ -19,6 +19,8 @@ from PySide6.QtWidgets import (
     QStatusBar
 )
 
+from PySide6.QtCore import QTimer
+
 from communication import MKSConnection
 
 from ui.pages.dashboard import DashboardPage
@@ -26,7 +28,6 @@ from ui.pages.manual import ManualPage
 from ui.pages.rack import RackPage
 from ui.pages.history import HistoryPage
 from ui.pages.settings import SettingsPage
-from PySide6.QtCore import QTimer
 
 
 class SmartRackGUI(QMainWindow):
@@ -50,9 +51,10 @@ class SmartRackGUI(QMainWindow):
         # Monitor de conexão
         self.timer_status = QTimer()
         self.timer_status.timeout.connect(
-        self.verificar_conexao
+            self.verificar_conexao
         )
         self.timer_status.start(3000)
+
 
     # =====================================
     # CONEXÃO
@@ -63,9 +65,13 @@ class SmartRackGUI(QMainWindow):
         conectado = self.mks.conectar()
 
         if conectado:
+
             mensagem = "🟢 MKS DLC32 conectada"
+
         else:
+
             mensagem = "🔴 MKS DLC32 desconectada"
+
 
         print(mensagem)
 
@@ -73,10 +79,19 @@ class SmartRackGUI(QMainWindow):
 
         self.dashboard.atualizar_status()
 
+
         if conectado:
-            self.manual.status.setText("🟢 MKS DLC32 conectada")
+
+            self.manual.status.setText(
+                "🟢 MKS DLC32 conectada"
+            )
+
         else:
-            self.manual.status.setText("🔴 MKS DLC32 desconectada")
+
+            self.manual.status.setText(
+                "🔴 MKS DLC32 desconectada"
+            )
+
 
     # =====================================
     # INTERFACE
@@ -85,36 +100,65 @@ class SmartRackGUI(QMainWindow):
     def criar_interface(self):
 
         principal = QWidget()
+
         self.setCentralWidget(principal)
 
+
         layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
+
+        layout.setContentsMargins(
+            0,
+            0,
+            0,
+            0
+        )
+
 
         # ==============================
         # PÁGINAS
         # ==============================
 
         self.paginas = QStackedWidget()
-        self.manual = ManualPage(self.mks)
+
+        self.manual = ManualPage(
+            self.mks
+        )
+
 
         self.dashboard = DashboardPage(
-        self.mks,
-        self.manual
+            self.mks,
+            self.manual
         )
+
+
         self.rack = RackPage()
+
         self.history = HistoryPage()
+
         self.settings = SettingsPage()
 
+
         paginas = [
+
             self.dashboard,
+
             self.manual,
+
             self.rack,
+
             self.history,
+
             self.settings
+
         ]
 
+
         for pagina in paginas:
-            self.paginas.addWidget(pagina)
+
+            self.paginas.addWidget(
+                pagina
+            )
+
 
         # ==============================
         # MENU
@@ -124,23 +168,39 @@ class SmartRackGUI(QMainWindow):
 
         layout.addWidget(menu)
 
+
         # ==============================
         # ÁREA CENTRAL
         # ==============================
 
         area = QVBoxLayout()
 
-        header = QLabel("SMART RACK MONITORING")
-        header.setObjectName("header")
+
+        header = QLabel(
+            "SMART RACK MONITORING"
+        )
+
+        header.setObjectName(
+            "header"
+        )
+
 
         area.addWidget(header)
-        area.addWidget(self.paginas)
+
+        area.addWidget(
+            self.paginas
+        )
+
 
         layout.addLayout(area)
 
+
         principal.setLayout(layout)
 
+
         self.criar_statusbar()
+
+
 
     # =====================================
     # MENU LATERAL
@@ -149,15 +209,32 @@ class SmartRackGUI(QMainWindow):
     def criar_menu(self):
 
         menu = QFrame()
-        menu.setObjectName("sidebar")
-        menu.setFixedWidth(230)
+
+        menu.setObjectName(
+            "sidebar"
+        )
+
+        menu.setFixedWidth(
+            230
+        )
+
 
         layout = QVBoxLayout()
 
-        titulo = QLabel("MENU")
-        titulo.setObjectName("menuTitle")
 
-        layout.addWidget(titulo)
+        titulo = QLabel(
+            "MENU"
+        )
+
+        titulo.setObjectName(
+            "menuTitle"
+        )
+
+
+        layout.addWidget(
+            titulo
+        )
+
 
         botoes = [
 
@@ -173,9 +250,18 @@ class SmartRackGUI(QMainWindow):
 
         ]
 
+
         for indice, texto in enumerate(botoes):
 
-            botao = QPushButton(texto)
+            botao = QPushButton(
+                texto
+            )
+
+            # Identificação para o QSS
+            botao.setObjectName(
+                "menuButton"
+            )
+
 
             botao.clicked.connect(
 
@@ -184,13 +270,23 @@ class SmartRackGUI(QMainWindow):
 
             )
 
-            layout.addWidget(botao)
+
+            layout.addWidget(
+                botao
+            )
+
 
         layout.addStretch()
 
-        menu.setLayout(layout)
+
+        menu.setLayout(
+            layout
+        )
+
 
         return menu
+
+
 
     # =====================================
     # STATUS BAR
@@ -200,23 +296,33 @@ class SmartRackGUI(QMainWindow):
 
         self.statusbar = QStatusBar()
 
+
         self.statusbar.showMessage(
             "Inicializando sistema..."
         )
+
 
         self.setStatusBar(
             self.statusbar
         )
 
+
+
+    # =====================================
+    # MONITOR DE CONEXÃO
+    # =====================================
+
     def verificar_conexao(self):
 
-     if self.mks.conectado:
+        if self.mks.conectado:
 
-        mensagem = "🟢 MKS DLC32 conectada"
+            mensagem = "🟢 MKS DLC32 conectada"
 
-     else:
+        else:
 
-        mensagem = "🔴 MKS DLC32 desconectada"
+            mensagem = "🔴 MKS DLC32 desconectada"
 
 
-     self.statusbar.showMessage(mensagem)
+        self.statusbar.showMessage(
+            mensagem
+        )

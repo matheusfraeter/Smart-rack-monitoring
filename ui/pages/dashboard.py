@@ -47,8 +47,6 @@ class DashboardPage(QWidget):
 
 
 
-
-
     # =====================================
     # INTERFACE
     # =====================================
@@ -60,14 +58,12 @@ class DashboardPage(QWidget):
 
         layout.setSpacing(20)
 
-
         layout.setContentsMargins(
             20,
             20,
             20,
             20
         )
-
 
 
         # =====================================
@@ -114,7 +110,6 @@ class DashboardPage(QWidget):
         )
 
 
-
         linha1.addWidget(
             self.maquina
         )
@@ -143,7 +138,6 @@ class DashboardPage(QWidget):
         linha2 = QHBoxLayout()
 
 
-
         self.x = InfoCard(
             "↔ Eixo X",
             "0.000 mm"
@@ -162,7 +156,6 @@ class DashboardPage(QWidget):
         )
 
 
-
         linha2.addWidget(
             self.x
         )
@@ -178,7 +171,6 @@ class DashboardPage(QWidget):
         )
 
 
-
         layout.addLayout(
             linha2
         )
@@ -192,7 +184,6 @@ class DashboardPage(QWidget):
         linha3 = QHBoxLayout()
 
 
-
         self.botao_conectar = QPushButton(
             "🔌 Conectar MKS"
         )
@@ -202,6 +193,15 @@ class DashboardPage(QWidget):
             "🏠 Zerar Eixos"
         )
 
+
+        self.botao_conectar.setObjectName(
+            "actionButton"
+        )
+
+
+        self.botao_home.setObjectName(
+            "actionButton"
+        )
 
 
         self.botao_conectar.setMinimumHeight(
@@ -214,7 +214,6 @@ class DashboardPage(QWidget):
         )
 
 
-
         linha3.addWidget(
             self.botao_conectar
         )
@@ -225,11 +224,9 @@ class DashboardPage(QWidget):
         )
 
 
-
         layout.addLayout(
             linha3
         )
-
 
 
         self.botao_conectar.clicked.connect(
@@ -242,12 +239,7 @@ class DashboardPage(QWidget):
         )
 
 
-
         layout.addStretch()
-
-
-
-
 
 
 
@@ -258,7 +250,6 @@ class DashboardPage(QWidget):
     def atualizar_status(self):
 
         try:
-
 
             if self.mks.conectado:
 
@@ -275,8 +266,9 @@ class DashboardPage(QWidget):
                     "🔴 Desconectada"
                 )
 
+
                 self.manual.atualizar_conexao(
-                  False
+                    False
                 )
 
 
@@ -294,10 +286,7 @@ class DashboardPage(QWidget):
 
 
 
-
-
             dados = self.mks.ler_status()
-
 
 
             if not dados:
@@ -306,11 +295,7 @@ class DashboardPage(QWidget):
 
 
 
-
-
             estado = dados["estado"]
-
-
 
 
 
@@ -320,10 +305,7 @@ class DashboardPage(QWidget):
 
 
 
-
-
             if estado == "IDLE":
-
 
                 self.estado.atualizar_valor(
                     "Pronto"
@@ -332,14 +314,12 @@ class DashboardPage(QWidget):
 
             elif estado == "MOVENDO":
 
-
                 self.estado.atualizar_valor(
                     "Executando"
                 )
 
 
             elif estado == "ZERO":
-
 
                 self.estado.atualizar_valor(
                     "Eixos zerados"
@@ -348,12 +328,9 @@ class DashboardPage(QWidget):
 
             else:
 
-
                 self.estado.atualizar_valor(
                     estado
                 )
-
-
 
 
 
@@ -373,19 +350,12 @@ class DashboardPage(QWidget):
 
 
 
-
-
         except Exception as erro:
-
 
             print(
                 "Erro dashboard:",
                 erro
             )
-
-
-
-
 
 
 
@@ -407,12 +377,11 @@ class DashboardPage(QWidget):
                 "🟢 Conectada"
             )
 
+
             self.manual.atualizar_conexao(
-             True
+                True
             )
 
-
-            # Atualiza todos os mostradores imediatamente
 
             self.atualizar_status()
 
@@ -425,9 +394,11 @@ class DashboardPage(QWidget):
                 "🔴 Desconectada"
             )
 
+
             self.manual.atualizar_conexao(
-              False
+                False
             )
+
 
             self.maquina.atualizar_valor(
                 "Desligada"
@@ -437,10 +408,6 @@ class DashboardPage(QWidget):
             self.estado.atualizar_valor(
                 "Sem conexão"
             )
-
-
-
-
 
 
 
@@ -463,11 +430,7 @@ class DashboardPage(QWidget):
 
 
 
-
-
         sucesso = self.mks.zerar_eixos()
-
-
 
 
 

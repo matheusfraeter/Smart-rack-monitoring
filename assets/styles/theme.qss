@@ -381,3 +381,60 @@ QHeaderView::section {
     font-weight: bold;
 
 }
+
+/* ==========================================================
+   CONTROLE MANUAL XYZ
+========================================================== */
+
+
+QFrame#controlBox {
+
+    background-color: #111827;
+
+    border: 1px solid #1E293B;
+
+    border-radius: 12px;
+
+}
+
+
+
+/* ==========================================================
+   BOTÕES DE AÇÃO
+========================================================== */
+
+
+QPushButton#actionButton {
+
+
+    background-color: #1E40AF;
+
+    color: white;
+
+    border: none;
+
+    border-radius: 8px;
+
+    padding: 10px;
+
+    font-weight: bold;
+
+}
+
+
+
+QPushButton#actionButton:hover {
+
+
+    background-color: #2563EB;
+
+}
+
+
+
+QPushButton#actionButton:pressed {
+
+
+    background-color: #1D4ED8;
+
+}
