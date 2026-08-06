@@ -14,11 +14,10 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QGridLayout,
-    QSpinBox,
     QFrame
 )
 
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import Qt
 
 from movement import Movement
 
@@ -37,18 +36,11 @@ class ManualPage(QWidget):
             mks
         )
 
+
+        self.passo = 10
+
+
         self.criar_interface()
-
-
-        self.timer = QTimer()
-
-        self.timer.timeout.connect(
-            self.atualizar_posicao
-        )
-
-        self.timer.start(
-            1000
-        )
 
 
 
@@ -62,6 +54,7 @@ class ManualPage(QWidget):
             self
         )
 
+
         principal.setContentsMargins(
             20,
             20,
@@ -69,15 +62,19 @@ class ManualPage(QWidget):
             20
         )
 
+
         principal.setSpacing(
             15
         )
 
 
-        # Título
+
+        # =====================================
+        # TÍTULO
+        # =====================================
 
         titulo = QLabel(
-            "🎮 Controle Manual XYZ"
+            "Controle Manual XYZ"
         )
 
         titulo.setObjectName(
@@ -86,7 +83,7 @@ class ManualPage(QWidget):
 
 
         self.status = QLabel(
-            "MKS DLC32: Aguardando conexão"
+            ""
         )
 
         self.status.setObjectName(
@@ -96,72 +93,95 @@ class ManualPage(QWidget):
 
 
         # =====================================
-        # POSIÇÃO ATUAL
+        # CONTROLE DE PASSO
         # =====================================
 
-        pos_box = QFrame()
+        passo_box = QHBoxLayout()
 
-        pos_box.setObjectName(
-            "infoCard"
+
+        passo_texto = QLabel(
+            "Deslocamento"
         )
 
 
-        pos_layout = QVBoxLayout(
-            pos_box
+        self.bt_menos = QPushButton(
+            "-"
         )
 
 
-        pos_layout.addWidget(
-            QLabel("📍 Posição Atual")
+        self.bt_mais = QPushButton(
+            "+"
         )
 
 
-        self.pos_x = QLabel(
-            "X: 0.000 mm"
-        )
-
-        self.pos_y = QLabel(
-            "Y: 0.000 mm"
-        )
-
-        self.pos_z = QLabel(
-            "Z: 0.000 mm"
+        self.passo_label = QLabel(
+            "10 mm"
         )
 
 
-        pos_layout.addWidget(
-            self.pos_x
+        self.passo_label.setAlignment(
+            Qt.AlignCenter
         )
 
-        pos_layout.addWidget(
-            self.pos_y
+
+        self.bt_menos.setObjectName(
+            "actionButton"
         )
 
-        pos_layout.addWidget(
-            self.pos_z
+
+        self.bt_mais.setObjectName(
+            "actionButton"
         )
+
+
+        self.bt_menos.setMinimumSize(
+            50,
+            40
+        )
+
+
+        self.bt_mais.setMinimumSize(
+            50,
+            40
+        )
+
+
+        self.passo_label.setMinimumWidth(
+            80
+        )
+
+
+        passo_box.addWidget(
+            passo_texto
+        )
+
+
+        passo_box.addSpacing(
+            20
+        )
+
+
+        passo_box.addWidget(
+            self.bt_menos
+        )
+
+
+        passo_box.addWidget(
+            self.passo_label
+        )
+
+
+        passo_box.addWidget(
+            self.bt_mais
+        )
+
+
+        passo_box.addStretch()
 
 
 
         # =====================================
-        # PASSO
-        # =====================================
-
-        self.passo = QSpinBox()
-
-        self.passo.setRange(
-            1,
-            100
-        )
-
-        self.passo.setValue(
-            10
-        )
-
-
-
-        # =====================================
-        # CONTROLES XYZ
+        # CONTROLE XYZ
         # =====================================
 
         caixa = QFrame()
@@ -176,6 +196,46 @@ class ManualPage(QWidget):
         )
 
 
+        controles.setSpacing(
+            60
+        )
+
+
+        controles.addStretch()
+
+
+
+        # =====================================
+        # MOVIMENTO XY
+        # =====================================
+
+        xy_box = QFrame()
+
+        xy_box.setObjectName(
+            "controlBox"
+        )
+
+
+        xy_layout = QVBoxLayout(
+            xy_box
+        )
+
+
+        xy_titulo = QLabel(
+            "Movimento XY"
+        )
+
+
+        xy_titulo.setAlignment(
+            Qt.AlignCenter
+        )
+
+
+        xy_layout.addWidget(
+            xy_titulo
+        )
+
+
         grid = QGridLayout()
 
 
@@ -184,13 +244,16 @@ class ManualPage(QWidget):
             "↑\nX+"
         )
 
+
         self.xm = QPushButton(
             "↓\nX-"
         )
 
+
         self.ym = QPushButton(
             "←\nY-"
         )
+
 
         self.yp = QPushButton(
             "→\nY+"
@@ -208,10 +271,12 @@ class ManualPage(QWidget):
                 "actionButton"
             )
 
+
             botao.setMinimumSize(
-                100,
-                70
+                90,
+                90
             )
+
 
 
         grid.addWidget(
@@ -220,17 +285,20 @@ class ManualPage(QWidget):
             1
         )
 
+
         grid.addWidget(
             self.ym,
             1,
             0
         )
 
+
         grid.addWidget(
             self.yp,
             1,
             2
         )
+
 
         grid.addWidget(
             self.xm,
@@ -239,14 +307,43 @@ class ManualPage(QWidget):
         )
 
 
+        xy_layout.addLayout(
+            grid
+        )
 
-        # Eixo Z
 
-        zlayout = QVBoxLayout()
+        controles.addWidget(
+            xy_box
+        )
+
+        # =====================================
+        # MOVIMENTO Z
+        # =====================================
+
+        z_box = QFrame()
+
+        z_box.setObjectName(
+            "controlBox"
+        )
 
 
-        zlayout.addWidget(
-            QLabel("Eixo Z")
+        z_layout = QVBoxLayout(
+            z_box
+        )
+
+
+        z_titulo = QLabel(
+            "Movimento Z"
+        )
+
+
+        z_titulo.setAlignment(
+            Qt.AlignCenter
+        )
+
+
+        z_layout.addWidget(
+            z_titulo
         )
 
 
@@ -254,41 +351,45 @@ class ManualPage(QWidget):
             "Z +"
         )
 
+
         self.zm = QPushButton(
             "Z -"
         )
 
 
-        self.zp.setObjectName(
-            "actionButton"
-        )
-
-        self.zm.setObjectName(
-            "actionButton"
-        )
-
-
-        zlayout.addWidget(
-            self.zp
-        )
-
-        zlayout.addWidget(
+        for botao in (
+            self.zp,
             self.zm
-        )
+        ):
+
+            botao.setObjectName(
+                "actionButton"
+            )
 
 
+            botao.setMinimumSize(
+                100,
+                70
+            )
 
-        controles.addLayout(
-            grid
-        )
+
+            z_layout.addWidget(
+                botao
+            )
+
+
 
         controles.addSpacing(
-            40
+            60
         )
 
-        controles.addLayout(
-            zlayout
+
+        controles.addWidget(
+            z_box
         )
+
+
+        controles.addStretch()
 
 
 
@@ -299,36 +400,44 @@ class ManualPage(QWidget):
         botoes = QHBoxLayout()
 
 
-        home = QPushButton(
-            "🏠 ZERAR EIXOS"
+        stop = QPushButton(
+            "STOP"
         )
 
-        stop = QPushButton(
-            "🛑 STOP"
-        )
 
         continuar = QPushButton(
-            "▶ CONTINUAR"
+            "CONTINUAR"
         )
 
 
-        for botao in (
-            home,
-            stop,
+        stop.setObjectName(
+            "actionButton"
+        )
+
+
+        continuar.setObjectName(
+            "actionButton"
+        )
+
+
+        stop.setMinimumHeight(
+            50
+        )
+
+
+        continuar.setMinimumHeight(
+            50
+        )
+
+
+        botoes.addWidget(
+            stop
+        )
+
+
+        botoes.addWidget(
             continuar
-        ):
-
-            botao.setObjectName(
-                "actionButton"
-            )
-
-            botao.setMinimumHeight(
-                50
-            )
-
-            botoes.addWidget(
-                botao
-            )
+        )
 
 
 
@@ -336,10 +445,21 @@ class ManualPage(QWidget):
         # EVENTOS
         # =====================================
 
+        self.bt_mais.clicked.connect(
+            self.aumentar_passo
+        )
+
+
+        self.bt_menos.clicked.connect(
+            self.diminuir_passo
+        )
+
+
+
         self.xp.clicked.connect(
             lambda:
             self.mover_x(
-                self.passo.value()
+                self.passo
             )
         )
 
@@ -347,7 +467,7 @@ class ManualPage(QWidget):
         self.xm.clicked.connect(
             lambda:
             self.mover_x(
-                -self.passo.value()
+                -self.passo
             )
         )
 
@@ -355,7 +475,7 @@ class ManualPage(QWidget):
         self.yp.clicked.connect(
             lambda:
             self.mover_y(
-                self.passo.value()
+                self.passo
             )
         )
 
@@ -363,7 +483,7 @@ class ManualPage(QWidget):
         self.ym.clicked.connect(
             lambda:
             self.mover_y(
-                -self.passo.value()
+                -self.passo
             )
         )
 
@@ -371,7 +491,7 @@ class ManualPage(QWidget):
         self.zp.clicked.connect(
             lambda:
             self.mover_z(
-                self.passo.value()
+                self.passo
             )
         )
 
@@ -379,13 +499,8 @@ class ManualPage(QWidget):
         self.zm.clicked.connect(
             lambda:
             self.mover_z(
-                -self.passo.value()
+                -self.passo
             )
-        )
-
-
-        home.clicked.connect(
-            self.zerar_eixos
         )
 
 
@@ -400,37 +515,64 @@ class ManualPage(QWidget):
 
 
 
-        # Montagem
+        # =====================================
+        # MONTAGEM FINAL
+        # =====================================
 
         principal.addWidget(
             titulo
         )
 
+
         principal.addWidget(
             self.status
         )
 
-        principal.addWidget(
-            pos_box
+
+        principal.addLayout(
+            passo_box
         )
 
-        principal.addWidget(
-            QLabel("Passo (mm)")
-        )
-
-        principal.addWidget(
-            self.passo
-        )
 
         principal.addWidget(
             caixa
         )
 
+
         principal.addLayout(
             botoes
         )
 
+
         principal.addStretch()
+
+
+
+    # =====================================
+    # CONTROLE DE PASSO
+    # =====================================
+
+    def aumentar_passo(self):
+
+        if self.passo < 100:
+
+            self.passo += 10
+
+            self.passo_label.setText(
+                f"{self.passo} mm"
+            )
+
+
+
+    def diminuir_passo(self):
+
+        if self.passo > 10:
+
+            self.passo -= 10
+
+            self.passo_label.setText(
+                f"{self.passo} mm"
+            )
 
 
 
@@ -447,8 +589,9 @@ class ManualPage(QWidget):
             )
 
             self.status.setText(
-                "🟢 MKS DLC32 conectada"
+                "MKS DLC32 conectada"
             )
+
 
         else:
 
@@ -457,36 +600,7 @@ class ManualPage(QWidget):
             )
 
             self.status.setText(
-                "🔴 MKS DLC32 desconectada"
-            )
-
-
-
-    # =====================================
-    # POSIÇÃO
-    # =====================================
-
-    def atualizar_posicao(self):
-
-        if not self.mks.conectado:
-            return
-
-
-        s = self.mks.ler_status()
-
-
-        if s:
-
-            self.pos_x.setText(
-                f"X: {s['X']:.3f} mm"
-            )
-
-            self.pos_y.setText(
-                f"Y: {s['Y']:.3f} mm"
-            )
-
-            self.pos_z.setText(
-                f"Z: {s['Z']:.3f} mm"
+                "MKS DLC32 desconectada"
             )
 
 
@@ -504,6 +618,7 @@ class ManualPage(QWidget):
             )
 
 
+
     def mover_y(self, valor):
 
         if self.mks.conectado:
@@ -511,6 +626,7 @@ class ManualPage(QWidget):
             self.movimento.mover_y(
                 valor
             )
+
 
 
     def mover_z(self, valor):
@@ -524,35 +640,6 @@ class ManualPage(QWidget):
 
 
     # =====================================
-    # HOME
-    # =====================================
-
-    def zerar_eixos(self):
-
-        if not self.mks.conectado:
-
-            self.status.setText(
-                "🔴 MKS DLC32 desconectada"
-            )
-
-            return
-
-
-        if self.mks.zerar_eixos():
-
-            self.status.setText(
-                "🟢 Eixos zerados"
-            )
-
-        else:
-
-            self.status.setText(
-                "🔴 Falha ao zerar eixos"
-            )
-
-
-
-    # =====================================
     # COMANDOS
     # =====================================
 
@@ -561,6 +648,7 @@ class ManualPage(QWidget):
         self.mks.enviar_comando(
             "!"
         )
+
 
 
     def reset(self):

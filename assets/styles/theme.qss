@@ -302,6 +302,153 @@ QSpinBox {
 
 }
 
+/* ==========================================================
+   TOP BAR INDUSTRIAL
+========================================================== */
+
+
+QFrame#topBar {
+
+    background-color: #020617;
+
+    border-bottom: 1px solid #1E293B;
+
+    min-height: 140px;
+
+}
+
+
+/* Título principal */
+
+QLabel#topTitle {
+
+    color: #FFFFFF;
+
+    font-size: 22px;
+
+    font-weight: bold;
+
+}
+
+
+/* Status da conexão MKS */
+
+QLabel#connectionStatus {
+
+    color: #22C55E;
+
+    font-size: 13px;
+
+    font-weight: bold;
+
+}
+
+
+/* Estado da máquina */
+
+QLabel#machineStatus {
+
+    color: #60A5FA;
+
+    font-size: 12px;
+
+    font-weight: bold;
+
+}
+
+
+/* ==========================================================
+   MINI CARDS DA TOP BAR
+========================================================== */
+
+
+QFrame#topCard {
+
+
+    background-color: #1E3A8A;
+
+    border-radius: 8px;
+
+    min-width: 110px;
+
+    min-height: 55px;
+
+}
+
+
+QFrame#topCard:hover {
+
+    background-color: #1E40AF;
+
+}
+
+
+
+QLabel#topCardTitle {
+
+
+    color: #BFDBFE;
+
+    font-size: 11px;
+
+    font-weight: bold;
+
+}
+
+
+
+QLabel#topCardValue {
+
+
+    color: #FFFFFF;
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+}
+
+
+
+/* ==========================================================
+   BOTÕES DA TOP BAR
+========================================================== */
+
+
+QPushButton#topButton {
+
+
+    background-color: #1E40AF;
+
+    color: white;
+
+    border-radius: 8px;
+
+    padding: 8px 15px;
+
+    font-weight: bold;
+
+}
+
+
+
+QPushButton#topButton:hover {
+
+
+    background-color: #2563EB;
+
+
+}
+
+
+
+QPushButton#topButton:pressed {
+
+
+    background-color: #1D4ED8;
+
+
+}
 
 
 /* ==========================================================
