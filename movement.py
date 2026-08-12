@@ -3,7 +3,7 @@
  Smart Rack Monitoring
 ---------------------------------------------------------
  Arquivo.....: movement.py
- Descrição...: Movimentação manual dos eixos
+ Descrição...: Controle dos movimentos XYZ
 =========================================================
 """
 
@@ -11,64 +11,92 @@
 class Movement:
 
     def __init__(self, mks):
+
         self.mks = mks
 
-    # =====================================
+    # =====================================================
     # EIXO X
-    # =====================================
+    # =====================================================
 
     def mover_x(self, valor):
 
-        comando = f"""
-G91
-G1 X{valor} F1000
-"""
+        try:
 
-        if self.mks.enviar_comando(comando):
+            valor = float(valor)
 
-            self.mks.status["X"] += valor
-            self.mks.status["estado"] = "MOVENDO"
+        except (ValueError, TypeError):
 
-            return True
+            print("ERRO: valor X inválido:", valor)
 
-        return False
+            return False
 
-    # =====================================
+        comando = f"G91\nG1 X{valor:g} F1000"
+
+        print()
+        print("====================================")
+        print(" MOVIMENTO X")
+        print("====================================")
+        print("Valor:", valor)
+        print("G-CODE:")
+        print(repr(comando))
+        print("====================================")
+
+        return self.mks.enviar_comando(comando)
+
+    # =====================================================
     # EIXO Y
-    # =====================================
+    # =====================================================
 
     def mover_y(self, valor):
 
-        comando = f"""
-G91
-G1 Y{valor} F1000
-"""
+        try:
 
-        if self.mks.enviar_comando(comando):
+            valor = float(valor)
 
-            self.mks.status["Y"] += valor
-            self.mks.status["estado"] = "MOVENDO"
+        except (ValueError, TypeError):
 
-            return True
+            print("ERRO: valor Y inválido:", valor)
 
-        return False
+            return False
 
-    # =====================================
+        comando = f"G91\nG1 Y{valor:g} F1000"
+
+        print()
+        print("====================================")
+        print(" MOVIMENTO Y")
+        print("====================================")
+        print("Valor:", valor)
+        print("G-CODE:")
+        print(repr(comando))
+        print("====================================")
+
+        return self.mks.enviar_comando(comando)
+
+    # =====================================================
     # EIXO Z
-    # =====================================
+    # =====================================================
 
     def mover_z(self, valor):
 
-        comando = f"""
-G91
-G1 Z{valor} F500
-"""
+        try:
 
-        if self.mks.enviar_comando(comando):
+            valor = float(valor)
 
-            self.mks.status["Z"] += valor
-            self.mks.status["estado"] = "MOVENDO"
+        except (ValueError, TypeError):
 
-            return True
+            print("ERRO: valor Z inválido:", valor)
 
-        return False
+            return False
+
+        comando = f"G91\nG1 Z{valor:g} F500"
+
+        print()
+        print("====================================")
+        print(" MOVIMENTO Z")
+        print("====================================")
+        print("Valor:", valor)
+        print("G-CODE:")
+        print(repr(comando))
+        print("====================================")
+
+        return self.mks.enviar_comando(comando)

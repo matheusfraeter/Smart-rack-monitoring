@@ -2,8 +2,8 @@
 =========================================================
  Smart Rack Monitoring
 ---------------------------------------------------------
- Arquivo.....: topbar.py
- Descrição...: Barra superior da aplicação
+ Arquivo.....: ui/widgets/topbar.py
+ Descrição...: Barra superior com status da MKS DLC32
 =========================================================
 """
 
@@ -18,7 +18,6 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QTimer
 
 
-
 class TopBar(QFrame):
 
     def __init__(self, mks):
@@ -27,12 +26,13 @@ class TopBar(QFrame):
 
         self.mks = mks
 
-        self.setObjectName(
-            "topBar"
-        )
+        self.setObjectName("topBar")
 
         self.criar_interface()
 
+        # =====================================
+        # TIMER DE ATUALIZAÇÃO
+        # =====================================
 
         self.timer = QTimer()
 
@@ -40,10 +40,7 @@ class TopBar(QFrame):
             self.atualizar_status
         )
 
-        self.timer.start(
-            1000
-        )
-
+        self.timer.start(500)
 
 
     # =====================================
@@ -52,10 +49,7 @@ class TopBar(QFrame):
 
     def criar_interface(self):
 
-        layout = QVBoxLayout(
-            self
-        )
-
+        layout = QVBoxLayout(self)
 
         layout.setContentsMargins(
             20,
@@ -64,11 +58,7 @@ class TopBar(QFrame):
             12
         )
 
-
-        layout.setSpacing(
-            10
-        )
-
+        layout.setSpacing(10)
 
 
         # =====================================
@@ -76,7 +66,6 @@ class TopBar(QFrame):
         # =====================================
 
         topo = QHBoxLayout()
-
 
         self.titulo = QLabel(
             "SMART RACK MONITORING"
@@ -100,19 +89,13 @@ class TopBar(QFrame):
             self.titulo
         )
 
-
         topo.addStretch()
-
 
         topo.addWidget(
             self.conexao
         )
 
-
-        layout.addLayout(
-            topo
-        )
-
+        layout.addLayout(topo)
 
 
         # =====================================
@@ -120,7 +103,6 @@ class TopBar(QFrame):
         # =====================================
 
         inferior = QHBoxLayout()
-
 
 
         self.card_estado, self.estado = self.criar_card(
@@ -147,7 +129,6 @@ class TopBar(QFrame):
         )
 
 
-
         inferior.addWidget(
             self.card_estado
         )
@@ -164,11 +145,12 @@ class TopBar(QFrame):
             self.card_z
         )
 
-
-
         inferior.addStretch()
 
 
+        # =====================================
+        # BOTÃO CONECTAR
+        # =====================================
 
         self.bt_conectar = QPushButton(
             "Conectar MKS"
@@ -178,7 +160,14 @@ class TopBar(QFrame):
             "topButton"
         )
 
+        inferior.addWidget(
+            self.bt_conectar
+        )
 
+
+        # =====================================
+        # BOTÃO HOME
+        # =====================================
 
         self.bt_home = QPushButton(
             "Zerar Eixos"
@@ -188,50 +177,34 @@ class TopBar(QFrame):
             "topButton"
         )
 
-
-        self.bt_home.setEnabled(
-            False
-        )
-
-
-
-        inferior.addWidget(
-            self.bt_conectar
-        )
-
+        self.bt_home.setEnabled(False)
 
         inferior.addWidget(
             self.bt_home
         )
 
 
-
-        layout.addLayout(
-            inferior
-        )
+        layout.addLayout(inferior)
 
 
+        # =====================================
+        # EVENTOS
+        # =====================================
 
         self.bt_conectar.clicked.connect(
             self.conectar_mks
         )
-
 
         self.bt_home.clicked.connect(
             self.zerar_eixos
         )
 
 
-
     # =====================================
     # CRIAR MINI CARD
     # =====================================
 
-    def criar_card(
-        self,
-        titulo,
-        valor
-    ):
+    def criar_card(self, titulo, valor):
 
         card = QFrame()
 
@@ -239,10 +212,16 @@ class TopBar(QFrame):
             "topCard"
         )
 
+        layout = QVBoxLayout(card)
 
-        layout = QVBoxLayout(
-            card
+        layout.setContentsMargins(
+            12,
+            8,
+            12,
+            8
         )
+
+        layout.setSpacing(2)
 
 
         label_titulo = QLabel(
@@ -254,7 +233,6 @@ class TopBar(QFrame):
         )
 
 
-
         label_valor = QLabel(
             valor
         )
@@ -264,30 +242,23 @@ class TopBar(QFrame):
         )
 
 
-
         layout.addWidget(
             label_titulo
         )
-
 
         layout.addWidget(
             label_valor
         )
 
 
-
         return card, label_valor
 
 
-
     # =====================================
-    # ATUALIZA COR DA CONEXÃO
+    # ATUALIZA VISUAL DA CONEXÃO
     # =====================================
 
-    def atualizar_conexao_visual(
-        self,
-        conectado
-    ):
+    def atualizar_conexao_visual(self, conectado):
 
         if conectado:
 
@@ -299,6 +270,9 @@ class TopBar(QFrame):
                 "MKS CONECTADA"
             )
 
+            self.bt_conectar.setText(
+                "MKS Conectada"
+            )
 
         else:
 
@@ -310,7 +284,12 @@ class TopBar(QFrame):
                 "DESCONECTADA"
             )
 
+            self.bt_conectar.setText(
+                "Conectar MKS"
+            )
 
+
+        # Força atualização do QSS
 
         self.conexao.style().unpolish(
             self.conexao
@@ -321,6 +300,8 @@ class TopBar(QFrame):
         )
 
 
+        self.conexao.update()
+
 
     # =====================================
     # ATUALIZA STATUS
@@ -330,13 +311,15 @@ class TopBar(QFrame):
 
         try:
 
-            if not self.mks.conectado:
+            # =================================
+            # SEM CONEXÃO
+            # =================================
 
+            if not self.mks.conectado:
 
                 self.atualizar_conexao_visual(
                     False
                 )
-
 
                 self.estado.setText(
                     "---"
@@ -354,29 +337,23 @@ class TopBar(QFrame):
                     "0.000"
                 )
 
-
                 self.bt_home.setEnabled(
                     False
                 )
 
-
                 return
 
 
+            # =================================
+            # CONECTADO
+            # =================================
 
             self.atualizar_conexao_visual(
                 True
             )
 
 
-            self.bt_home.setEnabled(
-                True
-            )
-
-
-
             dados = self.mks.ler_status()
-
 
 
             if not dados:
@@ -384,26 +361,47 @@ class TopBar(QFrame):
                 return
 
 
+            # =================================
+            # ESTADO
+            # =================================
 
-            self.estado.setText(
-                dados["estado"]
+            estado = dados.get(
+                "estado",
+                "---"
             )
 
 
+            self.estado.setText(
+                estado.upper()
+            )
+
+
+            # =================================
+            # POSIÇÕES
+            # =================================
+
             self.x.setText(
-                f'{dados["X"]:.3f}'
+                f'{dados.get("X", 0.0):.3f}'
             )
 
 
             self.y.setText(
-                f'{dados["Y"]:.3f}'
+                f'{dados.get("Y", 0.0):.3f}'
             )
 
 
             self.z.setText(
-                f'{dados["Z"]:.3f}'
+                f'{dados.get("Z", 0.0):.3f}'
             )
 
+
+            # =================================
+            # HOME
+            # =================================
+
+            self.bt_home.setEnabled(
+                True
+            )
 
 
         except Exception as erro:
@@ -414,46 +412,40 @@ class TopBar(QFrame):
             )
 
 
-
     # =====================================
     # CONECTAR
     # =====================================
 
     def conectar_mks(self):
 
-        conectado = self.mks.conectar()
+        # Já conectado
+        if self.mks.conectado:
 
+            self.atualizar_status()
+
+            return
+
+
+        conectado = self.mks.conectar()
 
 
         if conectado:
 
-
             self.atualizar_conexao_visual(
                 True
             )
-
-
-            self.bt_home.setEnabled(
-                True
-            )
-
 
             self.atualizar_status()
 
-
-
         else:
-
 
             self.atualizar_conexao_visual(
                 False
             )
 
-
             self.bt_home.setEnabled(
                 False
             )
-
 
 
     # =====================================
@@ -467,22 +459,31 @@ class TopBar(QFrame):
             return
 
 
+        self.bt_home.setEnabled(
+            False
+        )
+
+
+        self.estado.setText(
+            "HOMING"
+        )
+
 
         sucesso = self.mks.zerar_eixos()
 
 
-
         if sucesso:
 
-
             self.estado.setText(
-                "HOME"
+                "HOMING"
             )
 
-
         else:
-
 
             self.estado.setText(
                 "ERRO"
             )
+
+
+        # O estado real será atualizado
+        # automaticamente pelo WebSocket.
