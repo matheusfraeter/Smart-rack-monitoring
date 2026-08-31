@@ -26,22 +26,17 @@ class Sidebar(QFrame):
 
         super().__init__()
 
-
         self.setObjectName(
             "sidebar"
         )
-
 
         self.setFixedWidth(
             230
         )
 
-
         self.botoes = []
 
-
         self.criar_interface()
-
 
 
     # =====================================
@@ -54,14 +49,12 @@ class Sidebar(QFrame):
             self
         )
 
-
         layout.setContentsMargins(
             15,
             20,
             15,
             20
         )
-
 
         layout.setSpacing(
             10
@@ -72,21 +65,18 @@ class Sidebar(QFrame):
             "SMART RACK"
         )
 
-
         titulo.setObjectName(
             "menuTitle"
         )
-
 
         layout.addWidget(
             titulo
         )
 
 
-        # =============================
+        # =====================================
         # MENU
-        # =============================
-
+        # =====================================
 
         self.criar_botao(
             layout,
@@ -94,13 +84,11 @@ class Sidebar(QFrame):
             0
         )
 
-
         self.criar_botao(
             layout,
             "Controle Manual",
             1
         )
-
 
         self.criar_botao(
             layout,
@@ -108,16 +96,19 @@ class Sidebar(QFrame):
             2
         )
 
+        self.criar_botao(
+            layout,
+            "Coordenadas do Rack",
+            3
+        )
 
         self.criar_botao(
             layout,
             "Configurações",
-            3
+            4
         )
 
-
         layout.addStretch()
-
 
 
     # =====================================
@@ -131,21 +122,17 @@ class Sidebar(QFrame):
         indice
     ):
 
-
         botao = QPushButton(
             texto
         )
-
 
         botao.setObjectName(
             "menuButton"
         )
 
-
         botao.setMinimumHeight(
             45
         )
-
 
         botao.clicked.connect(
             lambda:
@@ -154,16 +141,13 @@ class Sidebar(QFrame):
             )
         )
 
-
         self.botoes.append(
             botao
         )
 
-
         layout.addWidget(
             botao
         )
-
 
 
     # =====================================
@@ -174,7 +158,6 @@ class Sidebar(QFrame):
         self,
         indice
     ):
-
 
         for i, botao in enumerate(
             self.botoes

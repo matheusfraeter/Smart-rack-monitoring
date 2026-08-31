@@ -10,33 +10,55 @@
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
+    QHBoxLayout,
     QLabel,
     QPushButton,
     QGridLayout,
     QFrame,
-    QScrollArea
+    QScrollArea,
+    QMessageBox
 )
 
 from PySide6.QtCore import Qt
 
 from controllers.rack_controller import RackController
+
 from ui.widgets.pallet_dialog import PalletDialog
 from ui.widgets.rack_action_dialog import RackActionDialog
 
 
 class RackPage(QWidget):
 
-    def __init__(self):
+    def __init__(
+        self,
+        mks
+    ):
 
         super().__init__()
 
-        self.controller = RackController()
+        # =====================================
+        # COMUNICAÇÃO
+        # =====================================
+
+        self.mks = mks
+
+        # =====================================
+        # CONTROLLER
+        # =====================================
+
+        self.controller = RackController(
+            self.mks
+        )
+
+        # =====================================
+        # BOTÕES DO RACK
+        # =====================================
 
         self.botoes = {}
 
-        # ==========================
+        # =====================================
         # CONFIGURAÇÃO DO RACK
-        # ==========================
+        # =====================================
 
         self.estantes = [
             "A",
@@ -44,9 +66,11 @@ class RackPage(QWidget):
         ]
 
         self.niveis = 3
+
         self.colunas = 4
 
         self.criar_interface()
+
 
     # =================================================
     # INTERFACE
@@ -54,7 +78,9 @@ class RackPage(QWidget):
 
     def criar_interface(self):
 
-        principal = QVBoxLayout(self)
+        principal = QVBoxLayout(
+            self
+        )
 
         principal.setContentsMargins(
             20,
@@ -63,28 +89,87 @@ class RackPage(QWidget):
             20
         )
 
-        principal.setSpacing(20)
+        principal.setSpacing(
+            15
+        )
 
-        titulo = QLabel("📦 SMART RACK")
-        titulo.setObjectName("title")
+        # =====================================
+        # TÍTULO
+        # =====================================
+
+        titulo = QLabel(
+            "SMART RACK"
+        )
+
+        titulo.setObjectName(
+            "title"
+        )
 
         self.selecionado = QLabel(
-            "Nenhuma posição selecionada"
+            "Selecione uma posição."
         )
+
         self.selecionado.setObjectName(
             "rackStatus"
         )
 
-        principal.addWidget(titulo)
-        principal.addWidget(self.selecionado)
+        principal.addWidget(
+            titulo
+        )
 
-        # ==========================
+        principal.addWidget(
+            self.selecionado
+        )
+
+        # =====================================
+        # PAINEL DE OPERAÇÃO
+        # =====================================
+
+        self.operacao_box = QFrame()
+
+        self.operacao_box.setObjectName(
+            "controlBox"
+        )
+
+        operacao_layout = QHBoxLayout(
+            self.operacao_box
+        )
+
+        self.pallet_label = QLabel(
+            "Pallet: ---"
+        )
+
+        self.posicao_label = QLabel(
+            "Posição: ---"
+        )
+
+        operacao_layout.addWidget(
+            self.pallet_label
+        )
+
+        operacao_layout.addSpacing(
+            30
+        )
+
+        operacao_layout.addWidget(
+            self.posicao_label
+        )
+
+        operacao_layout.addStretch()
+
+        principal.addWidget(
+            self.operacao_box
+        )
+
+        # =====================================
         # ÁREA COM ROLAGEM
-        # ==========================
+        # =====================================
 
         scroll = QScrollArea()
 
-        scroll.setWidgetResizable(True)
+        scroll.setWidgetResizable(
+            True
+        )
 
         scroll.setFrameShape(
             QFrame.NoFrame
@@ -120,13 +205,21 @@ class RackPage(QWidget):
             scroll
         )
 
+        # =====================================
+        # ATUALIZAR
+        # =====================================
+
         self.atualizar_tela()
+
 
     # =================================================
     # CRIAR ESTANTE
     # =================================================
 
-    def criar_estante(self, estante):
+    def criar_estante(
+        self,
+        estante
+    ):
 
         frame = QFrame()
 
@@ -156,7 +249,9 @@ class RackPage(QWidget):
             10
         )
 
-        # Cabeçalho das colunas
+        # =====================================
+        # CABEÇALHO DAS COLUNAS
+        # =====================================
 
         for coluna in range(
             1,
@@ -182,6 +277,10 @@ class RackPage(QWidget):
             )
 
         linha = 1
+
+        # =====================================
+        # CÉLULAS
+        # =====================================
 
         for nivel in range(
             self.niveis,
@@ -243,71 +342,221 @@ class RackPage(QWidget):
 
         return frame
 
+
     # =================================================
     # SELECIONAR POSIÇÃO
     # =================================================
 
-    def selecionar(self, endereco):
+    def selecionar(
+        self,
+        endereco
+    ):
 
         dados = self.controller.buscar_posicao(
             endereco
         )
 
         if dados is None:
+
+            QMessageBox.warning(
+                self,
+                "Erro",
+                f"A posição {endereco} não foi encontrada."
+            )
+
             return
 
         ocupado = dados[1]
+
         pallet = dados[2]
 
-        # -------------------------
-        # POSIÇÃO LIVRE
-        # -------------------------
+        # =====================================
+        # MOSTRAR SELEÇÃO
+        # =====================================
 
-        if ocupado == 0:
+        self.posicao_label.setText(
+            f"Posição: {endereco}"
+        )
 
-            dialog = PalletDialog(
-                endereco
+        # =====================================
+        # POSIÇÃO OCUPADA
+        # =====================================
+
+        if ocupado:
+
+            self.pallet_label.setText(
+                f"Pallet: {pallet}"
             )
 
-            if dialog.exec():
+            self.selecionado.setText(
+                f"Pallet {pallet} localizado em {endereco}."
+            )
 
-                codigo = dialog.obter_pallet()
-
-                if codigo:
-
-                    self.controller.armazenar_pallet(
-                        endereco,
-                        codigo
-                    )
-
-                    self.selecionado.setText(
-                        f"Pallet {codigo} armazenado em {endereco}"
-                    )
-
-        # -------------------------
-        # POSIÇÃO OCUPADA
-        # -------------------------
-
-        else:
-
-            dialog = RackActionDialog(
+            self.confirmar_retirada(
                 endereco,
                 pallet
             )
 
-            if dialog.exec():
+            return
 
-                if dialog.remover:
+        # =====================================
+        # POSIÇÃO VAZIA
+        # =====================================
 
-                    self.controller.retirar_pallet(
-                        endereco
-                    )
+        self.pallet_label.setText(
+            "Pallet: ---"
+        )
 
-                    self.selecionado.setText(
-                        f"Posição {endereco} liberada"
-                    )
+        self.selecionado.setText(
+            f"Posição {endereco} disponível."
+        )
+
+        self.confirmar_armazenamento(
+            endereco
+        )
+
+
+    # =================================================
+    # CONFIRMAR ARMAZENAMENTO
+    # =================================================
+
+    def confirmar_armazenamento(
+        self,
+        endereco
+    ):
+
+        dialog = PalletDialog(
+            endereco
+        )
+
+        if not dialog.exec():
+
+            return
+
+        codigo = dialog.obter_pallet()
+
+        if not codigo:
+
+            return
+
+        resposta = QMessageBox.question(
+            self,
+            "Confirmar armazenamento",
+            (
+                f"Pallet: {codigo}\n\n"
+                f"Destino: {endereco}\n\n"
+                "Deseja iniciar o armazenamento?"
+            ),
+            QMessageBox.Yes |
+            QMessageBox.No,
+            QMessageBox.No
+        )
+
+        if resposta != QMessageBox.Yes:
+
+            return
+
+        # =====================================
+        # EXECUTAR EMPILHADEIRA
+        # =====================================
+
+        self.selecionado.setText(
+            f"Armazenando pallet {codigo} em {endereco}..."
+        )
+
+        sucesso = self.controller.armazenar_pallet(
+            endereco,
+            codigo
+        )
+
+        # =====================================
+        # RESULTADO
+        # =====================================
+
+        if sucesso:
+
+            self.selecionado.setText(
+                f"Pallet {codigo} armazenado em {endereco}."
+            )
+
+            self.pallet_label.setText(
+                f"Pallet: {codigo}"
+            )
+
+        else:
+
+            self.selecionado.setText(
+                "Falha no armazenamento. "
+                "A posição não foi alterada."
+            )
 
         self.atualizar_tela()
+
+
+    # =================================================
+    # CONFIRMAR RETIRADA
+    # =================================================
+
+    def confirmar_retirada(
+        self,
+        endereco,
+        pallet
+    ):
+
+        resposta = QMessageBox.question(
+            self,
+            "Retirar pallet",
+            (
+                f"Pallet: {pallet}\n\n"
+                f"Origem: {endereco}\n"
+                "Destino: EXPEDIÇÃO\n\n"
+                "Deseja iniciar a retirada?"
+            ),
+            QMessageBox.Yes |
+            QMessageBox.No,
+            QMessageBox.No
+        )
+
+        if resposta != QMessageBox.Yes:
+
+            return
+
+        # =====================================
+        # EXECUTAR EMPILHADEIRA
+        # =====================================
+
+        self.selecionado.setText(
+            f"Retirando pallet {pallet} de {endereco}..."
+        )
+
+        sucesso = self.controller.retirar_pallet(
+            endereco
+        )
+
+        # =====================================
+        # RESULTADO
+        # =====================================
+
+        if sucesso:
+
+            self.selecionado.setText(
+                f"Pallet {pallet} retirado de {endereco} "
+                "e enviado para expedição."
+            )
+
+            self.pallet_label.setText(
+                "Pallet: ---"
+            )
+
+        else:
+
+            self.selecionado.setText(
+                "Falha na retirada. "
+                "A posição não foi alterada."
+            )
+
+        self.atualizar_tela()
+
 
     # =================================================
     # ATUALIZAR TELA
@@ -326,6 +575,7 @@ class RackPage(QWidget):
                     ocupado
                 )
 
+
     # =================================================
     # ATUALIZAR COR DOS BOTÕES
     # =================================================
@@ -338,7 +588,9 @@ class RackPage(QWidget):
 
         if ocupado:
 
-            botao.setText("📦")
+            botao.setText(
+                "📦"
+            )
 
             botao.setStyleSheet("""
                 QPushButton{
@@ -366,7 +618,9 @@ class RackPage(QWidget):
 
         else:
 
-            botao.setText("")
+            botao.setText(
+                ""
+            )
 
             botao.setStyleSheet("""
                 QPushButton{
