@@ -4,7 +4,7 @@
 ---------------------------------------------------------
  Arquivo.....: database.py
  Descrição...: Gerenciamento do banco SQLite
- Versão......: 0.5
+ Versão......: 0.6
 =========================================================
 """
 
@@ -25,6 +25,8 @@ class Database:
         self.criar_rack_inicial()
 
         self.criar_posicoes_maquina()
+
+        self.criar_configuracoes_empilhadeira()
 
 
     # =================================================
@@ -47,7 +49,6 @@ class Database:
         conexao = self.conectar()
 
         cursor = conexao.cursor()
-
 
         # ---------------------------------------------
         # POSIÇÕES DO RACK
@@ -80,7 +81,6 @@ class Database:
             """
         )
 
-
         # ---------------------------------------------
         # HISTÓRICO
         # ---------------------------------------------
@@ -101,7 +101,6 @@ class Database:
             )
             """
         )
-
 
         # ---------------------------------------------
         # POSIÇÕES ESPECIAIS DA MÁQUINA
@@ -124,6 +123,22 @@ class Database:
             """
         )
 
+        # ---------------------------------------------
+        # CONFIGURAÇÕES DA EMPILHADEIRA
+        # ---------------------------------------------
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS forklift_settings
+            (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                nome TEXT NOT NULL UNIQUE,
+
+                valor REAL DEFAULT 0.0
+            )
+            """
+        )
 
         conexao.commit()
 
@@ -140,22 +155,18 @@ class Database:
 
         cursor = conexao.cursor()
 
-
         cursor.execute(
             """
             PRAGMA table_info(rack_positions)
             """
         )
 
-
         colunas = cursor.fetchall()
-
 
         nomes_colunas = [
             coluna[1]
             for coluna in colunas
         ]
-
 
         # ---------------------------------------------
         # ADICIONA X
@@ -170,7 +181,6 @@ class Database:
                 """
             )
 
-
         # ---------------------------------------------
         # ADICIONA Y
         # ---------------------------------------------
@@ -184,7 +194,6 @@ class Database:
                 """
             )
 
-
         # ---------------------------------------------
         # ADICIONA Z
         # ---------------------------------------------
@@ -197,7 +206,6 @@ class Database:
                 ADD COLUMN z REAL DEFAULT 0.0
                 """
             )
-
 
         conexao.commit()
 
@@ -218,7 +226,6 @@ class Database:
         conexao = self.conectar()
 
         cursor = conexao.cursor()
-
 
         for estante in [
             "A",
@@ -241,7 +248,6 @@ class Database:
                         f"{coluna}"
                     )
 
-
                     cursor.execute(
                         """
                         SELECT endereco
@@ -256,9 +262,7 @@ class Database:
                         )
                     )
 
-
                     existe = cursor.fetchone()
-
 
                     if existe is None:
 
@@ -277,7 +281,17 @@ class Database:
                                 z
                             )
 
-                            VALUES (?, ?, ?, ?, 0, NULL, 0.0, 0.0, 0.0)
+                            VALUES (
+                                ?,
+                                ?,
+                                ?,
+                                ?,
+                                0,
+                                NULL,
+                                0.0,
+                                0.0,
+                                0.0
+                            )
 
                             """,
                             (
@@ -287,7 +301,6 @@ class Database:
                                 coluna
                             )
                         )
-
 
         conexao.commit()
 
@@ -308,13 +321,11 @@ class Database:
 
         cursor = conexao.cursor()
 
-
         posicoes = [
             "RECEBIMENTO",
             "EXPEDICAO",
             "Z_TRANSPORTE"
         ]
-
 
         for nome in posicoes:
 
@@ -332,9 +343,7 @@ class Database:
                 )
             )
 
-
             existe = cursor.fetchone()
-
 
             if existe is None:
 
@@ -356,10 +365,185 @@ class Database:
                     )
                 )
 
+        conexao.commit()
+
+        conexao.close()
+
+
+    # =================================================
+    # CONFIGURAÇÕES DA EMPILHADEIRA
+    #
+    # Z_LEVANTAR
+    # Z_APOIAR
+    # =================================================
+
+    def criar_configuracoes_empilhadeira(self):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+        configuracoes = [
+            (
+                "Z_LEVANTAR",
+                10.0
+            ),
+            (
+                "Z_APOIAR",
+                10.0
+            )
+        ]
+
+        for nome, valor in configuracoes:
+
+            cursor.execute(
+                """
+                SELECT nome
+
+                FROM forklift_settings
+
+                WHERE nome = ?
+
+                """,
+                (
+                    nome,
+                )
+            )
+
+            existe = cursor.fetchone()
+
+            if existe is None:
+
+                cursor.execute(
+                    """
+                    INSERT INTO forklift_settings
+                    (
+                        nome,
+                        valor
+                    )
+
+                    VALUES (?, ?)
+
+                    """,
+                    (
+                        nome,
+                        valor
+                    )
+                )
 
         conexao.commit()
 
         conexao.close()
+
+
+    # =================================================
+    # OBTER CONFIGURAÇÃO DA EMPILHADEIRA
+    # =================================================
+
+    def obter_configuracao_empilhadeira(
+        self,
+        nome
+    ):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+        cursor.execute(
+            """
+            SELECT valor
+
+            FROM forklift_settings
+
+            WHERE nome = ?
+
+            """,
+            (
+                nome,
+            )
+        )
+
+        resultado = cursor.fetchone()
+
+        conexao.close()
+
+        if resultado is None:
+
+            return None
+
+        return float(
+            resultado[0] or 0.0
+        )
+
+
+    # =================================================
+    # OBTER TODAS AS CONFIGURAÇÕES DA EMPILHADEIRA
+    # =================================================
+
+    def listar_configuracoes_empilhadeira(self):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+        cursor.execute(
+            """
+            SELECT
+                nome,
+                valor
+
+            FROM forklift_settings
+
+            ORDER BY id
+            """
+        )
+
+        dados = cursor.fetchall()
+
+        conexao.close()
+
+        return dados
+
+
+    # =================================================
+    # SALVAR CONFIGURAÇÃO DA EMPILHADEIRA
+    # =================================================
+
+    def salvar_configuracao_empilhadeira(
+        self,
+        nome,
+        valor
+    ):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+        cursor.execute(
+            """
+            UPDATE forklift_settings
+
+            SET
+                valor = ?
+
+            WHERE nome = ?
+
+            """,
+            (
+                float(valor),
+                nome
+            )
+        )
+
+        atualizado = (
+            cursor.rowcount > 0
+        )
+
+        conexao.commit()
+
+        conexao.close()
+
+        return atualizado
 
 
     # =================================================
@@ -371,7 +555,6 @@ class Database:
         conexao = self.conectar()
 
         cursor = conexao.cursor()
-
 
         cursor.execute(
             """
@@ -391,12 +574,9 @@ class Database:
             """
         )
 
-
         dados = cursor.fetchall()
 
-
         conexao.close()
-
 
         return dados
 
@@ -414,7 +594,6 @@ class Database:
 
         cursor = conexao.cursor()
 
-
         cursor.execute(
             """
             SELECT
@@ -433,12 +612,9 @@ class Database:
             )
         )
 
-
         resultado = cursor.fetchone()
 
-
         conexao.close()
-
 
         return resultado
 
@@ -452,7 +628,6 @@ class Database:
         conexao = self.conectar()
 
         cursor = conexao.cursor()
-
 
         cursor.execute(
             """
@@ -473,12 +648,9 @@ class Database:
             """
         )
 
-
         dados = cursor.fetchall()
 
-
         conexao.close()
-
 
         return dados
 
@@ -495,7 +667,6 @@ class Database:
         conexao = self.conectar()
 
         cursor = conexao.cursor()
-
 
         cursor.execute(
             """
@@ -515,17 +686,13 @@ class Database:
             )
         )
 
-
         resultado = cursor.fetchone()
 
-
         conexao.close()
-
 
         if resultado is None:
 
             return None
-
 
         return {
             "X": float(
@@ -558,7 +725,6 @@ class Database:
 
         cursor = conexao.cursor()
 
-
         cursor.execute(
             """
             UPDATE rack_positions
@@ -582,18 +748,16 @@ class Database:
             )
         )
 
-
         atualizado = (
             cursor.rowcount > 0
         )
-
 
         conexao.commit()
 
         conexao.close()
 
-
         return atualizado
+
 
     # =================================================
     # LISTAR POSIÇÕES DA MÁQUINA
@@ -604,7 +768,6 @@ class Database:
         conexao = self.conectar()
 
         cursor = conexao.cursor()
-
 
         cursor.execute(
             """
@@ -622,12 +785,9 @@ class Database:
             """
         )
 
-
         dados = cursor.fetchall()
 
-
         conexao.close()
-
 
         return dados
 
@@ -644,7 +804,6 @@ class Database:
         conexao = self.conectar()
 
         cursor = conexao.cursor()
-
 
         cursor.execute(
             """
@@ -664,17 +823,13 @@ class Database:
             )
         )
 
-
         resultado = cursor.fetchone()
 
-
         conexao.close()
-
 
         if resultado is None:
 
             return None
-
 
         return {
             "X": float(
@@ -707,7 +862,6 @@ class Database:
 
         cursor = conexao.cursor()
 
-
         cursor.execute(
             """
             UPDATE machine_positions
@@ -731,16 +885,13 @@ class Database:
             )
         )
 
-
         atualizado = (
             cursor.rowcount > 0
         )
 
-
         conexao.commit()
 
         conexao.close()
-
 
         return atualizado
 
@@ -758,7 +909,6 @@ class Database:
         conexao = self.conectar()
 
         cursor = conexao.cursor()
-
 
         cursor.execute(
             """
@@ -779,7 +929,6 @@ class Database:
             )
         )
 
-
         conexao.commit()
 
         conexao.close()
@@ -798,7 +947,6 @@ class Database:
 
         cursor = conexao.cursor()
 
-
         cursor.execute(
             """
             UPDATE rack_positions
@@ -816,7 +964,6 @@ class Database:
                 endereco,
             )
         )
-
 
         conexao.commit()
 
@@ -838,11 +985,9 @@ class Database:
 
         cursor = conexao.cursor()
 
-
         data = datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S"
         )
-
 
         cursor.execute(
             """
@@ -865,7 +1010,6 @@ class Database:
             )
         )
 
-
         conexao.commit()
 
         conexao.close()
@@ -880,7 +1024,6 @@ class Database:
         conexao = self.conectar()
 
         cursor = conexao.cursor()
-
 
         cursor.execute(
             """
@@ -899,11 +1042,8 @@ class Database:
             """
         )
 
-
         dados = cursor.fetchall()
 
-
         conexao.close()
-
 
         return dados

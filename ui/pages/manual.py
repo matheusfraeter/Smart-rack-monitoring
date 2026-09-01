@@ -17,7 +17,10 @@ from PySide6.QtWidgets import (
     QFrame
 )
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import (
+    Qt,
+    QTimer
+)
 
 from movement import Movement
 
@@ -36,7 +39,26 @@ class ManualPage(QWidget):
 
         self.passo = 10
 
+        # =================================================
+        # CONTROLE DO GARFO
+        # =================================================
+
+        self.garfo_acionado = False
+
+        self.timer_garfo = QTimer(
+            self
+        )
+
+        self.timer_garfo.setSingleShot(
+            True
+        )
+
+        self.timer_garfo.timeout.connect(
+            self.desligar_garfo
+        )
+
         self.criar_interface()
+
 
     # =====================================================
     # INTERFACE
@@ -65,14 +87,6 @@ class ManualPage(QWidget):
 
         titulo.setObjectName(
             "title"
-        )
-
-        self.status = QLabel(
-            "MKS DLC32 desconectada"
-        )
-
-        self.status.setObjectName(
-            "offline"
         )
 
         # =================================================
@@ -311,6 +325,55 @@ class ManualPage(QWidget):
             z_box
         )
 
+        # =================================================
+        # CONTROLE DOS GARFOS
+        # =================================================
+
+        garfo_box = QFrame()
+
+        garfo_box.setObjectName(
+            "controlBox"
+        )
+
+        garfo_layout = QVBoxLayout(
+            garfo_box
+        )
+
+        garfo_titulo = QLabel(
+            "Garfos"
+        )
+
+        garfo_titulo.setAlignment(
+            Qt.AlignCenter
+        )
+
+        garfo_layout.addWidget(
+            garfo_titulo
+        )
+
+        self.bt_garfo = QPushButton(
+            "ACIONAR GARFO"
+        )
+
+        self.bt_garfo.setObjectName(
+            "actionButton"
+        )
+
+        self.bt_garfo.setMinimumSize(
+            150,
+            70
+        )
+
+        garfo_layout.addWidget(
+            self.bt_garfo
+        )
+
+        controles.addSpacing(60)
+
+        controles.addWidget(
+            garfo_box
+        )
+
         controles.addStretch()
 
         # =================================================
@@ -383,6 +446,10 @@ class ManualPage(QWidget):
             self.botao_z_menos
         )
 
+        self.bt_garfo.clicked.connect(
+            self.acionar_garfo
+        )
+
         stop.clicked.connect(
             self.stop
         )
@@ -399,10 +466,6 @@ class ManualPage(QWidget):
             titulo
         )
 
-        principal.addWidget(
-            self.status
-        )
-
         principal.addLayout(
             passo_box
         )
@@ -416,6 +479,7 @@ class ManualPage(QWidget):
         )
 
         principal.addStretch()
+
 
     # =====================================================
     # PASSO +
@@ -435,6 +499,7 @@ class ManualPage(QWidget):
                 f"PASSO ALTERADO PARA: {self.passo} mm"
             )
 
+
     # =====================================================
     # PASSO -
     # =====================================================
@@ -453,42 +518,6 @@ class ManualPage(QWidget):
                 f"PASSO ALTERADO PARA: {self.passo} mm"
             )
 
-    # =====================================================
-    # STATUS
-    # =====================================================
-
-    def atualizar_conexao(
-        self,
-        conectado
-    ):
-
-        if conectado:
-
-            self.status.setObjectName(
-                "online"
-            )
-
-            self.status.setText(
-                "MKS DLC32 conectada"
-            )
-
-        else:
-
-            self.status.setObjectName(
-                "offline"
-            )
-
-            self.status.setText(
-                "MKS DLC32 desconectada"
-            )
-
-        self.status.style().unpolish(
-            self.status
-        )
-
-        self.status.style().polish(
-            self.status
-        )
 
     # =====================================================
     # BOTÃO X+
@@ -504,6 +533,7 @@ class ManualPage(QWidget):
             self.passo
         )
 
+
     # =====================================================
     # BOTÃO X-
     # =====================================================
@@ -517,6 +547,7 @@ class ManualPage(QWidget):
         self.mover_x(
             -self.passo
         )
+
 
     # =====================================================
     # BOTÃO Y+
@@ -532,6 +563,7 @@ class ManualPage(QWidget):
             self.passo
         )
 
+
     # =====================================================
     # BOTÃO Y-
     # =====================================================
@@ -545,6 +577,7 @@ class ManualPage(QWidget):
         self.mover_y(
             -self.passo
         )
+
 
     # =====================================================
     # BOTÃO Z+
@@ -560,6 +593,7 @@ class ManualPage(QWidget):
             self.passo
         )
 
+
     # =====================================================
     # BOTÃO Z-
     # =====================================================
@@ -573,6 +607,7 @@ class ManualPage(QWidget):
         self.mover_z(
             -self.passo
         )
+
 
     # =====================================================
     # MOVIMENTO X
@@ -588,10 +623,6 @@ class ManualPage(QWidget):
 
             print(">>> MKS DESCONECTADA")
 
-            self.atualizar_conexao(
-                False
-            )
-
             return
 
         resultado = self.movimento.mover_x(
@@ -601,6 +632,7 @@ class ManualPage(QWidget):
         print(
             f">>> RESULTADO X: {resultado}"
         )
+
 
     # =====================================================
     # MOVIMENTO Y
@@ -616,10 +648,6 @@ class ManualPage(QWidget):
 
             print(">>> MKS DESCONECTADA")
 
-            self.atualizar_conexao(
-                False
-            )
-
             return
 
         resultado = self.movimento.mover_y(
@@ -629,6 +657,7 @@ class ManualPage(QWidget):
         print(
             f">>> RESULTADO Y: {resultado}"
         )
+
 
     # =====================================================
     # MOVIMENTO Z
@@ -644,10 +673,6 @@ class ManualPage(QWidget):
 
             print(">>> MKS DESCONECTADA")
 
-            self.atualizar_conexao(
-                False
-            )
-
             return
 
         resultado = self.movimento.mover_z(
@@ -657,6 +682,149 @@ class ManualPage(QWidget):
         print(
             f">>> RESULTADO Z: {resultado}"
         )
+
+
+    # =====================================================
+    # ACIONAR GARFO
+    #
+    # M3 S1000
+    # ↓
+    # HIGH POR 1 SEGUNDO
+    # ↓
+    # M3 S0
+    #
+    # QTimer mantém a interface responsiva.
+    # =====================================================
+
+    def acionar_garfo(self):
+
+        print()
+        print(">>> BOTÃO ACIONAR GARFO PRESSIONADO")
+
+        # ---------------------------------------------
+        # IMPEDIR NOVO ACIONAMENTO
+        # ---------------------------------------------
+
+        if self.garfo_acionado:
+
+            print(
+                ">>> GARFO JÁ ESTÁ EM ACIONAMENTO"
+            )
+
+            return
+
+        # ---------------------------------------------
+        # VERIFICAR CONEXÃO
+        # ---------------------------------------------
+
+        if not self.mks.conectado:
+
+            print(
+                ">>> MKS DESCONECTADA"
+            )
+
+            return
+
+        # ---------------------------------------------
+        # LIGAR TTL
+        # ---------------------------------------------
+
+        print(
+            ">>> ENVIANDO M3 S1000"
+        )
+
+        resultado = self.mks.enviar_comando(
+            "M3 S1000"
+        )
+
+        if not resultado:
+
+            print(
+                ">>> FALHA AO LIGAR GARFO"
+            )
+
+            return
+
+        # ---------------------------------------------
+        # ESTADO
+        # ---------------------------------------------
+
+        self.garfo_acionado = True
+
+        self.bt_garfo.setEnabled(
+            False
+        )
+
+        self.bt_garfo.setText(
+            "GARFO ACIONADO"
+        )
+
+        # ---------------------------------------------
+        # TIMER
+        #
+        # 1000 ms = 1 segundo de HIGH
+        # ---------------------------------------------
+
+        print(
+            ">>> TTL HIGH POR 1 SEGUNDO"
+        )
+
+        self.timer_garfo.start(
+            1000
+        )
+
+
+    # =====================================================
+    # DESLIGAR GARFO
+    # =====================================================
+
+    def desligar_garfo(self):
+
+        print()
+        print(
+            ">>> TEMPO DO GARFO FINALIZADO"
+        )
+
+        if not self.mks.conectado:
+
+            print(
+                ">>> MKS DESCONECTADA AO FINALIZAR GARFO"
+            )
+
+            self.garfo_acionado = False
+
+            self.bt_garfo.setEnabled(
+                True
+            )
+
+            self.bt_garfo.setText(
+                "ACIONAR GARFO"
+            )
+
+            return
+
+        print(
+            ">>> ENVIANDO M3 S0"
+        )
+
+        resultado = self.mks.enviar_comando(
+            "M3 S0"
+        )
+
+        print(
+            f">>> RESULTADO GARFO: {resultado}"
+        )
+
+        self.garfo_acionado = False
+
+        self.bt_garfo.setEnabled(
+            True
+        )
+
+        self.bt_garfo.setText(
+            "ACIONAR GARFO"
+        )
+
 
     # =====================================================
     # STOP
@@ -673,9 +841,40 @@ class ManualPage(QWidget):
 
             return
 
+        # ---------------------------------------------
+        # CANCELAR TIMER DO GARFO
+        # ---------------------------------------------
+
+        if self.timer_garfo.isActive():
+
+            self.timer_garfo.stop()
+
+            print(
+                ">>> TIMER DO GARFO CANCELADO"
+            )
+
+            self.mks.enviar_comando(
+                "M3 S0"
+            )
+
+            self.garfo_acionado = False
+
+            self.bt_garfo.setEnabled(
+                True
+            )
+
+            self.bt_garfo.setText(
+                "ACIONAR GARFO"
+            )
+
+        # ---------------------------------------------
+        # STOP DA MKS
+        # ---------------------------------------------
+
         self.mks.enviar_comando(
             "!"
         )
+
 
     # =====================================================
     # CONTINUAR

@@ -7,6 +7,8 @@
 =========================================================
 """
 
+import time
+
 from database import Database
 
 
@@ -20,7 +22,6 @@ class ForkliftController:
 
         self.executando = False
 
-
         # =================================================
         # VELOCIDADES
         # =================================================
@@ -28,6 +29,14 @@ class ForkliftController:
         self.velocidade_xy = 1000
 
         self.velocidade_z = 500
+
+        # =================================================
+        # CONFIRMAÇÃO DE MOVIMENTO
+        # =================================================
+
+        self.timeout_movimento = 30.0
+
+        self.intervalo_verificacao = 0.05
 
 
     # =====================================================
@@ -84,6 +93,435 @@ class ForkliftController:
 
 
     # =====================================================
+    # AGUARDAR POSIÇÃO
+    #
+    # A posição precisa ser exatamente igual
+    # ao valor solicitado.
+    # =====================================================
+
+    def aguardar_posicao(
+        self,
+        eixo,
+        destino,
+        posicao_inicial
+    ):
+
+        try:
+
+            destino = float(
+                destino
+            )
+
+            posicao_inicial = float(
+                posicao_inicial
+            )
+
+        except (
+            ValueError,
+            TypeError
+        ):
+
+            print(
+                "ERRO: posição inválida."
+            )
+
+            return False
+
+
+        inicio = time.monotonic()
+
+        movimento_detectado = False
+
+
+        print()
+        print(
+            "------------------------------------"
+        )
+
+        print(
+            f"AGUARDANDO {eixo}"
+        )
+
+        print(
+            f"Inicial: {posicao_inicial}"
+        )
+
+        print(
+            f"Destino: {destino}"
+        )
+
+        print(
+            "------------------------------------"
+        )
+
+
+        while True:
+
+            if not self.conectado():
+
+                print(
+                    "ERRO: MKS desconectada durante movimento."
+                )
+
+                return False
+
+
+            status = self.mks.ler_status()
+
+
+            atual = status.get(
+                eixo
+            )
+
+
+            estado = status.get(
+                "estado",
+                ""
+            )
+
+
+            if atual is None:
+
+                time.sleep(
+                    self.intervalo_verificacao
+                )
+
+                continue
+
+
+            try:
+
+                atual = float(
+                    atual
+                )
+
+            except (
+                ValueError,
+                TypeError
+            ):
+
+                time.sleep(
+                    self.intervalo_verificacao
+                )
+
+                continue
+
+
+            # -----------------------------------------
+            # Detectar deslocamento
+            # -----------------------------------------
+
+            if atual != posicao_inicial:
+
+                movimento_detectado = True
+
+
+            print(
+                f"{eixo}: {atual} | "
+                f"Destino: {destino} | "
+                f"Estado: {estado}"
+            )
+
+
+            # -----------------------------------------
+            # CONFIRMAÇÃO EXATA
+            # -----------------------------------------
+
+            if (
+                movimento_detectado
+                and atual == destino
+            ):
+
+                print(
+                    f"{eixo} chegou exatamente em {destino}."
+                )
+
+                return True
+
+
+            # -----------------------------------------
+            # Já estava no destino
+            # -----------------------------------------
+
+            if (
+                not movimento_detectado
+                and atual == destino
+            ):
+
+                print(
+                    f"{eixo} já estava em {destino}."
+                )
+
+                return True
+
+
+            # -----------------------------------------
+            # TIMEOUT
+            # -----------------------------------------
+
+            if (
+                time.monotonic() - inicio
+                >= self.timeout_movimento
+            ):
+
+                print()
+                print(
+                    "ERRO: timeout aguardando movimento."
+                )
+
+                print(
+                    f"Eixo: {eixo}"
+                )
+
+                print(
+                    f"Esperado: {destino}"
+                )
+
+                print(
+                    f"Atual: {atual}"
+                )
+
+                print(
+                    f"Estado: {estado}"
+                )
+
+                return False
+
+
+            time.sleep(
+                self.intervalo_verificacao
+            )
+
+
+    # =====================================================
+    # OBTER POSIÇÃO ATUAL
+    # =====================================================
+
+    def obter_posicao_atual(
+        self,
+        eixo
+    ):
+
+        status = self.mks.ler_status()
+
+        valor = status.get(
+            eixo
+        )
+
+
+        if valor is None:
+
+            print(
+                f"ERRO: não foi possível ler {eixo}."
+            )
+
+            return None
+
+
+        try:
+
+            return float(
+                valor
+            )
+
+        except (
+            ValueError,
+            TypeError
+        ):
+
+            print(
+                f"ERRO: valor atual de {eixo} inválido:",
+                valor
+            )
+
+            return None
+
+
+    # =====================================================
+    # OBTER AJUSTE Z
+    # =====================================================
+
+    def obter_ajuste_z(
+        self,
+        nome
+    ):
+
+        valor = (
+            self.db.obter_configuracao_empilhadeira(
+                nome
+            )
+        )
+
+
+        if valor is None:
+
+            print(
+                f"ERRO: configuração não encontrada: {nome}"
+            )
+
+            return None
+
+
+        try:
+
+            valor = float(
+                valor
+            )
+
+        except (
+            ValueError,
+            TypeError
+        ):
+
+            print(
+                f"ERRO: configuração inválida: {nome}"
+            )
+
+            return None
+
+
+        return valor
+
+
+    # =====================================================
+    # LEVANTAR PALLET
+    #
+    # Usa:
+    # Z atual + Z_LEVANTAR
+    # =====================================================
+
+    def levantar_pallet(self):
+
+        ajuste = self.obter_ajuste_z(
+            "Z_LEVANTAR"
+        )
+
+
+        if ajuste is None:
+
+            return False
+
+
+        z_atual = self.obter_posicao_atual(
+            "Z"
+        )
+
+
+        if z_atual is None:
+
+            return False
+
+
+        destino = (
+            z_atual + ajuste
+        )
+
+
+        print()
+        print(
+            "===================================="
+        )
+
+        print(
+            " LEVANTAR PALLET"
+        )
+
+        print(
+            "===================================="
+        )
+
+        print(
+            f"Z atual: {z_atual}"
+        )
+
+        print(
+            f"Ajuste: +{ajuste}"
+        )
+
+        print(
+            f"Z destino: {destino}"
+        )
+
+        print(
+            "===================================="
+        )
+
+
+        return self.mover_z(
+            destino
+        )
+
+
+    # =====================================================
+    # APOIAR PALLET
+    #
+    # Usa:
+    # Z atual - Z_APOIAR
+    # =====================================================
+
+    def apoiar_pallet(self):
+
+        ajuste = self.obter_ajuste_z(
+            "Z_APOIAR"
+        )
+
+
+        if ajuste is None:
+
+            return False
+
+
+        z_atual = self.obter_posicao_atual(
+            "Z"
+        )
+
+
+        if z_atual is None:
+
+            return False
+
+
+        destino = (
+            z_atual - ajuste
+        )
+
+
+        print()
+        print(
+            "===================================="
+        )
+
+        print(
+            " APOIAR PALLET"
+        )
+
+        print(
+            "===================================="
+        )
+
+        print(
+            f"Z atual: {z_atual}"
+        )
+
+        print(
+            f"Ajuste: -{ajuste}"
+        )
+
+        print(
+            f"Z destino: {destino}"
+        )
+
+        print(
+            "===================================="
+        )
+
+
+        return self.mover_z(
+            destino
+        )
+
+
+    # =====================================================
     # MOVER X
     # =====================================================
 
@@ -109,14 +547,33 @@ class ForkliftController:
             return False
 
 
+        x_atual = self.obter_posicao_atual(
+            "X"
+        )
+
+
+        if x_atual is None:
+
+            return False
+
+
         comando = (
             "G90\n"
             f"G0 X{x:g} F{self.velocidade_xy}"
         )
 
 
-        return self.enviar(
+        if not self.enviar(
             comando
+        ):
+
+            return False
+
+
+        return self.aguardar_posicao(
+            "X",
+            x,
+            x_atual
         )
 
 
@@ -146,14 +603,33 @@ class ForkliftController:
             return False
 
 
+        y_atual = self.obter_posicao_atual(
+            "Y"
+        )
+
+
+        if y_atual is None:
+
+            return False
+
+
         comando = (
             "G90\n"
             f"G0 Y{y:g} F{self.velocidade_xy}"
         )
 
 
-        return self.enviar(
+        if not self.enviar(
             comando
+        ):
+
+            return False
+
+
+        return self.aguardar_posicao(
+            "Y",
+            y,
+            y_atual
         )
 
 
@@ -183,14 +659,33 @@ class ForkliftController:
             return False
 
 
+        z_atual = self.obter_posicao_atual(
+            "Z"
+        )
+
+
+        if z_atual is None:
+
+            return False
+
+
         comando = (
             "G90\n"
             f"G0 Z{z:g} F{self.velocidade_z}"
         )
 
 
-        return self.enviar(
+        if not self.enviar(
             comando
+        ):
+
+            return False
+
+
+        return self.aguardar_posicao(
+            "Z",
+            z,
+            z_atual
         )
 
 
@@ -198,7 +693,9 @@ class ForkliftController:
     # MOVER XY
     #
     # PRIMEIRO X
+    # CONFIRMA X
     # DEPOIS Y
+    # CONFIRMA Y
     # =====================================================
 
     def mover_xy(
@@ -207,12 +704,16 @@ class ForkliftController:
         y
     ):
 
-        if not self.mover_x(x):
+        if not self.mover_x(
+            x
+        ):
 
             return False
 
 
-        if not self.mover_y(y):
+        if not self.mover_y(
+            y
+        ):
 
             return False
 
@@ -280,6 +781,10 @@ class ForkliftController:
 
     # =====================================================
     # MOVER PARA POSIÇÃO ESPECIAL
+    #
+    # X → CONFIRMA
+    # Y → CONFIRMA
+    # Z → CONFIRMA
     # =====================================================
 
     def mover_para_posicao_maquina(
@@ -335,10 +840,6 @@ class ForkliftController:
         )
 
 
-        # -----------------------------------------
-        # X
-        # -----------------------------------------
-
         if not self.mover_x(
             posicao["X"]
         ):
@@ -346,20 +847,12 @@ class ForkliftController:
             return False
 
 
-        # -----------------------------------------
-        # Y
-        # -----------------------------------------
-
         if not self.mover_y(
             posicao["Y"]
         ):
 
             return False
 
-
-        # -----------------------------------------
-        # Z
-        # -----------------------------------------
 
         if not self.mover_z(
             posicao["Z"]
@@ -403,6 +896,10 @@ class ForkliftController:
 
     # =====================================================
     # MOVER PARA CÉLULA
+    #
+    # X → CONFIRMA
+    # Y → CONFIRMA
+    # Z → CONFIRMA
     # =====================================================
 
     def mover_para_celula(
@@ -458,21 +955,19 @@ class ForkliftController:
         )
 
 
-        # -----------------------------------------
-        # XY
-        # -----------------------------------------
-
-        if not self.mover_xy(
-            coordenadas["X"],
-            coordenadas["Y"]
+        if not self.mover_x(
+            coordenadas["X"]
         ):
 
             return False
 
 
-        # -----------------------------------------
-        # Z
-        # -----------------------------------------
+        if not self.mover_y(
+            coordenadas["Y"]
+        ):
+
+            return False
+
 
         if not self.mover_z(
             coordenadas["Z"]
@@ -487,10 +982,10 @@ class ForkliftController:
     # =====================================================
     # ACIONAR GARFO
     #
-    # SEM ESPERA
+    # TEMPORÁRIO:
+    # HIGH por 1 segundo.
     #
-    # M3 S1000
-    # M3 S0
+    # O TEMPO DEFINITIVO AINDA SERÁ CALCULADO.
     # =====================================================
 
     def acionar_garfo(self):
@@ -500,15 +995,50 @@ class ForkliftController:
             return False
 
 
-        comando = (
-            "M3 S1000\n"
+        print()
+        print(
+            "===================================="
+        )
+
+        print(
+            " ACIONANDO GARFO"
+        )
+
+        print(
+            "===================================="
+        )
+
+
+        if not self.enviar(
+            "M3 S1000"
+        ):
+
+            return False
+
+
+        print(
+            "Mantendo TTL HIGH por 1 segundo..."
+        )
+
+
+        time.sleep(
+            1.0
+        )
+
+
+        if not self.enviar(
             "M3 S0"
+        ):
+
+            return False
+
+
+        print(
+            "Garfo acionado."
         )
 
 
-        return self.enviar(
-            comando
-        )
+        return True
 
 
     # =====================================================
@@ -518,13 +1048,23 @@ class ForkliftController:
     # ↓
     # GARFO
     # ↓
+    # Z SOBE
+    # ↓
+    # GARFO
+    # ↓
     # Z TRANSPORTE
     # ↓
     # CÉLULA
     # ↓
     # GARFO
     # ↓
+    # Z DESCE
+    # ↓
+    # GARFO
+    # ↓
     # Z TRANSPORTE
+    # ↓
+    # ZERO
     # =====================================================
 
     def armazenar_pallet(
@@ -575,7 +1115,7 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 1. IR PARA RECEBIMENTO
+            # 1. RECEBIMENTO
             # -----------------------------------------
 
             print(
@@ -605,11 +1145,39 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 3. SUBIR PARA TRANSPORTE
+            # 3. LEVANTAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 3 - Z TRANSPORTE"
+                "ETAPA 3 - LEVANTAR PALLET"
+            )
+
+
+            if not self.levantar_pallet():
+
+                return False
+
+
+            # -----------------------------------------
+            # 4. AJUSTAR GARFO
+            # -----------------------------------------
+
+            print(
+                "ETAPA 4 - AJUSTAR GARFO"
+            )
+
+
+            if not self.acionar_garfo():
+
+                return False
+
+
+            # -----------------------------------------
+            # 5. Z TRANSPORTE
+            # -----------------------------------------
+
+            print(
+                "ETAPA 5 - Z TRANSPORTE"
             )
 
 
@@ -619,11 +1187,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 4. IR PARA DESTINO
+            # 6. DESTINO
             # -----------------------------------------
 
             print(
-                "ETAPA 4 - DESTINO"
+                "ETAPA 6 - DESTINO"
             )
 
 
@@ -635,11 +1203,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 5. SOLTAR PALLET
+            # 7. SOLTAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 5 - SOLTAR PALLET"
+                "ETAPA 7 - SOLTAR PALLET"
             )
 
 
@@ -649,15 +1217,66 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 6. SUBIR PARA TRANSPORTE
+            # 8. APOIAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 6 - Z TRANSPORTE"
+                "ETAPA 8 - APOIAR PALLET"
+            )
+
+
+            if not self.apoiar_pallet():
+
+                return False
+
+
+            # -----------------------------------------
+            # 9. RECOLHER GARFO
+            # -----------------------------------------
+
+            print(
+                "ETAPA 9 - RECOLHER GARFO"
+            )
+
+
+            if not self.acionar_garfo():
+
+                return False
+
+
+            # -----------------------------------------
+            # 10. Z TRANSPORTE
+            # -----------------------------------------
+
+            print(
+                "ETAPA 10 - Z TRANSPORTE"
             )
 
 
             if not self.ir_para_z_transporte():
+
+                return False
+
+
+            # -----------------------------------------
+            # 11. VOLTAR PARA ZERO
+            # -----------------------------------------
+
+            print(
+                "ETAPA 11 - RETORNAR PARA ZERO"
+            )
+
+
+            if not self.mover_x(
+                0
+            ):
+
+                return False
+
+
+            if not self.mover_y(
+                0
+            ):
 
                 return False
 
@@ -686,18 +1305,6 @@ class ForkliftController:
 
     # =====================================================
     # RETIRAR PALLET
-    #
-    # CÉLULA
-    # ↓
-    # GARFO
-    # ↓
-    # Z TRANSPORTE
-    # ↓
-    # EXPEDIÇÃO
-    # ↓
-    # GARFO
-    # ↓
-    # Z TRANSPORTE
     # =====================================================
 
     def retirar_pallet(
@@ -778,11 +1385,39 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 3. SUBIR PARA TRANSPORTE
+            # 3. LEVANTAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 3 - Z TRANSPORTE"
+                "ETAPA 3 - LEVANTAR PALLET"
+            )
+
+
+            if not self.levantar_pallet():
+
+                return False
+
+
+            # -----------------------------------------
+            # 4. AJUSTAR GARFO
+            # -----------------------------------------
+
+            print(
+                "ETAPA 4 - AJUSTAR GARFO"
+            )
+
+
+            if not self.acionar_garfo():
+
+                return False
+
+
+            # -----------------------------------------
+            # 5. Z TRANSPORTE
+            # -----------------------------------------
+
+            print(
+                "ETAPA 5 - Z TRANSPORTE"
             )
 
 
@@ -792,11 +1427,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 4. IR PARA EXPEDIÇÃO
+            # 6. EXPEDIÇÃO
             # -----------------------------------------
 
             print(
-                "ETAPA 4 - EXPEDIÇÃO"
+                "ETAPA 6 - EXPEDIÇÃO"
             )
 
 
@@ -808,11 +1443,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 5. SOLTAR PALLET
+            # 7. SOLTAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 5 - SOLTAR PALLET"
+                "ETAPA 7 - SOLTAR PALLET"
             )
 
 
@@ -822,15 +1457,66 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 6. SUBIR PARA TRANSPORTE
+            # 8. APOIAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 6 - Z TRANSPORTE"
+                "ETAPA 8 - APOIAR PALLET"
+            )
+
+
+            if not self.apoiar_pallet():
+
+                return False
+
+
+            # -----------------------------------------
+            # 9. RECOLHER GARFO
+            # -----------------------------------------
+
+            print(
+                "ETAPA 9 - RECOLHER GARFO"
+            )
+
+
+            if not self.acionar_garfo():
+
+                return False
+
+
+            # -----------------------------------------
+            # 10. Z TRANSPORTE
+            # -----------------------------------------
+
+            print(
+                "ETAPA 10 - Z TRANSPORTE"
             )
 
 
             if not self.ir_para_z_transporte():
+
+                return False
+
+
+            # -----------------------------------------
+            # 11. VOLTAR PARA ZERO
+            # -----------------------------------------
+
+            print(
+                "ETAPA 11 - RETORNAR PARA ZERO"
+            )
+
+
+            if not self.mover_x(
+                0
+            ):
+
+                return False
+
+
+            if not self.mover_y(
+                0
+            ):
 
                 return False
 
