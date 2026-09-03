@@ -11,10 +11,14 @@ from PySide6.QtWidgets import (
     QFrame,
     QVBoxLayout,
     QLabel,
-    QPushButton
+    QPushButton,
+    QSizePolicy
 )
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import (
+    Qt,
+    Signal
+)
 
 
 class Sidebar(QFrame):
@@ -30,8 +34,13 @@ class Sidebar(QFrame):
             "sidebar"
         )
 
-        self.setFixedWidth(
-            230
+        # =====================================
+        # LAYOUT RESPONSIVO
+        # =====================================
+
+        self.setSizePolicy(
+            QSizePolicy.Preferred,
+            QSizePolicy.Expanding
         )
 
         self.botoes = []
@@ -45,70 +54,85 @@ class Sidebar(QFrame):
 
     def criar_interface(self):
 
-        layout = QVBoxLayout(
+        self.layout = QVBoxLayout(
             self
         )
 
-        layout.setContentsMargins(
+        self.layout.setContentsMargins(
             15,
             20,
             15,
             20
         )
 
-        layout.setSpacing(
+        self.layout.setSpacing(
             10
         )
 
+        # =====================================
+        # TÍTULO
+        # =====================================
 
-        titulo = QLabel(
+        self.titulo = QLabel(
             "SMART RACK"
         )
 
-        titulo.setObjectName(
+        self.titulo.setObjectName(
             "menuTitle"
         )
 
-        layout.addWidget(
-            titulo
+        self.titulo.setAlignment(
+            Qt.AlignCenter
         )
 
+        self.titulo.setWordWrap(
+            True
+        )
+
+        self.titulo.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Preferred
+        )
+
+        self.layout.addWidget(
+            self.titulo
+        )
 
         # =====================================
         # MENU
         # =====================================
 
         self.criar_botao(
-            layout,
+            self.layout,
             "Rack",
             0
         )
 
         self.criar_botao(
-            layout,
+            self.layout,
             "Controle Manual",
             1
         )
 
         self.criar_botao(
-            layout,
+            self.layout,
             "Histórico",
             2
         )
 
         self.criar_botao(
-            layout,
+            self.layout,
             "Coordenadas do Rack",
             3
         )
 
         self.criar_botao(
-            layout,
+            self.layout,
             "Configurações",
             4
         )
 
-        layout.addStretch()
+        self.layout.addStretch()
 
 
     # =====================================
@@ -130,12 +154,21 @@ class Sidebar(QFrame):
             "menuButton"
         )
 
+        # =====================================
+        # O BOTÃO OCUPA A LARGURA DISPONÍVEL
+        # =====================================
+
+        botao.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Preferred
+        )
+
         botao.setMinimumHeight(
-            45
+            40
         )
 
         botao.clicked.connect(
-            lambda:
+            lambda checked=False:
             self.selecionar(
                 indice
             )
@@ -177,7 +210,6 @@ class Sidebar(QFrame):
                     False
                 )
 
-
             botao.style().unpolish(
                 botao
             )
@@ -185,6 +217,8 @@ class Sidebar(QFrame):
             botao.style().polish(
                 botao
             )
+
+            botao.update()
 
 
         self.paginaSelecionada.emit(

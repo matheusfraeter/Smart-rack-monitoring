@@ -2,9 +2,18 @@ import sys
 from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import Qt
 
 from gui import SmartRackGUI
 
+# ===============================
+# Compatibilidade com tela touch
+# ===============================
+
+QApplication.setAttribute(
+    Qt.AA_SynthesizeMouseForUnhandledTouchEvents,
+    True
+)
 
 app = QApplication(sys.argv)
 

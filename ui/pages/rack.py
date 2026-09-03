@@ -10,19 +10,22 @@
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
-    QHBoxLayout,
     QLabel,
     QPushButton,
     QGridLayout,
     QFrame,
     QScrollArea,
-    QMessageBox
+    QMessageBox,
+    QSizePolicy,
+    QApplication
 )
 
 from PySide6.QtCore import (
     Qt,
     QThread,
-    Signal
+    Signal,
+    QEvent,
+    QPoint
 )
 
 from controllers.rack_controller import RackController
@@ -53,13 +56,9 @@ class RackWorker(QThread):
         super().__init__()
 
         self.controller = controller
-
         self.operacao = operacao
-
         self.endereco = endereco
-
         self.pallet = pallet
-
 
     # =====================================================
     # EXECUTAR
@@ -104,7 +103,6 @@ class RackWorker(QThread):
 
                 return
 
-
             # ---------------------------------------------
             # RETIRADA
             # ---------------------------------------------
@@ -140,12 +138,10 @@ class RackWorker(QThread):
 
                 return
 
-
             self.concluido.emit(
                 False,
                 "Operação desconhecida."
             )
-
 
         except Exception as erro:
 
@@ -218,11 +214,58 @@ class RackPage(QWidget):
         ]
 
         self.niveis = 3
-
         self.colunas = 4
+
+        # =====================================
+        # REFERÊNCIAS DAS GRADES
+        # =====================================
+
+        self.grades = []
+
+        # =====================================
+        # TAMANHO ATUAL DAS CÉLULAS
+        # =====================================
+
+        self.tamanho_celula = 90
+        self.altura_celula = 55
+
+        # =====================================
+        # CONTROLE DO TOQUE / ARRASTO
+        # =====================================
+
+        self._touch_ativo = False
+        self._touch_arrastando = False
+
+        self._touch_posicao_inicial = QPoint()
+        self._touch_posicao_anterior = QPoint()
+
+        self._touch_scroll_inicial = 0
+
+        # Distância mínima para considerar
+        # que o dedo começou a arrastar.
+        self._touch_limite_arrasto = 12
+
+        # Endereço da célula onde começou
+        # o toque/clique.
+        self._endereco_touch = None
+
+        # =====================================
+        # CRIAR INTERFACE
+        # =====================================
 
         self.criar_interface()
 
+        # =====================================
+        # EVENT FILTER GLOBAL
+        # =====================================
+
+        app = QApplication.instance()
+
+        if app is not None:
+
+            app.installEventFilter(
+                self
+            )
 
     # =================================================
     # INTERFACE
@@ -235,15 +278,17 @@ class RackPage(QWidget):
         )
 
         principal.setContentsMargins(
-            20,
-            20,
-            20,
-            20
+            10,
+            8,
+            10,
+            8
         )
 
         principal.setSpacing(
-            15
+            6
         )
+
+        self.principal_layout = principal
 
         # =====================================
         # TÍTULO
@@ -257,85 +302,65 @@ class RackPage(QWidget):
             "title"
         )
 
-        self.selecionado = QLabel(
-            "Selecione uma posição."
-        )
-
-        self.selecionado.setObjectName(
-            "rackStatus"
+        titulo.setAlignment(
+            Qt.AlignCenter
         )
 
         principal.addWidget(
             titulo
         )
 
-        principal.addWidget(
-            self.selecionado
-        )
-
-        # =====================================
-        # PAINEL DE OPERAÇÃO
-        # =====================================
-
-        self.operacao_box = QFrame()
-
-        self.operacao_box.setObjectName(
-            "controlBox"
-        )
-
-        operacao_layout = QHBoxLayout(
-            self.operacao_box
-        )
-
-        self.pallet_label = QLabel(
-            "Pallet: ---"
-        )
-
-        self.posicao_label = QLabel(
-            "Posição: ---"
-        )
-
-        operacao_layout.addWidget(
-            self.pallet_label
-        )
-
-        operacao_layout.addSpacing(
-            30
-        )
-
-        operacao_layout.addWidget(
-            self.posicao_label
-        )
-
-        operacao_layout.addStretch()
-
-        principal.addWidget(
-            self.operacao_box
-        )
-
         # =====================================
         # ÁREA COM ROLAGEM
         # =====================================
 
-        scroll = QScrollArea()
+        self.scroll = QScrollArea()
 
-        scroll.setWidgetResizable(
+        self.scroll.setWidgetResizable(
             True
         )
 
-        scroll.setFrameShape(
+        self.scroll.setFrameShape(
             QFrame.NoFrame
         )
 
-        conteudo = QWidget()
+        self.scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
+        )
+
+        self.scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarAsNeeded
+        )
+
+        # =====================================
+        # CONTEÚDO
+        # =====================================
+
+        self.conteudo = QWidget()
+
+        self.conteudo.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Preferred
+        )
 
         self.layout_racks = QVBoxLayout(
-            conteudo
+            self.conteudo
+        )
+
+        self.layout_racks.setContentsMargins(
+            5,
+            5,
+            5,
+            5
         )
 
         self.layout_racks.setSpacing(
-            30
+            10
         )
+
+        # =====================================
+        # CRIAR ESTANTES
+        # =====================================
 
         for estante in self.estantes:
 
@@ -349,12 +374,13 @@ class RackPage(QWidget):
 
         self.layout_racks.addStretch()
 
-        scroll.setWidget(
-            conteudo
+        self.scroll.setWidget(
+            self.conteudo
         )
 
         principal.addWidget(
-            scroll
+            self.scroll,
+            1
         )
 
         # =====================================
@@ -363,6 +389,345 @@ class RackPage(QWidget):
 
         self.atualizar_tela()
 
+        # =====================================
+        # AJUSTAR TAMANHOS
+        # =====================================
+
+        self.atualizar_tamanho_rack()
+
+    # =================================================
+    # ENCONTRAR ENDEREÇO SOB O TOQUE
+    # =================================================
+
+    def encontrar_endereco(
+        self,
+        ponto_global
+    ):
+
+        for endereco, botao in self.botoes.items():
+
+            if not botao.isVisible():
+
+                continue
+
+            topo_esquerdo = (
+                botao.mapToGlobal(
+                    QPoint(0, 0)
+                )
+            )
+
+            largura = botao.width()
+            altura = botao.height()
+
+            if (
+                topo_esquerdo.x()
+                <= ponto_global.x()
+                <= topo_esquerdo.x() + largura
+                and
+                topo_esquerdo.y()
+                <= ponto_global.y()
+                <= topo_esquerdo.y() + altura
+            ):
+
+                return endereco
+
+        return None
+
+    # =================================================
+    # INICIAR TOUCH
+    # =================================================
+
+    def iniciar_touch(
+        self,
+        ponto_global
+    ):
+
+        self._touch_ativo = True
+
+        self._touch_arrastando = False
+
+        self._touch_posicao_inicial = (
+            ponto_global
+        )
+
+        self._touch_posicao_anterior = (
+            ponto_global
+        )
+
+        self._touch_scroll_inicial = (
+            self.scroll.verticalScrollBar().value()
+        )
+
+        self._endereco_touch = (
+            self.encontrar_endereco(
+                ponto_global
+            )
+        )
+
+    # =================================================
+    # MOVER TOUCH
+    # =================================================
+
+    def mover_touch(
+        self,
+        ponto_global
+    ):
+
+        if not self._touch_ativo:
+
+            return False
+
+        deslocamento_y = (
+            ponto_global.y()
+            - self._touch_posicao_inicial.y()
+        )
+
+        # =====================================
+        # DETECTAR INÍCIO DO ARRASTO
+        # =====================================
+
+        if not self._touch_arrastando:
+
+            distancia = (
+                ponto_global
+                - self._touch_posicao_inicial
+            ).manhattanLength()
+
+            if distancia >= self._touch_limite_arrasto:
+
+                self._touch_arrastando = True
+
+        # =====================================
+        # ROLAR
+        # =====================================
+
+        if self._touch_arrastando:
+
+            barra = (
+                self.scroll.verticalScrollBar()
+            )
+
+            novo_valor = (
+                self._touch_scroll_inicial
+                - deslocamento_y
+            )
+
+            novo_valor = max(
+                barra.minimum(),
+                min(
+                    barra.maximum(),
+                    int(novo_valor)
+                )
+            )
+
+            barra.setValue(
+                novo_valor
+            )
+
+            self._touch_posicao_anterior = (
+                ponto_global
+            )
+
+            return True
+
+        return False
+
+    # =================================================
+    # FINALIZAR TOUCH
+    # =================================================
+
+    def finalizar_touch(self):
+
+        if not self._touch_ativo:
+
+            return False, None
+
+        foi_arrasto = (
+            self._touch_arrastando
+        )
+
+        endereco = (
+            self._endereco_touch
+        )
+
+        self._touch_ativo = False
+        self._touch_arrastando = False
+        self._endereco_touch = None
+
+        return foi_arrasto, endereco
+
+    # =================================================
+    # EVENT FILTER
+    # =================================================
+
+    def eventFilter(
+        self,
+        obj,
+        event
+    ):
+
+        # =====================================
+        # SOMENTE A PÁGINA VISÍVEL
+        # =====================================
+
+        if not self.isVisible():
+
+            return super().eventFilter(
+                obj,
+                event
+            )
+
+        # =====================================
+        # MOUSE PRESS
+        # =====================================
+
+        if (
+            event.type()
+            == QEvent.MouseButtonPress
+            and event.button()
+            == Qt.LeftButton
+        ):
+
+            if not hasattr(
+                event,
+                "globalPosition"
+            ):
+
+                return super().eventFilter(
+                    obj,
+                    event
+                )
+
+            ponto_global = (
+                event.globalPosition().toPoint()
+            )
+
+            # ---------------------------------
+            # SOMENTE QUANDO O TOQUE ESTÁ
+            # DENTRO DA ÁREA DE ROLAGEM
+            # ---------------------------------
+
+            viewport = (
+                self.scroll.viewport()
+            )
+
+            viewport_top_left = (
+                viewport.mapToGlobal(
+                    QPoint(0, 0)
+                )
+            )
+
+            viewport_rect = viewport.rect()
+
+            viewport_rect.moveTopLeft(
+                viewport_top_left
+            )
+
+            if viewport_rect.contains(
+                ponto_global
+            ):
+
+                self.iniciar_touch(
+                    ponto_global
+                )
+
+            return super().eventFilter(
+                obj,
+                event
+            )
+
+        # =====================================
+        # MOUSE MOVE
+        # =====================================
+
+        if (
+            event.type()
+            == QEvent.MouseMove
+            and self._touch_ativo
+        ):
+
+            if not hasattr(
+                event,
+                "globalPosition"
+            ):
+
+                return super().eventFilter(
+                    obj,
+                    event
+                )
+
+            ponto_global = (
+                event.globalPosition().toPoint()
+            )
+
+            if self.mover_touch(
+                ponto_global
+            ):
+
+                event.accept()
+
+                return True
+
+            return super().eventFilter(
+                obj,
+                event
+            )
+
+        # =====================================
+        # MOUSE RELEASE
+        # =====================================
+
+        if (
+            event.type()
+            == QEvent.MouseButtonRelease
+            and event.button()
+            == Qt.LeftButton
+        ):
+
+            if not self._touch_ativo:
+
+                return super().eventFilter(
+                    obj,
+                    event
+                )
+
+            foi_arrasto, endereco = (
+                self.finalizar_touch()
+            )
+
+            # ---------------------------------
+            # FOI ARRASTO
+            # ---------------------------------
+
+            if foi_arrasto:
+
+                event.accept()
+
+                return True
+
+            # ---------------------------------
+            # FOI TOQUE RÁPIDO
+            # ---------------------------------
+
+            if endereco is not None:
+
+                self.selecionar(
+                    endereco
+                )
+
+                event.accept()
+
+                return True
+
+            return super().eventFilter(
+                obj,
+                event
+            )
+
+        return super().eventFilter(
+            obj,
+            event
+        )
 
     # =================================================
     # CRIAR ESTANTE
@@ -383,6 +748,17 @@ class RackPage(QWidget):
             frame
         )
 
+        layout.setContentsMargins(
+            6,
+            6,
+            6,
+            6
+        )
+
+        layout.setSpacing(
+            5
+        )
+
         titulo = QLabel(
             f"ESTANTE {estante}"
         )
@@ -391,14 +767,22 @@ class RackPage(QWidget):
             "rackTitle"
         )
 
+        titulo.setAlignment(
+            Qt.AlignCenter
+        )
+
         layout.addWidget(
             titulo
         )
 
         grade = QGridLayout()
 
-        grade.setSpacing(
-            10
+        grade.setHorizontalSpacing(
+            6
+        )
+
+        grade.setVerticalSpacing(
+            6
         )
 
         # =====================================
@@ -422,17 +806,22 @@ class RackPage(QWidget):
                 Qt.AlignCenter
             )
 
+            label.setSizePolicy(
+                QSizePolicy.Fixed,
+                QSizePolicy.Fixed
+            )
+
             grade.addWidget(
                 label,
                 0,
                 coluna
             )
 
-        linha = 1
+        # =====================================
+        # NÍVEIS
+        # =====================================
 
-        # =====================================
-        # CÉLULAS
-        # =====================================
+        linha = 1
 
         for nivel in range(
             self.niveis,
@@ -448,11 +837,24 @@ class RackPage(QWidget):
                 "rackLabel"
             )
 
+            nivel_label.setAlignment(
+                Qt.AlignCenter
+            )
+
+            nivel_label.setSizePolicy(
+                QSizePolicy.Fixed,
+                QSizePolicy.Fixed
+            )
+
             grade.addWidget(
                 nivel_label,
                 linha,
                 0
             )
+
+            # =================================
+            # CÉLULAS
+            # =================================
 
             for coluna in range(
                 1,
@@ -467,16 +869,23 @@ class RackPage(QWidget):
 
                 botao = QPushButton()
 
-                botao.setMinimumSize(
-                    90,
-                    70
+                botao.setObjectName(
+                    "rackButton"
                 )
 
-                botao.clicked.connect(
-                    lambda checked=False,
-                    e=endereco:
-                    self.selecionar(e)
+                botao.setSizePolicy(
+                    QSizePolicy.Fixed,
+                    QSizePolicy.Fixed
                 )
+
+                # IMPORTANTE:
+                # O clique não é conectado diretamente
+                # ao QPushButton.
+                #
+                # O eventFilter global identifica:
+                #
+                # toque curto -> selecionar
+                # arrasto      -> rolagem
 
                 self.botoes[endereco] = botao
 
@@ -488,12 +897,210 @@ class RackPage(QWidget):
 
             linha += 1
 
+        # =====================================
+        # EXPANSÃO DAS COLUNAS
+        # =====================================
+
+        grade.setColumnStretch(
+            0,
+            0
+        )
+
+        for coluna in range(
+            1,
+            self.colunas + 1
+        ):
+
+            grade.setColumnStretch(
+                coluna,
+                0
+            )
+
         layout.addLayout(
+            grade
+        )
+
+        self.grades.append(
             grade
         )
 
         return frame
 
+    # =================================================
+    # REDIMENSIONAMENTO
+    # =================================================
+
+    def resizeEvent(
+        self,
+        event
+    ):
+
+        super().resizeEvent(
+            event
+        )
+
+        self.atualizar_tamanho_rack()
+
+    # =================================================
+    # CALCULAR TAMANHO DO RACK
+    # =================================================
+
+    def atualizar_tamanho_rack(self):
+
+        if not hasattr(
+            self,
+            "scroll"
+        ):
+
+            return
+
+        largura_disponivel = (
+            self.scroll.viewport().width()
+        )
+
+        if largura_disponivel <= 0:
+
+            return
+
+        # =====================================
+        # ESPAÇOS
+        # =====================================
+
+        margem = 30
+
+        largura_util = (
+            largura_disponivel
+            - margem
+        )
+
+        # =====================================
+        # LARGURA DO RÓTULO "NÍVEL"
+        # =====================================
+
+        largura_nivel = 65
+
+        # =====================================
+        # ESPAÇAMENTOS
+        # =====================================
+
+        espacamento = 6
+
+        total_espacamento = (
+            espacamento * 4
+        )
+
+        # =====================================
+        # CALCULAR LARGURA DAS CÉLULAS
+        # =====================================
+
+        largura_disponivel_celulas = (
+            largura_util
+            - largura_nivel
+            - total_espacamento
+        )
+
+        tamanho = int(
+            largura_disponivel_celulas
+            / self.colunas
+        )
+
+        # =====================================
+        # LIMITES DA LARGURA
+        # =====================================
+
+        tamanho = max(
+            48,
+            min(
+                110,
+                tamanho
+            )
+        )
+
+        # =====================================
+        # ALTURA
+        # =====================================
+
+        altura = int(
+            tamanho * 0.62
+        )
+
+        altura = max(
+            34,
+            min(
+                68,
+                altura
+            )
+        )
+
+        self.tamanho_celula = tamanho
+        self.altura_celula = altura
+
+        # =====================================
+        # APLICAR NAS CÉLULAS
+        # =====================================
+
+        for botao in self.botoes.values():
+
+            botao.setFixedSize(
+                tamanho,
+                altura
+            )
+
+        # =====================================
+        # TAMANHO DOS CABEÇALHOS
+        # =====================================
+
+        for grade in self.grades:
+
+            # ---------------------------------
+            # LABELS DAS COLUNAS
+            # ---------------------------------
+
+            for coluna in range(
+                1,
+                self.colunas + 1
+            ):
+
+                item = grade.itemAtPosition(
+                    0,
+                    coluna
+                )
+
+                if item is not None:
+
+                    widget = item.widget()
+
+                    if widget is not None:
+
+                        widget.setFixedSize(
+                            tamanho,
+                            24
+                        )
+
+            # ---------------------------------
+            # LABELS DOS NÍVEIS
+            # ---------------------------------
+
+            for linha in range(
+                1,
+                self.niveis + 1
+            ):
+
+                item = grade.itemAtPosition(
+                    linha,
+                    0
+                )
+
+                if item is not None:
+
+                    widget = item.widget()
+
+                    if widget is not None:
+
+                        widget.setFixedSize(
+                            largura_nivel,
+                            altura
+                        )
 
     # =================================================
     # SELECIONAR POSIÇÃO
@@ -504,11 +1111,6 @@ class RackPage(QWidget):
         endereco
     ):
 
-        # =====================================
-        # NÃO PERMITIR NOVA OPERAÇÃO
-        # DURANTE UMA OPERAÇÃO AUTOMÁTICA
-        # =====================================
-
         if self.operacao_em_andamento:
 
             QMessageBox.information(
@@ -518,7 +1120,6 @@ class RackPage(QWidget):
             )
 
             return
-
 
         dados = self.controller.buscar_posicao(
             endereco
@@ -539,26 +1140,10 @@ class RackPage(QWidget):
         pallet = dados[2]
 
         # =====================================
-        # MOSTRAR SELEÇÃO
-        # =====================================
-
-        self.posicao_label.setText(
-            f"Posição: {endereco}"
-        )
-
-        # =====================================
         # POSIÇÃO OCUPADA
         # =====================================
 
         if ocupado:
-
-            self.pallet_label.setText(
-                f"Pallet: {pallet}"
-            )
-
-            self.selecionado.setText(
-                f"Pallet {pallet} localizado em {endereco}."
-            )
 
             self.confirmar_retirada(
                 endereco,
@@ -568,21 +1153,12 @@ class RackPage(QWidget):
             return
 
         # =====================================
-        # POSIÇÃO VAZIA
+        # POSIÇÃO LIVRE
         # =====================================
-
-        self.pallet_label.setText(
-            "Pallet: ---"
-        )
-
-        self.selecionado.setText(
-            f"Posição {endereco} disponível."
-        )
 
         self.confirmar_armazenamento(
             endereco
         )
-
 
     # =================================================
     # CONFIRMAR ARMAZENAMENTO
@@ -624,16 +1200,11 @@ class RackPage(QWidget):
 
             return
 
-        # =====================================
-        # INICIAR OPERAÇÃO
-        # =====================================
-
         self.iniciar_operacao(
             operacao="armazenar",
             endereco=endereco,
             pallet=codigo
         )
-
 
     # =================================================
     # CONFIRMAR RETIRADA
@@ -663,16 +1234,11 @@ class RackPage(QWidget):
 
             return
 
-        # =====================================
-        # INICIAR OPERAÇÃO
-        # =====================================
-
         self.iniciar_operacao(
             operacao="retirar",
             endereco=endereco,
             pallet=pallet
         )
-
 
     # =================================================
     # INICIAR OPERAÇÃO
@@ -701,35 +1267,9 @@ class RackPage(QWidget):
 
         self.operacao_em_andamento = True
 
-        # =====================================
-        # DESABILITAR RACK
-        # =====================================
-
         self.definir_rack_habilitado(
             False
         )
-
-        # =====================================
-        # MENSAGEM
-        # =====================================
-
-        if operacao == "armazenar":
-
-            self.selecionado.setText(
-                f"Armazenando pallet {pallet} "
-                f"em {endereco}..."
-            )
-
-        else:
-
-            self.selecionado.setText(
-                f"Retirando pallet {pallet} "
-                f"de {endereco}..."
-            )
-
-        # =====================================
-        # CRIAR WORKER
-        # =====================================
 
         self.worker = RackWorker(
             self.controller,
@@ -748,7 +1288,6 @@ class RackPage(QWidget):
 
         self.worker.start()
 
-
     # =================================================
     # OPERAÇÃO CONCLUÍDA
     # =================================================
@@ -759,22 +1298,19 @@ class RackPage(QWidget):
         mensagem
     ):
 
-        self.selecionado.setText(
+        print(
             mensagem
         )
 
-        # -------------------------------------
-        # ATUALIZAR VISUAL
-        # -------------------------------------
-
         self.atualizar_tela()
-
 
     # =================================================
     # WORKER FINALIZADO
     # =================================================
 
-    def worker_finalizado(self):
+    def worker_finalizado(
+        self
+    ):
 
         self.operacao_em_andamento = False
 
@@ -786,9 +1322,8 @@ class RackPage(QWidget):
 
         self.atualizar_tela()
 
-
     # =================================================
-    # HABILITAR / DESABILITAR RACK
+    # HABILITAR / DESABILITAR
     # =================================================
 
     def definir_rack_habilitado(
@@ -801,7 +1336,6 @@ class RackPage(QWidget):
             botao.setEnabled(
                 habilitado
             )
-
 
     # =================================================
     # ATUALIZAR TELA
@@ -819,7 +1353,6 @@ class RackPage(QWidget):
                     self.botoes[endereco],
                     ocupado
                 )
-
 
     # =================================================
     # ATUALIZAR COR DOS BOTÕES
@@ -884,7 +1417,6 @@ class RackPage(QWidget):
 
                 }
             """)
-
 
     # =================================================
     # FINALIZAÇÃO DA PÁGINA

@@ -3,7 +3,7 @@
  Smart Rack Monitoring
 ---------------------------------------------------------
  Arquivo.....: coordinates.py
- Descrição...: Configuração das coordenadas do Rack
+ Descrição...: Configuração de coordenadas
 =========================================================
 """
 
@@ -16,20 +16,30 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QHeaderView,
-    QMessageBox,
-    QDoubleSpinBox,
+    QAbstractItemView,
+    QScrollArea,
     QDialog,
     QLineEdit,
-    QFrame,
-    QFormLayout,
-    QScrollArea,
-    QSizePolicy
+    QDialogButtonBox,
+    QMessageBox,
+    QDoubleSpinBox,
+    QApplication,
+    QStyle,
+    QStyleOptionSpinBox,
 )
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import (
+    Qt,
+    QEvent,
+    QPoint,
+)
 
 from database import Database
 
+
+# =========================================================
+# DIÁLOGO DE SENHA
+# =========================================================
 
 class PasswordDialog(QDialog):
 
@@ -37,109 +47,41 @@ class PasswordDialog(QDialog):
 
         super().__init__(parent)
 
-        self.setWindowTitle(
-            "Acesso Restrito"
-        )
+        self.setWindowTitle("Acesso")
+        self.setModal(True)
+        self.setMinimumWidth(300)
 
-        self.setModal(
-            True
-        )
-
-        self.setMinimumWidth(
-            350
-        )
-
-        self.criar_interface()
-
-
-    # =====================================
-    # INTERFACE DO DIÁLOGO
-    # =====================================
-
-    def criar_interface(self):
-
-        layout = QVBoxLayout(
-            self
-        )
-
-        layout.setContentsMargins(
-            25,
-            25,
-            25,
-            25
-        )
-
-        layout.setSpacing(
-            15
-        )
+        layout = QVBoxLayout(self)
 
         titulo = QLabel(
-            "ACESSO RESTRITO"
+            "Digite a senha para desbloquear:"
         )
 
         titulo.setAlignment(
             Qt.AlignCenter
         )
 
-        titulo.setObjectName(
-            "title"
-        )
+        self.campo_senha = QLineEdit()
 
-        mensagem = QLabel(
-            "Digite a senha para acessar\n"
-            "as coordenadas do Rack."
-        )
-
-        mensagem.setAlignment(
-            Qt.AlignCenter
-        )
-
-        self.senha = QLineEdit()
-
-        self.senha.setEchoMode(
+        self.campo_senha.setEchoMode(
             QLineEdit.Password
         )
 
-        self.senha.setPlaceholderText(
-            "Senha"
+        self.campo_senha.setAlignment(
+            Qt.AlignCenter
         )
 
-        self.senha.setMinimumHeight(
-            40
+        botoes = QDialogButtonBox(
+            QDialogButtonBox.Ok |
+            QDialogButtonBox.Cancel
         )
 
-        botoes = QHBoxLayout()
-
-        cancelar = QPushButton(
-            "Cancelar"
+        botoes.accepted.connect(
+            self.accept
         )
 
-        entrar = QPushButton(
-            "Entrar"
-        )
-
-        cancelar.setObjectName(
-            "actionButton"
-        )
-
-        entrar.setObjectName(
-            "actionButton"
-        )
-
-        cancelar.setMinimumHeight(
-            40
-        )
-
-        entrar.setMinimumHeight(
-            40
-        )
-
-        botoes.addWidget(
-            cancelar
-        )
-
-        botoes.addWidget(
-            entrar
+        botoes.rejected.connect(
+            self.reject
         )
 
         layout.addWidget(
@@ -147,46 +89,27 @@ class PasswordDialog(QDialog):
         )
 
         layout.addWidget(
-            mensagem
+            self.campo_senha
         )
 
         layout.addWidget(
-            self.senha
-        )
-
-        layout.addLayout(
             botoes
         )
 
-        cancelar.clicked.connect(
-            self.reject
-        )
-
-        entrar.clicked.connect(
+        self.campo_senha.returnPressed.connect(
             self.accept
         )
 
-        self.senha.returnPressed.connect(
-            self.accept
-        )
+    def senha(self):
 
-        self.senha.setFocus()
+        return self.campo_senha.text()
 
 
-    # =====================================
-    # OBTER SENHA
-    # =====================================
-
-    def obter_senha(self):
-
-        return self.senha.text()
-
+# =========================================================
+# PÁGINA DE COORDENADAS
+# =========================================================
 
 class CoordinatesPage(QWidget):
-
-    # =================================================
-    # CONFIGURAÇÃO
-    # =================================================
 
     SENHA = "1234"
 
@@ -196,7 +119,6 @@ class CoordinatesPage(QWidget):
         "Z_TRANSPORTE"
     ]
 
-
     def __init__(self):
 
         super().__init__()
@@ -205,100 +127,145 @@ class CoordinatesPage(QWidget):
 
         self.acesso_liberado = False
 
-        self.campos = {}
+        self.campos = []
+        self.campos_maquina = []
 
-        self.campos_maquina = {}
+        # =====================================================
+        # ESTADO DO GESTO
+        # =====================================================
+
+        self._touch_ativo = False
+        self._touch_arrastando = False
+
+        self._touch_posicao_inicial = QPoint()
+        self._touch_posicao_anterior = QPoint()
+
+        self._touch_limite_arrasto = 12
+
+        # =====================================================
+        # ESTADO ESPECÍFICO DOS SPINBOX
+        # =====================================================
+
+        self._spinbox_pendente = None
+        self._spinbox_direcao = 0
 
         self.criar_interface()
 
+        # =====================================================
+        # FILTRO GLOBAL
+        # =====================================================
 
-    # =================================================
-    # INTERFACE
-    # =================================================
+        app = QApplication.instance()
+
+        if app is not None:
+
+            app.installEventFilter(
+                self
+            )
+
+    # =========================================================
+    # CRIAR INTERFACE
+    # =========================================================
 
     def criar_interface(self):
 
-        layout_externo = QVBoxLayout(
+        layout_principal = QVBoxLayout(
             self
         )
 
-        layout_externo.setContentsMargins(
-            0,
-            0,
-            0,
-            0
+        layout_principal.setContentsMargins(
+            10,
+            10,
+            10,
+            10
         )
 
-        # =================================================
-        # SCROLL ÚNICO DA ABA
-        # =================================================
+        layout_principal.setSpacing(
+            10
+        )
 
-        scroll = QScrollArea()
+        # =====================================================
+        # SCROLL
+        # =====================================================
 
-        scroll.setWidgetResizable(
+        self.scroll = QScrollArea()
+
+        self.scroll.setWidgetResizable(
             True
         )
 
-        scroll.setFrameShape(
-            QFrame.NoFrame
+        self.scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
         )
 
-        # =================================================
-        # CONTEÚDO DA ABA
-        # =================================================
-
-        conteudo = QWidget()
-
-        self.layout_principal = QVBoxLayout(
-            conteudo
+        self.scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarAsNeeded
         )
 
-        self.layout_principal.setContentsMargins(
-            20,
-            20,
-            20,
-            20
+        layout_principal.addWidget(
+            self.scroll
         )
 
-        self.layout_principal.setSpacing(
-            15
+        # =====================================================
+        # CONTEÚDO
+        # =====================================================
+
+        self.conteudo = QWidget()
+
+        self.layout_conteudo = QVBoxLayout(
+            self.conteudo
         )
 
-        # =============================================
+        self.layout_conteudo.setContentsMargins(
+            5,
+            5,
+            5,
+            5
+        )
+
+        self.layout_conteudo.setSpacing(
+            12
+        )
+
+        self.scroll.setWidget(
+            self.conteudo
+        )
+
+        # =====================================================
         # TÍTULO
-        # =============================================
+        # =====================================================
 
         titulo = QLabel(
-            "COORDENADAS DO RACK"
+            "COORDENADAS"
+        )
+
+        titulo.setAlignment(
+            Qt.AlignCenter
         )
 
         titulo.setObjectName(
-            "title"
+            "tituloPagina"
         )
 
-        self.layout_principal.addWidget(
+        self.layout_conteudo.addWidget(
             titulo
         )
 
-        # =============================================
-        # STATUS
-        # =============================================
+        # =====================================================
+        # COORDENADAS DO RACK
+        # =====================================================
 
-        self.status = QLabel(
-            "Acesso restrito."
+        titulo_rack = QLabel(
+            "COORDENADAS DO RACK"
         )
 
-        self.status.setObjectName(
-            "offline"
+        titulo_rack.setAlignment(
+            Qt.AlignCenter
         )
 
-        self.layout_principal.addWidget(
-            self.status
+        self.layout_conteudo.addWidget(
+            titulo_rack
         )
-
-        # =============================================
-        # TABELA DO RACK
-        # =============================================
 
         self.tabela = QTableWidget()
 
@@ -315,17 +282,13 @@ class CoordinatesPage(QWidget):
             ]
         )
 
-        self.tabela.setAlternatingRowColors(
-            True
+        self.tabela.setEditTriggers(
+            QAbstractItemView.NoEditTriggers
         )
 
-        self.tabela.verticalHeader().setVisible(
-            False
+        self.tabela.setSelectionMode(
+            QAbstractItemView.NoSelection
         )
-
-        # ---------------------------------------------
-        # REMOVER ROLAGEM INTERNA
-        # ---------------------------------------------
 
         self.tabela.setVerticalScrollBarPolicy(
             Qt.ScrollBarAlwaysOff
@@ -335,61 +298,31 @@ class CoordinatesPage(QWidget):
             Qt.ScrollBarAlwaysOff
         )
 
-        self.tabela.setSizePolicy(
-            QSizePolicy.Expanding,
-            QSizePolicy.Fixed
-        )
+        for coluna in range(4):
 
-        cabecalho = self.tabela.horizontalHeader()
+            self.tabela.horizontalHeader().setSectionResizeMode(
+                coluna,
+                QHeaderView.Stretch
+            )
 
-        cabecalho.setSectionResizeMode(
-            0,
-            QHeaderView.ResizeToContents
-        )
-
-        cabecalho.setSectionResizeMode(
-            1,
-            QHeaderView.Stretch
-        )
-
-        cabecalho.setSectionResizeMode(
-            2,
-            QHeaderView.Stretch
-        )
-
-        cabecalho.setSectionResizeMode(
-            3,
-            QHeaderView.Stretch
-        )
-
-        self.layout_principal.addWidget(
+        self.layout_conteudo.addWidget(
             self.tabela
         )
 
-        # =============================================
+        # =====================================================
         # POSIÇÕES DA EMPILHADEIRA
-        # =============================================
+        # =====================================================
 
-        maquina_box = QFrame()
-
-        maquina_box.setObjectName(
-            "controlBox"
-        )
-
-        maquina_layout = QVBoxLayout(
-            maquina_box
-        )
-
-        maquina_titulo = QLabel(
+        titulo_maquina = QLabel(
             "POSIÇÕES DA EMPILHADEIRA"
         )
 
-        maquina_titulo.setObjectName(
-            "rackTitle"
+        titulo_maquina.setAlignment(
+            Qt.AlignCenter
         )
 
-        maquina_layout.addWidget(
-            maquina_titulo
+        self.layout_conteudo.addWidget(
+            titulo_maquina
         )
 
         self.tabela_maquina = QTableWidget()
@@ -411,17 +344,13 @@ class CoordinatesPage(QWidget):
             len(self.POSICOES_MAQUINA)
         )
 
-        self.tabela_maquina.setAlternatingRowColors(
-            True
+        self.tabela_maquina.setEditTriggers(
+            QAbstractItemView.NoEditTriggers
         )
 
-        self.tabela_maquina.verticalHeader().setVisible(
-            False
+        self.tabela_maquina.setSelectionMode(
+            QAbstractItemView.NoSelection
         )
-
-        # ---------------------------------------------
-        # REMOVER ROLAGEM INTERNA
-        # ---------------------------------------------
 
         self.tabela_maquina.setVerticalScrollBarPolicy(
             Qt.ScrollBarAlwaysOff
@@ -431,179 +360,153 @@ class CoordinatesPage(QWidget):
             Qt.ScrollBarAlwaysOff
         )
 
-        self.tabela_maquina.setSizePolicy(
-            QSizePolicy.Expanding,
-            QSizePolicy.Fixed
-        )
+        for coluna in range(4):
 
-        cabecalho_maquina = (
-            self.tabela_maquina.horizontalHeader()
-        )
+            self.tabela_maquina.horizontalHeader().setSectionResizeMode(
+                coluna,
+                QHeaderView.Stretch
+            )
 
-        cabecalho_maquina.setSectionResizeMode(
-            0,
-            QHeaderView.ResizeToContents
-        )
+        for linha, nome in enumerate(
+            self.POSICOES_MAQUINA
+        ):
 
-        cabecalho_maquina.setSectionResizeMode(
-            1,
-            QHeaderView.Stretch
-        )
+            item = QTableWidgetItem(
+                nome
+            )
 
-        cabecalho_maquina.setSectionResizeMode(
-            2,
-            QHeaderView.Stretch
-        )
+            item.setTextAlignment(
+                Qt.AlignCenter
+            )
 
-        cabecalho_maquina.setSectionResizeMode(
-            3,
-            QHeaderView.Stretch
-        )
+            self.tabela_maquina.setItem(
+                linha,
+                0,
+                item
+            )
 
-        maquina_layout.addWidget(
+        self.layout_conteudo.addWidget(
             self.tabela_maquina
         )
 
-        self.layout_principal.addWidget(
-            maquina_box
-        )
-
-        # =============================================
+        # =====================================================
         # AJUSTES DA EMPILHADEIRA
-        # =============================================
+        # =====================================================
 
-        ajuste_box = QFrame()
-
-        ajuste_box.setObjectName(
-            "controlBox"
-        )
-
-        ajuste_layout = QVBoxLayout(
-            ajuste_box
-        )
-
-        ajuste_titulo = QLabel(
+        titulo_ajustes = QLabel(
             "AJUSTES DA EMPILHADEIRA"
         )
 
-        ajuste_titulo.setObjectName(
-            "rackTitle"
+        titulo_ajustes.setAlignment(
+            Qt.AlignCenter
         )
 
-        ajuste_layout.addWidget(
-            ajuste_titulo
+        self.layout_conteudo.addWidget(
+            titulo_ajustes
         )
 
-        formulario = QFormLayout()
+        ajustes = QHBoxLayout()
 
-        formulario.setSpacing(
+        ajustes.setSpacing(
             10
         )
 
-        # ---------------------------------------------
+        # =====================================================
         # Z LEVANTAR
-        # ---------------------------------------------
+        # =====================================================
 
-        self.campo_z_levantar = QDoubleSpinBox()
+        bloco_levantar = QVBoxLayout()
 
-        self.campo_z_levantar.setDecimals(
-            3
+        label_levantar = QLabel(
+            "Z LEVANTAR"
         )
 
-        self.campo_z_levantar.setRange(
-            0.0,
-            99999.999
+        label_levantar.setAlignment(
+            Qt.AlignCenter
         )
 
-        self.campo_z_levantar.setSingleStep(
-            1.0
+        self.campo_z_levantar = self.criar_campo(
+            10.0
         )
 
         self.campo_z_levantar.setSuffix(
             " mm"
         )
 
-        self.campo_z_levantar.setAlignment(
-            Qt.AlignCenter
+        bloco_levantar.addWidget(
+            label_levantar
         )
 
-        formulario.addRow(
-            "Subir para levantar pallet:",
+        bloco_levantar.addWidget(
             self.campo_z_levantar
         )
 
-        # ---------------------------------------------
+        # =====================================================
         # Z APOIAR
-        # ---------------------------------------------
+        # =====================================================
 
-        self.campo_z_apoiar = QDoubleSpinBox()
+        bloco_apoiar = QVBoxLayout()
 
-        self.campo_z_apoiar.setDecimals(
-            3
+        label_apoiar = QLabel(
+            "Z APOIAR"
         )
 
-        self.campo_z_apoiar.setRange(
-            0.0,
-            99999.999
+        label_apoiar.setAlignment(
+            Qt.AlignCenter
         )
 
-        self.campo_z_apoiar.setSingleStep(
-            1.0
+        self.campo_z_apoiar = self.criar_campo(
+            10.0
         )
 
         self.campo_z_apoiar.setSuffix(
             " mm"
         )
 
-        self.campo_z_apoiar.setAlignment(
-            Qt.AlignCenter
+        bloco_apoiar.addWidget(
+            label_apoiar
         )
 
-        formulario.addRow(
-            "Descer para apoiar pallet:",
+        bloco_apoiar.addWidget(
             self.campo_z_apoiar
         )
 
-        ajuste_layout.addLayout(
-            formulario
+        ajustes.addLayout(
+            bloco_levantar
         )
 
-        self.layout_principal.addWidget(
-            ajuste_box
+        ajustes.addLayout(
+            bloco_apoiar
         )
 
-        # =============================================
+        self.layout_conteudo.addLayout(
+            ajustes
+        )
+
+        # =====================================================
         # BOTÕES
-        # =============================================
+        # =====================================================
 
         botoes = QHBoxLayout()
 
-        self.bt_entrar = QPushButton(
-            "Desbloquear"
+        botoes.setSpacing(
+            8
+        )
+
+        self.bt_desbloquear = QPushButton(
+            "DESBLOQUEAR"
         )
 
         self.bt_salvar = QPushButton(
-            "Salvar Coordenadas"
+            "SALVAR COORDENADAS"
         )
 
         self.bt_atualizar = QPushButton(
-            "Atualizar"
-        )
-
-        self.bt_entrar.setObjectName(
-            "actionButton"
-        )
-
-        self.bt_salvar.setObjectName(
-            "actionButton"
-        )
-
-        self.bt_atualizar.setObjectName(
-            "actionButton"
+            "ATUALIZAR"
         )
 
         botoes.addWidget(
-            self.bt_entrar
+            self.bt_desbloquear
         )
 
         botoes.addWidget(
@@ -614,30 +517,16 @@ class CoordinatesPage(QWidget):
             self.bt_atualizar
         )
 
-        self.layout_principal.addLayout(
+        self.layout_conteudo.addLayout(
             botoes
         )
 
-        self.layout_principal.addStretch()
+        # =====================================================
+        # CONEXÕES
+        # =====================================================
 
-        # =============================================
-        # DEFINIR CONTEÚDO DO SCROLL
-        # =============================================
-
-        scroll.setWidget(
-            conteudo
-        )
-
-        layout_externo.addWidget(
-            scroll
-        )
-
-        # =============================================
-        # EVENTOS
-        # =============================================
-
-        self.bt_entrar.clicked.connect(
-            self.solicitar_senha
+        self.bt_desbloquear.clicked.connect(
+            self.alternar_bloqueio
         )
 
         self.bt_salvar.clicked.connect(
@@ -648,17 +537,704 @@ class CoordinatesPage(QWidget):
             self.carregar_coordenadas
         )
 
-        # =============================================
+        # =====================================================
         # ESTADO INICIAL
-        # =============================================
+        # =====================================================
 
-        self.tabela.setEnabled(
-            False
+        self.carregar_coordenadas()
+
+        self.bloquear()
+
+    # =========================================================
+    # CRIAR QDOUBLESPINBOX
+    # =========================================================
+
+    def criar_campo(
+        self,
+        valor=0.0
+    ):
+
+        campo = QDoubleSpinBox()
+
+        campo.setRange(
+            -99999.999,
+            99999.999
         )
 
-        self.tabela_maquina.setEnabled(
-            False
+        campo.setDecimals(
+            3
         )
+
+        campo.setSingleStep(
+            1.0
+        )
+
+        campo.setAlignment(
+            Qt.AlignCenter
+        )
+
+        campo.setValue(
+            float(valor)
+        )
+
+        return campo
+
+    # =========================================================
+    # DETECTAR QDOUBLESPINBOX
+    # =========================================================
+
+    def encontrar_spinbox(
+        self,
+        obj
+    ):
+
+        atual = obj
+
+        while atual is not None:
+
+            if isinstance(
+                atual,
+                QDoubleSpinBox
+            ):
+
+                return atual
+
+            if hasattr(
+                atual,
+                "parentWidget"
+            ):
+
+                atual = atual.parentWidget()
+
+            else:
+
+                break
+
+        return None
+
+    # =========================================================
+    # DETECTAR SETA DO SPINBOX
+    # =========================================================
+
+    def detectar_seta_spinbox(
+        self,
+        obj,
+        ponto_global
+    ):
+
+        spinbox = self.encontrar_spinbox(
+            obj
+        )
+
+        if spinbox is None:
+
+            return None, 0
+
+        ponto_local = spinbox.mapFromGlobal(
+            ponto_global
+        )
+
+        opcao = QStyleOptionSpinBox()
+
+        opcao.initFrom(
+            spinbox
+        )
+
+        opcao.rect = spinbox.rect()
+
+        subcontrole = spinbox.style().hitTestComplexControl(
+            QStyle.CC_SpinBox,
+            opcao,
+            ponto_local,
+            spinbox
+        )
+
+        if subcontrole == QStyle.SC_SpinBoxUp:
+
+            return spinbox, 1
+
+        if subcontrole == QStyle.SC_SpinBoxDown:
+
+            return spinbox, -1
+
+        return None, 0
+
+    # =========================================================
+    # VERIFICAR PONTO DENTRO DO SCROLL
+    # =========================================================
+
+    def _ponto_dentro_scroll(
+        self,
+        ponto
+    ):
+
+        viewport = self.scroll.viewport()
+
+        ponto_local = viewport.mapFromGlobal(
+            ponto
+        )
+
+        return viewport.rect().contains(
+            ponto_local
+        )
+
+    # =========================================================
+    # APLICAR CLIQUE DA SETA
+    # =========================================================
+
+    def aplicar_seta_spinbox(self):
+
+        spinbox = self._spinbox_pendente
+
+        direcao = self._spinbox_direcao
+
+        self._spinbox_pendente = None
+
+        self._spinbox_direcao = 0
+
+        if spinbox is None:
+
+            return
+
+        valor = spinbox.value()
+
+        passo = spinbox.singleStep()
+
+        novo_valor = valor + (
+            passo * direcao
+        )
+
+        if novo_valor > spinbox.maximum():
+
+            novo_valor = spinbox.maximum()
+
+        if novo_valor < spinbox.minimum():
+
+            novo_valor = spinbox.minimum()
+
+        spinbox.setValue(
+            novo_valor
+        )
+
+    # =========================================================
+    # CANCELAR CLIQUE DA SETA
+    # =========================================================
+
+    def cancelar_seta_spinbox(self):
+
+        self._spinbox_pendente = None
+
+        self._spinbox_direcao = 0
+
+    # =========================================================
+    # EVENT FILTER
+    # =========================================================
+
+    def eventFilter(
+        self,
+        obj,
+        event
+    ):
+
+        # =====================================================
+        # IGNORAR QUANDO A PÁGINA NÃO ESTÁ VISÍVEL
+        # =====================================================
+
+        if not self.isVisible():
+
+            return super().eventFilter(
+                obj,
+                event
+            )
+
+        # =====================================================
+        # MOUSE PRESS
+        # =====================================================
+
+        if event.type() == QEvent.MouseButtonPress:
+
+            if event.button() != Qt.LeftButton:
+
+                return super().eventFilter(
+                    obj,
+                    event
+                )
+
+            ponto = (
+                event.globalPosition()
+                .toPoint()
+            )
+
+            if not self._ponto_dentro_scroll(
+                ponto
+            ):
+
+                return super().eventFilter(
+                    obj,
+                    event
+                )
+
+            # -------------------------------------------------
+            # VERIFICAR SE COMEÇOU NAS SETAS
+            # -------------------------------------------------
+
+            spinbox, direcao = (
+                self.detectar_seta_spinbox(
+                    obj,
+                    ponto
+                )
+            )
+
+            if spinbox is not None:
+
+                self._spinbox_pendente = (
+                    spinbox
+                )
+
+                self._spinbox_direcao = (
+                    direcao
+                )
+
+                self._touch_ativo = True
+
+                self._touch_arrastando = False
+
+                self._touch_posicao_inicial = (
+                    ponto
+                )
+
+                self._touch_posicao_anterior = (
+                    ponto
+                )
+
+                return True
+
+            # -------------------------------------------------
+            # CLIQUE NORMAL
+            # -------------------------------------------------
+
+            self._touch_ativo = True
+
+            self._touch_arrastando = False
+
+            self._touch_posicao_inicial = (
+                ponto
+            )
+
+            self._touch_posicao_anterior = (
+                ponto
+            )
+
+            self.cancelar_seta_spinbox()
+
+            return super().eventFilter(
+                obj,
+                event
+            )
+
+        # =====================================================
+        # MOUSE MOVE
+        # =====================================================
+
+        if event.type() == QEvent.MouseMove:
+
+            if not self._touch_ativo:
+
+                return super().eventFilter(
+                    obj,
+                    event
+                )
+
+            ponto_atual = (
+                event.globalPosition()
+                .toPoint()
+            )
+
+            deslocamento = (
+                ponto_atual
+                -
+                self._touch_posicao_inicial
+            )
+
+            # -------------------------------------------------
+            # AINDA NÃO ATINGIU LIMITE
+            # -------------------------------------------------
+
+            if not self._touch_arrastando:
+
+                if (
+                    deslocamento.manhattanLength()
+                    <
+                    self._touch_limite_arrasto
+                ):
+
+                    if self._spinbox_pendente is not None:
+
+                        return True
+
+                    return super().eventFilter(
+                        obj,
+                        event
+                    )
+
+                # ---------------------------------------------
+                # COMEÇOU ARRASTE
+                # ---------------------------------------------
+
+                self._touch_arrastando = True
+
+                self.cancelar_seta_spinbox()
+
+            # -------------------------------------------------
+            # ROLAR
+            # -------------------------------------------------
+
+            delta_y = (
+                ponto_atual.y()
+                -
+                self._touch_posicao_anterior.y()
+            )
+
+            barra = (
+                self.scroll.verticalScrollBar()
+            )
+
+            barra.setValue(
+                barra.value()
+                -
+                delta_y
+            )
+
+            self._touch_posicao_anterior = (
+                ponto_atual
+            )
+
+            return True
+
+        # =====================================================
+        # MOUSE RELEASE
+        # =====================================================
+
+        if event.type() == QEvent.MouseButtonRelease:
+
+            if event.button() != Qt.LeftButton:
+
+                return super().eventFilter(
+                    obj,
+                    event
+                )
+
+            if not self._touch_ativo:
+
+                return super().eventFilter(
+                    obj,
+                    event
+                )
+
+            ponto = (
+                event.globalPosition()
+                .toPoint()
+            )
+
+            foi_arrasto = (
+                self._touch_arrastando
+            )
+
+            self._touch_ativo = False
+
+            self._touch_arrastando = False
+
+            # -------------------------------------------------
+            # ARRASTE
+            # -------------------------------------------------
+
+            if foi_arrasto:
+
+                self.cancelar_seta_spinbox()
+
+                return True
+
+            # -------------------------------------------------
+            # CLIQUE NAS SETAS
+            # -------------------------------------------------
+
+            if self._spinbox_pendente is not None:
+
+                spinbox, direcao = (
+                    self.detectar_seta_spinbox(
+                        obj,
+                        ponto
+                    )
+                )
+
+                if (
+                    spinbox is self._spinbox_pendente
+                    and
+                    direcao == self._spinbox_direcao
+                ):
+
+                    self.aplicar_seta_spinbox()
+
+                else:
+
+                    self.cancelar_seta_spinbox()
+
+                return True
+
+            return super().eventFilter(
+                obj,
+                event
+            )
+
+        # =====================================================
+        # TOUCH BEGIN
+        # =====================================================
+
+        if event.type() == QEvent.TouchBegin:
+
+            pontos = event.touchPoints()
+
+            if not pontos:
+
+                return super().eventFilter(
+                    obj,
+                    event
+                )
+
+            ponto = (
+                pontos[0]
+                .globalPosition()
+                .toPoint()
+            )
+
+            if self._ponto_dentro_scroll(
+                ponto
+            ):
+
+                self._touch_ativo = True
+
+                self._touch_arrastando = False
+
+                self._touch_posicao_inicial = (
+                    ponto
+                )
+
+                self._touch_posicao_anterior = (
+                    ponto
+                )
+
+                self.cancelar_seta_spinbox()
+
+                event.accept()
+
+                return True
+
+        # =====================================================
+        # TOUCH UPDATE
+        # =====================================================
+
+        if event.type() == QEvent.TouchUpdate:
+
+            if not self._touch_ativo:
+
+                return super().eventFilter(
+                    obj,
+                    event
+                )
+
+            pontos = event.touchPoints()
+
+            if not pontos:
+
+                return super().eventFilter(
+                    obj,
+                    event
+                )
+
+            ponto_atual = (
+                pontos[0]
+                .globalPosition()
+                .toPoint()
+            )
+
+            deslocamento = (
+                ponto_atual
+                -
+                self._touch_posicao_inicial
+            )
+
+            # -------------------------------------------------
+            # LIMITE
+            # -------------------------------------------------
+
+            if not self._touch_arrastando:
+
+                if (
+                    deslocamento.manhattanLength()
+                    <
+                    self._touch_limite_arrasto
+                ):
+
+                    return True
+
+                self._touch_arrastando = True
+
+                self.cancelar_seta_spinbox()
+
+            # -------------------------------------------------
+            # ROLAR
+            # -------------------------------------------------
+
+            delta_y = (
+                ponto_atual.y()
+                -
+                self._touch_posicao_anterior.y()
+            )
+
+            barra = (
+                self.scroll.verticalScrollBar()
+            )
+
+            barra.setValue(
+                barra.value()
+                -
+                delta_y
+            )
+
+            self._touch_posicao_anterior = (
+                ponto_atual
+            )
+
+            return True
+
+        # =====================================================
+        # TOUCH END
+        # =====================================================
+
+        if event.type() == QEvent.TouchEnd:
+
+            self._touch_ativo = False
+
+            self._touch_arrastando = False
+
+            self.cancelar_seta_spinbox()
+
+            event.accept()
+
+            return True
+
+        # =====================================================
+        # TOUCH CANCEL
+        # =====================================================
+
+        if event.type() == QEvent.TouchCancel:
+
+            self._touch_ativo = False
+
+            self._touch_arrastando = False
+
+            self.cancelar_seta_spinbox()
+
+            return True
+
+        return super().eventFilter(
+            obj,
+            event
+        )
+
+    # =========================================================
+    # ALTERNAR BLOQUEIO
+    # =========================================================
+
+    def alternar_bloqueio(self):
+
+        if self.acesso_liberado:
+
+            self.bloquear()
+
+        else:
+
+            self.solicitar_senha()
+
+    # =========================================================
+    # SENHA
+    # =========================================================
+
+    def solicitar_senha(self):
+
+        dialogo = PasswordDialog(
+            self
+        )
+
+        if dialogo.exec() != QDialog.Accepted:
+
+            return
+
+        if dialogo.senha() == self.SENHA:
+
+            self.desbloquear()
+
+        else:
+
+            QMessageBox.warning(
+                self,
+                "Senha incorreta",
+                "A senha informada está incorreta."
+            )
+
+    # =========================================================
+    # DESBLOQUEAR
+    # =========================================================
+
+    def desbloquear(self):
+
+        self.acesso_liberado = True
+
+        for campo in self.campos:
+
+            campo.setEnabled(
+                True
+            )
+
+        for campo in self.campos_maquina:
+
+            campo.setEnabled(
+                True
+            )
+
+        self.campo_z_levantar.setEnabled(
+            True
+        )
+
+        self.campo_z_apoiar.setEnabled(
+            True
+        )
+
+        self.bt_salvar.setEnabled(
+            True
+        )
+
+        self.atualizar_estilo_status()
+
+    # =========================================================
+    # BLOQUEAR
+    # =========================================================
+
+    def bloquear(self):
+
+        self.acesso_liberado = False
+
+        for campo in self.campos:
+
+            campo.setEnabled(
+                False
+            )
+
+        for campo in self.campos_maquina:
+
+            campo.setEnabled(
+                False
+            )
 
         self.campo_z_levantar.setEnabled(
             False
@@ -672,98 +1248,64 @@ class CoordinatesPage(QWidget):
             False
         )
 
-        self.carregar_coordenadas()
+        self.atualizar_estilo_status()
 
+    # =========================================================
+    # TEXTO DO BOTÃO
+    # =========================================================
 
-    # =================================================
-    # AJUSTAR ALTURA DA TABELA
-    # =================================================
+    def atualizar_estilo_status(self):
 
-    def ajustar_altura_tabela(
-        self,
-        tabela
-    ):
+        if self.acesso_liberado:
 
-        tabela.resizeRowsToContents()
-
-        altura_header = (
-            tabela.horizontalHeader().height()
-        )
-
-        altura_linhas = sum(
-            tabela.rowHeight(i)
-            for i in range(
-                tabela.rowCount()
+            self.bt_desbloquear.setText(
+                "BLOQUEAR"
             )
-        )
 
-        altura_bordas = (
-            tabela.frameWidth() * 2
-        )
+        else:
 
-        altura_scroll = (
-            2
-        )
+            self.bt_desbloquear.setText(
+                "DESBLOQUEAR"
+            )
 
-        altura_total = (
-            altura_header
-            + altura_linhas
-            + altura_bordas
-            + altura_scroll
-        )
-
-        tabela.setFixedHeight(
-            altura_total
-        )
-
-
-    # =================================================
+    # =========================================================
     # CARREGAR COORDENADAS
-    # =================================================
+    # =========================================================
 
     def carregar_coordenadas(self):
 
-        # =============================================
-        # COORDENADAS DO RACK
-        # =============================================
-
-        dados = self.db.listar_coordenadas()
-
-        self.tabela.setRowCount(
-            len(dados)
-        )
-
         self.campos.clear()
 
-        for linha, registro in enumerate(
-            dados
+        self.campos_maquina.clear()
+
+        # =====================================================
+        # RACK
+        # =====================================================
+
+        posicoes = (
+            self.db.listar_coordenadas()
+        )
+
+        self.tabela.setRowCount(
+            len(posicoes)
+        )
+
+        for linha, posicao in enumerate(
+            posicoes
         ):
 
-            endereco = registro[0]
+            endereco = posicao[0]
 
-            x = float(
-                registro[1] or 0.0
-            )
-
-            y = float(
-                registro[2] or 0.0
-            )
-
-            z = float(
-                registro[3] or 0.0
-            )
+            x = posicao[1]
+            y = posicao[2]
+            z = posicao[3]
 
             item = QTableWidgetItem(
-                endereco
+                str(endereco)
             )
 
             item.setTextAlignment(
                 Qt.AlignCenter
-            )
-
-            item.setFlags(
-                item.flags()
-                & ~Qt.ItemIsEditable
             )
 
             self.tabela.setItem(
@@ -776,18 +1318,14 @@ class CoordinatesPage(QWidget):
                 x
             )
 
-            campo_y = self.criar_campo(
-                y
-            )
-
-            campo_z = self.criar_campo(
-                z
-            )
-
             self.tabela.setCellWidget(
                 linha,
                 1,
                 campo_x
+            )
+
+            campo_y = self.criar_campo(
+                y
             )
 
             self.tabela.setCellWidget(
@@ -796,40 +1334,31 @@ class CoordinatesPage(QWidget):
                 campo_y
             )
 
+            campo_z = self.criar_campo(
+                z
+            )
+
             self.tabela.setCellWidget(
                 linha,
                 3,
                 campo_z
             )
 
-            self.campos[endereco] = (
-                campo_x,
-                campo_y,
-                campo_z
+            self.campos.extend(
+                [
+                    campo_x,
+                    campo_y,
+                    campo_z
+                ]
             )
 
-        # =============================================
-        # AJUSTAR ALTURA DA TABELA DO RACK
-        # =============================================
+        # =====================================================
+        # POSIÇÕES DA MÁQUINA
+        # =====================================================
 
-        self.ajustar_altura_tabela(
-            self.tabela
-        )
-
-        # =============================================
-        # COORDENADAS DA EMPILHADEIRA
-        # =============================================
-
-        dados_maquina = (
+        posicoes_maquina = (
             self.db.listar_posicoes_maquina()
         )
-
-        self.campos_maquina.clear()
-
-        mapa_maquina = {
-            registro[0]: registro
-            for registro in dados_maquina
-        }
 
         self.tabela_maquina.setRowCount(
             len(self.POSICOES_MAQUINA)
@@ -839,29 +1368,27 @@ class CoordinatesPage(QWidget):
             self.POSICOES_MAQUINA
         ):
 
-            registro = mapa_maquina.get(
-                nome
-            )
+            dados = None
 
-            if registro is None:
+            for registro in posicoes_maquina:
+
+                if registro[0] == nome:
+
+                    dados = registro
+
+                    break
+
+            if dados is not None:
+
+                x = dados[1]
+                y = dados[2]
+                z = dados[3]
+
+            else:
 
                 x = 0.0
                 y = 0.0
                 z = 0.0
-
-            else:
-
-                x = float(
-                    registro[1] or 0.0
-                )
-
-                y = float(
-                    registro[2] or 0.0
-                )
-
-                z = float(
-                    registro[3] or 0.0
-                )
 
             item = QTableWidgetItem(
                 nome
@@ -869,11 +1396,6 @@ class CoordinatesPage(QWidget):
 
             item.setTextAlignment(
                 Qt.AlignCenter
-            )
-
-            item.setFlags(
-                item.flags()
-                & ~Qt.ItemIsEditable
             )
 
             self.tabela_maquina.setItem(
@@ -886,18 +1408,14 @@ class CoordinatesPage(QWidget):
                 x
             )
 
-            campo_y = self.criar_campo(
-                y
-            )
-
-            campo_z = self.criar_campo(
-                z
-            )
-
             self.tabela_maquina.setCellWidget(
                 linha,
                 1,
                 campo_x
+            )
+
+            campo_y = self.criar_campo(
+                y
             )
 
             self.tabela_maquina.setCellWidget(
@@ -906,38 +1424,27 @@ class CoordinatesPage(QWidget):
                 campo_y
             )
 
+            campo_z = self.criar_campo(
+                z
+            )
+
             self.tabela_maquina.setCellWidget(
                 linha,
                 3,
                 campo_z
             )
 
-            self.campos_maquina[nome] = (
-                campo_x,
-                campo_y,
-                campo_z
+            self.campos_maquina.extend(
+                [
+                    campo_x,
+                    campo_y,
+                    campo_z
+                ]
             )
 
-        # =============================================
-        # AJUSTAR ALTURA DA TABELA DA MÁQUINA
-        # =============================================
-
-        self.ajustar_altura_tabela(
-            self.tabela_maquina
-        )
-
-        # =============================================
+        # =====================================================
         # CONFIGURAÇÕES
-        # =============================================
-
-        self.carregar_configuracoes()
-
-
-    # =================================================
-    # CARREGAR CONFIGURAÇÕES
-    # =================================================
-
-    def carregar_configuracoes(self):
+        # =====================================================
 
         z_levantar = (
             self.db.obter_configuracao_empilhadeira(
@@ -963,180 +1470,45 @@ class CoordinatesPage(QWidget):
                 z_apoiar
             )
 
+        self.ajustar_alturas_tabelas()
 
-    # =================================================
-    # CRIAR CAMPO
-    # =================================================
+    # =========================================================
+    # ALTURAS DAS TABELAS
+    # =========================================================
 
-    def criar_campo(
-        self,
-        valor
-    ):
+    def ajustar_alturas_tabelas(self):
 
-        campo = QDoubleSpinBox()
-
-        campo.setDecimals(
-            3
+        altura_rack = (
+            self.tabela.horizontalHeader().height()
         )
 
-        campo.setRange(
-            -99999.999,
-            99999.999
+        altura_rack += (
+            self.tabela.rowCount()
+            *
+            self.tabela.verticalHeader().defaultSectionSize()
         )
 
-        campo.setSingleStep(
-            1.0
+        self.tabela.setFixedHeight(
+            altura_rack + 4
         )
 
-        campo.setValue(
-            valor
+        altura_maquina = (
+            self.tabela_maquina.horizontalHeader().height()
         )
 
-        campo.setAlignment(
-            Qt.AlignCenter
+        altura_maquina += (
+            self.tabela_maquina.rowCount()
+            *
+            self.tabela_maquina.verticalHeader().defaultSectionSize()
         )
 
-        return campo
-
-
-    # =================================================
-    # SENHA
-    # =================================================
-
-    def solicitar_senha(self):
-
-        print(
-            "Abrindo tela de senha..."
+        self.tabela_maquina.setFixedHeight(
+            altura_maquina + 4
         )
 
-        if self.acesso_liberado:
-
-            self.bloquear()
-
-            return
-
-        dialogo = PasswordDialog(
-            self
-        )
-
-        resultado = dialogo.exec()
-
-        if resultado != QDialog.Accepted:
-
-            return
-
-        senha = dialogo.obter_senha()
-
-        if senha == self.SENHA:
-
-            self.acesso_liberado = True
-
-            self.tabela.setEnabled(
-                True
-            )
-
-            self.tabela_maquina.setEnabled(
-                True
-            )
-
-            self.campo_z_levantar.setEnabled(
-                True
-            )
-
-            self.campo_z_apoiar.setEnabled(
-                True
-            )
-
-            self.bt_salvar.setEnabled(
-                True
-            )
-
-            self.bt_entrar.setText(
-                "Bloquear"
-            )
-
-            self.status.setObjectName(
-                "online"
-            )
-
-            self.status.setText(
-                "Acesso autorizado."
-            )
-
-            self.atualizar_estilo_status()
-
-        else:
-
-            QMessageBox.warning(
-                self,
-                "Acesso negado",
-                "Senha incorreta."
-            )
-
-
-    # =================================================
-    # BLOQUEAR
-    # =================================================
-
-    def bloquear(self):
-
-        self.acesso_liberado = False
-
-        self.tabela.setEnabled(
-            False
-        )
-
-        self.tabela_maquina.setEnabled(
-            False
-        )
-
-        self.campo_z_levantar.setEnabled(
-            False
-        )
-
-        self.campo_z_apoiar.setEnabled(
-            False
-        )
-
-        self.bt_salvar.setEnabled(
-            False
-        )
-
-        self.bt_entrar.setText(
-            "Desbloquear"
-        )
-
-        self.status.setObjectName(
-            "offline"
-        )
-
-        self.status.setText(
-            "Acesso restrito."
-        )
-
-        self.atualizar_estilo_status()
-
-
-    # =================================================
-    # ATUALIZAR ESTILO
-    # =================================================
-
-    def atualizar_estilo_status(self):
-
-        self.status.style().unpolish(
-            self.status
-        )
-
-        self.status.style().polish(
-            self.status
-        )
-
-        self.status.update()
-
-
-    # =================================================
+    # =========================================================
     # SALVAR COORDENADAS
-    # =================================================
+    # =========================================================
 
     def salvar_coordenadas(self):
 
@@ -1144,130 +1516,128 @@ class CoordinatesPage(QWidget):
 
             QMessageBox.warning(
                 self,
-                "Acesso restrito",
-                "Desbloqueie a página antes de salvar."
+                "Acesso bloqueado",
+                "Desbloqueie a edição antes de salvar."
             )
 
             return
 
-        erros = []
+        # =====================================================
+        # RACK
+        # =====================================================
 
-        # =============================================
-        # SALVAR RACK
-        # =============================================
+        for linha in range(
+            self.tabela.rowCount()
+        ):
 
-        for endereco, campos in self.campos.items():
+            item = self.tabela.item(
+                linha,
+                0
+            )
 
-            campo_x = campos[0]
-            campo_y = campos[1]
-            campo_z = campos[2]
+            if item is None:
 
-            x = campo_x.value()
-            y = campo_y.value()
-            z = campo_z.value()
+                continue
 
-            sucesso = self.db.salvar_coordenadas(
+            endereco = item.text()
+
+            campo_x = self.tabela.cellWidget(
+                linha,
+                1
+            )
+
+            campo_y = self.tabela.cellWidget(
+                linha,
+                2
+            )
+
+            campo_z = self.tabela.cellWidget(
+                linha,
+                3
+            )
+
+            if (
+                campo_x is None
+                or
+                campo_y is None
+                or
+                campo_z is None
+            ):
+
+                continue
+
+            self.db.salvar_coordenadas(
                 endereco,
-                x,
-                y,
-                z
+                campo_x.value(),
+                campo_y.value(),
+                campo_z.value()
             )
 
-            if not sucesso:
+        # =====================================================
+        # POSIÇÕES DA MÁQUINA
+        # =====================================================
 
-                erros.append(
-                    endereco
-                )
+        for linha, nome in enumerate(
+            self.POSICOES_MAQUINA
+        ):
 
-        # =============================================
-        # SALVAR POSIÇÕES DA EMPILHADEIRA
-        # =============================================
+            campo_x = self.tabela_maquina.cellWidget(
+                linha,
+                1
+            )
 
-        for nome, campos in self.campos_maquina.items():
+            campo_y = self.tabela_maquina.cellWidget(
+                linha,
+                2
+            )
 
-            campo_x = campos[0]
-            campo_y = campos[1]
-            campo_z = campos[2]
+            campo_z = self.tabela_maquina.cellWidget(
+                linha,
+                3
+            )
 
-            x = campo_x.value()
-            y = campo_y.value()
-            z = campo_z.value()
+            if (
+                campo_x is None
+                or
+                campo_y is None
+                or
+                campo_z is None
+            ):
 
-            sucesso = self.db.salvar_posicao_maquina(
+                continue
+
+            self.db.salvar_posicao_maquina(
                 nome,
-                x,
-                y,
-                z
+                campo_x.value(),
+                campo_y.value(),
+                campo_z.value()
             )
 
-            if not sucesso:
+        # =====================================================
+        # CONFIGURAÇÕES
+        # =====================================================
 
-                erros.append(
-                    nome
-                )
-
-        # =============================================
-        # SALVAR AJUSTES DA EMPILHADEIRA
-        # =============================================
-
-        sucesso_levantar = (
-            self.db.salvar_configuracao_empilhadeira(
-                "Z_LEVANTAR",
-                self.campo_z_levantar.value()
-            )
+        self.db.salvar_configuracao_empilhadeira(
+            "Z_LEVANTAR",
+            self.campo_z_levantar.value()
         )
 
-        sucesso_apoiar = (
-            self.db.salvar_configuracao_empilhadeira(
-                "Z_APOIAR",
-                self.campo_z_apoiar.value()
-            )
+        self.db.salvar_configuracao_empilhadeira(
+            "Z_APOIAR",
+            self.campo_z_apoiar.value()
         )
-
-        if not sucesso_levantar:
-
-            erros.append(
-                "Z_LEVANTAR"
-            )
-
-        if not sucesso_apoiar:
-
-            erros.append(
-                "Z_APOIAR"
-            )
-
-        # =============================================
-        # RESULTADO
-        # =============================================
-
-        if erros:
-
-            QMessageBox.critical(
-                self,
-                "Erro",
-                "Não foi possível salvar:\n"
-                + ", ".join(erros)
-            )
-
-            return
 
         QMessageBox.information(
             self,
-            "Salvo",
-            (
-                "Coordenadas e ajustes "
-                "salvos com sucesso."
-            )
+            "Sucesso",
+            "Coordenadas salvas com sucesso."
         )
 
-        self.status.setText(
-            "Coordenadas e ajustes salvos."
-        )
+        self.carregar_coordenadas()
 
-
-    # =================================================
+    # =========================================================
     # ATUALIZAR
-    # =================================================
+    # =========================================================
 
     def atualizar(self):
 

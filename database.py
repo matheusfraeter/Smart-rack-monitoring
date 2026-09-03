@@ -1029,7 +1029,6 @@ class Database:
             """
             SELECT
 
-                id,
                 data,
                 origem,
                 destino,

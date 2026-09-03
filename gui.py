@@ -8,6 +8,7 @@
 """
 
 from PySide6.QtWidgets import (
+    QApplication,
     QMainWindow,
     QWidget,
     QVBoxLayout,
@@ -32,9 +33,20 @@ from ui.pages.settings import SettingsPage
 
 class SmartRackGUI(QMainWindow):
 
+    # =================================================
+    # PROPORÇÃO DA JANELA
+    # =================================================
+
+    PROPORCAO_LARGURA = 800
+    PROPORCAO_ALTURA = 480
+
     def __init__(self):
 
         super().__init__()
+
+        # Indica que a janela está sendo redimensionada
+        # internamente para manter a proporção.
+        self._ajustando_tamanho = False
 
         # =====================================
         # COMUNICAÇÃO COM A MKS
@@ -42,21 +54,34 @@ class SmartRackGUI(QMainWindow):
 
         self.mks = MKSConnection()
 
+        # =====================================
+        # CONFIGURAÇÃO DA JANELA
+        # =====================================
+
         self.setWindowTitle(
             "Smart Rack Monitoring"
         )
 
-        self.resize(
-            1200,
-            700
-        )
+        # =====================================
+        # TAMANHO MÍNIMO
+        # =====================================
 
         self.setMinimumSize(
-            1000,
-            650
+            self.PROPORCAO_LARGURA,
+            self.PROPORCAO_ALTURA
         )
 
+        # =====================================
+        # CRIAR INTERFACE
+        # =====================================
+
         self.criar_interface()
+
+        # =====================================
+        # TAMANHO INICIAL
+        # =====================================
+
+        self.ajustar_tamanho_inicial()
 
         # =====================================
         # TENTA CONECTAR APÓS ABRIR A GUI
@@ -76,19 +101,194 @@ class SmartRackGUI(QMainWindow):
             1500
         )
 
+    # =================================================
+    # TAMANHO INICIAL
+    # =================================================
 
-    # =====================================
+    def ajustar_tamanho_inicial(self):
+
+        tela = QApplication.primaryScreen()
+
+        if tela is None:
+
+            self.resize(
+                self.PROPORCAO_LARGURA,
+                self.PROPORCAO_ALTURA
+            )
+
+            return
+
+        area = tela.availableGeometry()
+
+        largura_tela = area.width()
+        altura_tela = area.height()
+
+        # =====================================
+        # USAR 800x480 COMO MODELO
+        # =====================================
+
+        proporcao = (
+            self.PROPORCAO_LARGURA /
+            self.PROPORCAO_ALTURA
+        )
+
+        # -------------------------------------
+        # TENTAR OCUPAR O MÁXIMO POSSÍVEL
+        # SEM PERDER A PROPORÇÃO
+        # -------------------------------------
+
+        largura = largura_tela
+        altura = int(largura / proporcao)
+
+        # Caso a altura calculada ultrapasse
+        # a tela, limitar pela altura.
+
+        if altura > altura_tela:
+
+            altura = altura_tela
+            largura = int(
+                altura * proporcao
+            )
+
+        # =====================================
+        # GARANTIR O TAMANHO MÍNIMO
+        # =====================================
+
+        largura = max(
+            self.PROPORCAO_LARGURA,
+            largura
+        )
+
+        altura = max(
+            self.PROPORCAO_ALTURA,
+            altura
+        )
+
+        # =====================================
+        # EVITAR PASSAR DA TELA
+        # =====================================
+
+        if largura > largura_tela:
+
+            largura = largura_tela
+            altura = int(
+                largura / proporcao
+            )
+
+        if altura > altura_tela:
+
+            altura = altura_tela
+            largura = int(
+                altura * proporcao
+            )
+
+        # =====================================
+        # REDIMENSIONAR
+        # =====================================
+
+        self.resize(
+            largura,
+            altura
+        )
+
+        # =====================================
+        # CENTRALIZAR
+        # =====================================
+
+        x = (
+            area.left()
+            + (largura_tela - largura) // 2
+        )
+
+        y = (
+            area.top()
+            + (altura_tela - altura) // 2
+        )
+
+        self.move(
+            x,
+            y
+        )
+
+    # =================================================
+    # MANTER PROPORÇÃO 800x480
+    # =================================================
+
+    def resizeEvent(self, event):
+
+        # Evita loop de resizeEvent
+        if self._ajustando_tamanho:
+
+            super().resizeEvent(event)
+
+            return
+
+        self._ajustando_tamanho = True
+
+        largura = self.width()
+        altura = self.height()
+
+        proporcao = (
+            self.PROPORCAO_LARGURA /
+            self.PROPORCAO_ALTURA
+        )
+
+        # =====================================
+        # DESCOBRIR QUAL DIMENSÃO FOI ALTERADA
+        # =====================================
+
+        # Usa a largura como referência
+        # e calcula a altura proporcional.
+
+        nova_altura = int(
+            largura / proporcao
+        )
+
+        # =====================================
+        # GARANTIR ALTURA MÍNIMA
+        # =====================================
+
+        if nova_altura < self.PROPORCAO_ALTURA:
+
+            nova_altura = self.PROPORCAO_ALTURA
+
+            nova_largura = int(
+                nova_altura * proporcao
+            )
+
+        else:
+
+            nova_largura = largura
+
+        # =====================================
+        # AJUSTAR TAMANHO
+        # =====================================
+
+        if (
+            nova_largura != largura
+            or nova_altura != altura
+        ):
+
+            self.resize(
+                nova_largura,
+                nova_altura
+            )
+
+        self._ajustando_tamanho = False
+
+        super().resizeEvent(event)
+
+    # =================================================
     # TENTATIVA DE CONEXÃO
-    # =====================================
+    # =================================================
 
     def tentar_conexao(self):
 
         self.topbar.conectar_mks()
 
-
-    # =====================================
+    # =================================================
     # INTERFACE
-    # =====================================
+    # =================================================
 
     def criar_interface(self):
 
@@ -100,6 +300,7 @@ class SmartRackGUI(QMainWindow):
 
         # =====================================
         # LAYOUT PRINCIPAL
+        #
         # Sidebar | Conteúdo
         # =====================================
 
@@ -253,10 +454,9 @@ class SmartRackGUI(QMainWindow):
 
         self.criar_statusbar()
 
-
-    # =====================================
+    # =================================================
     # STATUS BAR
-    # =====================================
+    # =================================================
 
     def criar_statusbar(self):
 

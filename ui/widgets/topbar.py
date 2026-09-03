@@ -12,10 +12,14 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QHBoxLayout,
-    QVBoxLayout
+    QVBoxLayout,
+    QSizePolicy
 )
 
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import (
+    QTimer,
+    Qt
+)
 
 
 class TopBar(QFrame):
@@ -26,7 +30,13 @@ class TopBar(QFrame):
 
         self.mks = mks
 
-        self.setObjectName("topBar")
+        self.setObjectName(
+            "topBar"
+        )
+
+        # =====================================
+        # CRIAR INTERFACE
+        # =====================================
 
         self.criar_interface()
 
@@ -40,7 +50,9 @@ class TopBar(QFrame):
             self.atualizar_status
         )
 
-        self.timer.start(500)
+        self.timer.start(
+            500
+        )
 
 
     # =====================================
@@ -49,23 +61,30 @@ class TopBar(QFrame):
 
     def criar_interface(self):
 
-        layout = QVBoxLayout(self)
-
-        layout.setContentsMargins(
-            20,
-            12,
-            20,
-            12
+        self.layout_principal = QVBoxLayout(
+            self
         )
 
-        layout.setSpacing(10)
+        self.layout_principal.setContentsMargins(
+            15,
+            10,
+            15,
+            10
+        )
 
+        self.layout_principal.setSpacing(
+            8
+        )
 
         # =====================================
         # CABEÇALHO
         # =====================================
 
-        topo = QHBoxLayout()
+        self.topo = QHBoxLayout()
+
+        self.topo.setSpacing(
+            10
+        )
 
         self.titulo = QLabel(
             "SMART RACK MONITORING"
@@ -75,6 +94,10 @@ class TopBar(QFrame):
             "topTitle"
         )
 
+        self.titulo.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Fixed
+        )
 
         self.conexao = QLabel(
             "DESCONECTADA"
@@ -84,69 +107,78 @@ class TopBar(QFrame):
             "offline"
         )
 
+        self.conexao.setSizePolicy(
+            QSizePolicy.Maximum,
+            QSizePolicy.Fixed
+        )
 
-        topo.addWidget(
+        self.topo.addWidget(
             self.titulo
         )
 
-        topo.addStretch()
+        self.topo.addStretch()
 
-        topo.addWidget(
+        self.topo.addWidget(
             self.conexao
         )
 
-        layout.addLayout(topo)
-
+        self.layout_principal.addLayout(
+            self.topo
+        )
 
         # =====================================
-        # CARDS + BOTÕES
+        # ÁREA INFERIOR
         # =====================================
 
-        inferior = QHBoxLayout()
+        self.inferior = QHBoxLayout()
 
+        self.inferior.setSpacing(
+            8
+        )
+
+        # =====================================
+        # CARDS
+        # =====================================
 
         self.card_estado, self.estado = self.criar_card(
             "Estado",
             "---"
         )
 
-
         self.card_x, self.x = self.criar_card(
             "Eixo X",
             "0.000"
         )
-
 
         self.card_y, self.y = self.criar_card(
             "Eixo Y",
             "0.000"
         )
 
-
         self.card_z, self.z = self.criar_card(
             "Eixo Z",
             "0.000"
         )
 
-
-        inferior.addWidget(
-            self.card_estado
+        self.inferior.addWidget(
+            self.card_estado,
+            1
         )
 
-        inferior.addWidget(
-            self.card_x
+        self.inferior.addWidget(
+            self.card_x,
+            1
         )
 
-        inferior.addWidget(
-            self.card_y
+        self.inferior.addWidget(
+            self.card_y,
+            1
         )
 
-        inferior.addWidget(
-            self.card_z
+        self.inferior.addWidget(
+            self.card_z,
+            1
         )
-
-        inferior.addStretch()
-
 
         # =====================================
         # BOTÃO CONECTAR
@@ -160,32 +192,19 @@ class TopBar(QFrame):
             "topButton"
         )
 
-        inferior.addWidget(
-            self.bt_conectar
+        self.bt_conectar.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Fixed
         )
 
-
-        # =====================================
-        # BOTÃO HOME
-        # =====================================
-
-        self.bt_home = QPushButton(
-            "Zerar Eixos"
+        self.inferior.addWidget(
+            self.bt_conectar,
+            1
         )
 
-        self.bt_home.setObjectName(
-            "topButton"
+        self.layout_principal.addLayout(
+            self.inferior
         )
-
-        self.bt_home.setEnabled(False)
-
-        inferior.addWidget(
-            self.bt_home
-        )
-
-
-        layout.addLayout(inferior)
-
 
         # =====================================
         # EVENTOS
@@ -195,16 +214,16 @@ class TopBar(QFrame):
             self.conectar_mks
         )
 
-        self.bt_home.clicked.connect(
-            self.zerar_eixos
-        )
-
 
     # =====================================
     # CRIAR MINI CARD
     # =====================================
 
-    def criar_card(self, titulo, valor):
+    def criar_card(
+        self,
+        titulo,
+        valor
+    ):
 
         card = QFrame()
 
@@ -212,17 +231,29 @@ class TopBar(QFrame):
             "topCard"
         )
 
-        layout = QVBoxLayout(card)
-
-        layout.setContentsMargins(
-            12,
-            8,
-            12,
-            8
+        card.setMinimumWidth(
+            70
         )
 
-        layout.setSpacing(2)
+        card.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Fixed
+        )
 
+        layout = QVBoxLayout(
+            card
+        )
+
+        layout.setContentsMargins(
+            8,
+            5,
+            8,
+            5
+        )
+
+        layout.setSpacing(
+            1
+        )
 
         label_titulo = QLabel(
             titulo
@@ -232,6 +263,9 @@ class TopBar(QFrame):
             "topCardTitle"
         )
 
+        label_titulo.setAlignment(
+            Qt.AlignCenter
+        )
 
         label_valor = QLabel(
             valor
@@ -241,6 +275,14 @@ class TopBar(QFrame):
             "topCardValue"
         )
 
+        label_valor.setAlignment(
+            Qt.AlignCenter
+        )
+
+        label_valor.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Fixed
+        )
 
         layout.addWidget(
             label_titulo
@@ -250,15 +292,111 @@ class TopBar(QFrame):
             label_valor
         )
 
-
         return card, label_valor
+
+
+    # =====================================
+    # REDIMENSIONAMENTO
+    # =====================================
+
+    def resizeEvent(
+        self,
+        event
+    ):
+
+        super().resizeEvent(
+            event
+        )
+
+        self.adaptar_layout()
+
+
+    # =====================================
+    # ADAPTAR LAYOUT
+    # =====================================
+
+    def adaptar_layout(self):
+
+        largura = self.width()
+
+        # =====================================
+        # TELA MUITO PEQUENA
+        # =====================================
+
+        if largura < 750:
+
+            self.inferior.setSpacing(
+                5
+            )
+
+            self.layout_principal.setContentsMargins(
+                8,
+                6,
+                8,
+                6
+            )
+
+            self.bt_conectar.setText(
+                "Conectar"
+                if not self.mks.conectado
+                else "Conectada"
+            )
+
+        # =====================================
+        # TELA MÉDIA
+        # =====================================
+
+        elif largura < 1000:
+
+            self.inferior.setSpacing(
+                6
+            )
+
+            self.layout_principal.setContentsMargins(
+                10,
+                8,
+                10,
+                8
+            )
+
+            self.bt_conectar.setText(
+                "Conectar MKS"
+                if not self.mks.conectado
+                else "MKS Conectada"
+            )
+
+        # =====================================
+        # TELA GRANDE
+        # =====================================
+
+        else:
+
+            self.inferior.setSpacing(
+                8
+            )
+
+            self.layout_principal.setContentsMargins(
+                15,
+                10,
+                15,
+                10
+            )
+
+            self.bt_conectar.setText(
+                "Conectar MKS"
+                if not self.mks.conectado
+                else "MKS Conectada"
+            )
 
 
     # =====================================
     # ATUALIZA VISUAL DA CONEXÃO
     # =====================================
 
-    def atualizar_conexao_visual(self, conectado):
+    def atualizar_conexao_visual(
+        self,
+        conectado
+    ):
 
         if conectado:
 
@@ -288,8 +426,9 @@ class TopBar(QFrame):
                 "Conectar MKS"
             )
 
-
-        # Força atualização do QSS
+        # =====================================
+        # FORÇAR ATUALIZAÇÃO DO QSS
+        # =====================================
 
         self.conexao.style().unpolish(
             self.conexao
@@ -299,8 +438,9 @@ class TopBar(QFrame):
             self.conexao
         )
 
-
         self.conexao.update()
+
+        self.adaptar_layout()
 
 
     # =====================================
@@ -337,10 +477,6 @@ class TopBar(QFrame):
                     "0.000"
                 )
 
-                self.bt_home.setEnabled(
-                    False
-                )
-
                 return
 
 
@@ -352,9 +488,7 @@ class TopBar(QFrame):
                 True
             )
 
-
             dados = self.mks.ler_status()
-
 
             if not dados:
 
@@ -370,7 +504,6 @@ class TopBar(QFrame):
                 "---"
             )
 
-
             self.estado.setText(
                 estado.upper()
             )
@@ -384,23 +517,12 @@ class TopBar(QFrame):
                 f'{dados.get("X", 0.0):.3f}'
             )
 
-
             self.y.setText(
                 f'{dados.get("Y", 0.0):.3f}'
             )
 
-
             self.z.setText(
                 f'{dados.get("Z", 0.0):.3f}'
-            )
-
-
-            # =================================
-            # HOME
-            # =================================
-
-            self.bt_home.setEnabled(
-                True
             )
 
 
@@ -442,48 +564,3 @@ class TopBar(QFrame):
             self.atualizar_conexao_visual(
                 False
             )
-
-            self.bt_home.setEnabled(
-                False
-            )
-
-
-    # =====================================
-    # HOME
-    # =====================================
-
-    def zerar_eixos(self):
-
-        if not self.mks.conectado:
-
-            return
-
-
-        self.bt_home.setEnabled(
-            False
-        )
-
-
-        self.estado.setText(
-            "HOMING"
-        )
-
-
-        sucesso = self.mks.zerar_eixos()
-
-
-        if sucesso:
-
-            self.estado.setText(
-                "HOMING"
-            )
-
-        else:
-
-            self.estado.setText(
-                "ERRO"
-            )
-
-
-        # O estado real será atualizado
-        # automaticamente pelo WebSocket.

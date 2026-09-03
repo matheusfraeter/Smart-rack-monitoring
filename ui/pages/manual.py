@@ -14,7 +14,8 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QGridLayout,
-    QFrame
+    QFrame,
+    QSizePolicy
 )
 
 from PySide6.QtCore import (
@@ -57,8 +58,17 @@ class ManualPage(QWidget):
             self.desligar_garfo
         )
 
-        self.criar_interface()
+        # =================================================
+        # TAMANHO DOS BOTÕES
+        # =================================================
 
+        self.tamanho_botao_xy = 50
+
+        # =================================================
+        # CRIAR INTERFACE
+        # =================================================
+
+        self.criar_interface()
 
     # =====================================================
     # INTERFACE
@@ -66,16 +76,22 @@ class ManualPage(QWidget):
 
     def criar_interface(self):
 
-        principal = QVBoxLayout(self)
-
-        principal.setContentsMargins(
-            20,
-            20,
-            20,
-            20
+        principal = QVBoxLayout(
+            self
         )
 
-        principal.setSpacing(15)
+        principal.setContentsMargins(
+            10,
+            8,
+            10,
+            8
+        )
+
+        principal.setSpacing(
+            6
+        )
+
+        self.principal_layout = principal
 
         # =================================================
         # TÍTULO
@@ -89,11 +105,24 @@ class ManualPage(QWidget):
             "title"
         )
 
+        titulo.setAlignment(
+            Qt.AlignCenter
+        )
+
+        titulo.setSizePolicy(
+            QSizePolicy.Preferred,
+            QSizePolicy.Fixed
+        )
+
         # =================================================
         # CONTROLE DE PASSO
         # =================================================
 
-        passo_box = QHBoxLayout()
+        self.passo_box = QHBoxLayout()
+
+        self.passo_box.setSpacing(
+            5
+        )
 
         passo_texto = QLabel(
             "Deslocamento"
@@ -123,70 +152,84 @@ class ManualPage(QWidget):
             "actionButton"
         )
 
-        self.bt_menos.setMinimumSize(
-            50,
-            40
-        )
-
-        self.bt_mais.setMinimumSize(
-            50,
-            40
-        )
-
         self.passo_label.setMinimumWidth(
-            80
+            52
         )
 
-        passo_box.addWidget(
+        self.passo_box.addWidget(
             passo_texto
         )
 
-        passo_box.addSpacing(20)
+        self.passo_box.addSpacing(
+            5
+        )
 
-        passo_box.addWidget(
+        self.passo_box.addWidget(
             self.bt_menos
         )
 
-        passo_box.addWidget(
+        self.passo_box.addWidget(
             self.passo_label
         )
 
-        passo_box.addWidget(
+        self.passo_box.addWidget(
             self.bt_mais
         )
 
-        passo_box.addStretch()
+        self.passo_box.addStretch()
 
         # =================================================
         # CAIXA PRINCIPAL
         # =================================================
 
-        caixa = QFrame()
+        self.caixa = QFrame()
 
-        caixa.setObjectName(
+        self.caixa.setObjectName(
             "controlBox"
         )
 
-        controles = QHBoxLayout(
-            caixa
+        self.controles = QHBoxLayout(
+            self.caixa
         )
 
-        controles.setSpacing(60)
+        self.controles.setContentsMargins(
+            5,
+            5,
+            5,
+            5
+        )
 
-        controles.addStretch()
+        self.controles.setSpacing(
+            8
+        )
 
         # =================================================
         # XY
         # =================================================
 
-        xy_box = QFrame()
+        self.xy_box = QFrame()
 
-        xy_box.setObjectName(
+        self.xy_box.setObjectName(
             "controlBox"
         )
 
-        xy_layout = QVBoxLayout(
-            xy_box
+        self.xy_layout = QVBoxLayout(
+            self.xy_box
+        )
+
+        self.xy_layout.setContentsMargins(
+            5,
+            5,
+            5,
+            5
+        )
+
+        self.xy_layout.setSpacing(
+            3
+        )
+
+        self.xy_layout.setAlignment(
+            Qt.AlignCenter
         )
 
         xy_titulo = QLabel(
@@ -197,26 +240,38 @@ class ManualPage(QWidget):
             Qt.AlignCenter
         )
 
-        xy_layout.addWidget(
+        self.xy_layout.addWidget(
             xy_titulo
         )
 
-        grid = QGridLayout()
+        self.grid_xy = QGridLayout()
+
+        self.grid_xy.setSpacing(
+            3
+        )
+
+        self.grid_xy.setAlignment(
+            Qt.AlignCenter
+        )
+
+        # =================================================
+        # BOTÕES XY
+        # =================================================
 
         self.xp = QPushButton(
-            "↑\nX+"
+            "X+"
         )
 
         self.xm = QPushButton(
-            "↓\nX-"
+            "X-"
         )
 
         self.ym = QPushButton(
-            "←\nY-"
+            "Y-"
         )
 
         self.yp = QPushButton(
-            "→\nY+"
+            "Y+"
         )
 
         for botao in (
@@ -230,55 +285,74 @@ class ManualPage(QWidget):
                 "actionButton"
             )
 
-            botao.setMinimumSize(
-                90,
-                90
+            botao.setSizePolicy(
+                QSizePolicy.Fixed,
+                QSizePolicy.Fixed
             )
 
-        grid.addWidget(
+        # -------------------------------------------------
+        # DISPOSIÇÃO XY
+        # -------------------------------------------------
+
+        self.grid_xy.addWidget(
             self.xp,
             0,
-            1
+            1,
+            Qt.AlignCenter
         )
 
-        grid.addWidget(
+        self.grid_xy.addWidget(
             self.ym,
             1,
-            0
+            0,
+            Qt.AlignCenter
         )
 
-        grid.addWidget(
+        self.grid_xy.addWidget(
             self.yp,
             1,
-            2
+            2,
+            Qt.AlignCenter
         )
 
-        grid.addWidget(
+        self.grid_xy.addWidget(
             self.xm,
             2,
-            1
+            1,
+            Qt.AlignCenter
         )
 
-        xy_layout.addLayout(
-            grid
-        )
-
-        controles.addWidget(
-            xy_box
+        self.xy_layout.addLayout(
+            self.grid_xy
         )
 
         # =================================================
         # Z
         # =================================================
 
-        z_box = QFrame()
+        self.z_box = QFrame()
 
-        z_box.setObjectName(
+        self.z_box.setObjectName(
             "controlBox"
         )
 
-        z_layout = QVBoxLayout(
-            z_box
+        self.z_layout = QVBoxLayout(
+            self.z_box
+        )
+
+        self.z_layout.setContentsMargins(
+            5,
+            5,
+            5,
+            5
+        )
+
+        self.z_layout.setSpacing(
+            5
+        )
+
+        self.z_layout.setAlignment(
+            Qt.AlignCenter
         )
 
         z_titulo = QLabel(
@@ -289,9 +363,13 @@ class ManualPage(QWidget):
             Qt.AlignCenter
         )
 
-        z_layout.addWidget(
+        self.z_layout.addWidget(
             z_titulo
         )
+
+        # =================================================
+        # BOTÕES Z
+        # =================================================
 
         self.zp = QPushButton(
             "Z +"
@@ -310,33 +388,44 @@ class ManualPage(QWidget):
                 "actionButton"
             )
 
-            botao.setMinimumSize(
-                100,
-                70
+            botao.setSizePolicy(
+                QSizePolicy.Fixed,
+                QSizePolicy.Fixed
             )
 
-            z_layout.addWidget(
-                botao
+            self.z_layout.addWidget(
+                botao,
+                0,
+                Qt.AlignCenter
             )
 
-        controles.addSpacing(60)
-
-        controles.addWidget(
-            z_box
-        )
-
         # =================================================
-        # CONTROLE DOS GARFOS
+        # GARFOS
         # =================================================
 
-        garfo_box = QFrame()
+        self.garfo_box = QFrame()
 
-        garfo_box.setObjectName(
+        self.garfo_box.setObjectName(
             "controlBox"
         )
 
-        garfo_layout = QVBoxLayout(
-            garfo_box
+        self.garfo_layout = QVBoxLayout(
+            self.garfo_box
+        )
+
+        self.garfo_layout.setContentsMargins(
+            5,
+            5,
+            5,
+            5
+        )
+
+        self.garfo_layout.setSpacing(
+            5
+        )
+
+        self.garfo_layout.setAlignment(
+            Qt.AlignCenter
         )
 
         garfo_titulo = QLabel(
@@ -347,40 +436,61 @@ class ManualPage(QWidget):
             Qt.AlignCenter
         )
 
-        garfo_layout.addWidget(
+        self.garfo_layout.addWidget(
             garfo_titulo
         )
 
+        # =================================================
+        # BOTÃO GARFO
+        # =================================================
+
         self.bt_garfo = QPushButton(
-            "ACIONAR GARFO"
+            "ACIONAR\nGARFO"
         )
 
         self.bt_garfo.setObjectName(
             "actionButton"
         )
 
-        self.bt_garfo.setMinimumSize(
-            150,
-            70
+        self.bt_garfo.setSizePolicy(
+            QSizePolicy.Fixed,
+            QSizePolicy.Fixed
         )
 
-        garfo_layout.addWidget(
-            self.bt_garfo
+        self.garfo_layout.addWidget(
+            self.bt_garfo,
+            0,
+            Qt.AlignCenter
         )
 
-        controles.addSpacing(60)
+        # =================================================
+        # MONTAR OS TRÊS CONTROLES
+        # =================================================
 
-        controles.addWidget(
-            garfo_box
+        self.controles.addWidget(
+            self.xy_box,
+            4
         )
 
-        controles.addStretch()
+        self.controles.addWidget(
+            self.z_box,
+            2
+        )
+
+        self.controles.addWidget(
+            self.garfo_box,
+            3
+        )
 
         # =================================================
         # BOTÕES INFERIORES
         # =================================================
 
-        botoes = QHBoxLayout()
+        self.botoes = QHBoxLayout()
+
+        self.botoes.setSpacing(
+            8
+        )
 
         stop = QPushButton(
             "STOP"
@@ -398,15 +508,14 @@ class ManualPage(QWidget):
             "actionButton"
         )
 
-        stop.setMinimumHeight(50)
+        self.stop_button = stop
+        self.continuar_button = continuar
 
-        continuar.setMinimumHeight(50)
-
-        botoes.addWidget(
+        self.botoes.addWidget(
             stop
         )
 
-        botoes.addWidget(
+        self.botoes.addWidget(
             continuar
         )
 
@@ -459,7 +568,7 @@ class ManualPage(QWidget):
         )
 
         # =================================================
-        # MONTAGEM
+        # MONTAGEM FINAL
         # =================================================
 
         principal.addWidget(
@@ -467,19 +576,183 @@ class ManualPage(QWidget):
         )
 
         principal.addLayout(
-            passo_box
+            self.passo_box
         )
 
         principal.addWidget(
-            caixa
+            self.caixa,
+            1
         )
 
         principal.addLayout(
-            botoes
+            self.botoes
         )
 
-        principal.addStretch()
+        # =================================================
+        # TAMANHO INICIAL
+        # =================================================
 
+        self.atualizar_tamanho_botoes()
+
+    # =====================================================
+    # REDIMENSIONAMENTO
+    # =====================================================
+
+    def resizeEvent(self, event):
+
+        super().resizeEvent(
+            event
+        )
+
+        self.atualizar_tamanho_botoes()
+
+    # =====================================================
+    # ATUALIZAR TAMANHOS
+    # =====================================================
+
+    def atualizar_tamanho_botoes(self):
+
+        largura = self.width()
+        altura = self.height()
+
+        # =================================================
+        # TAMANHO BASE DOS BOTÕES DE MOVIMENTO
+        # =================================================
+
+        tamanho_base = int(
+            min(
+                62,
+                max(
+                    46,
+                    largura * 0.075
+                )
+            )
+        )
+
+        self.tamanho_botao_xy = tamanho_base
+
+        # =================================================
+        # BOTÕES XY
+        # =================================================
+
+        # Agora XY tem o mesmo formato dos botões Z:
+        # retangular em vez de quadrado.
+
+        largura_movimento = int(
+            tamanho_base * 1.25
+        )
+
+        altura_movimento = int(
+            tamanho_base * 0.80
+        )
+
+        for botao in (
+            self.xp,
+            self.xm,
+            self.ym,
+            self.yp
+        ):
+
+            botao.setFixedSize(
+                largura_movimento,
+                altura_movimento
+            )
+
+        # =================================================
+        # BOTÕES Z
+        # =================================================
+
+        self.zp.setFixedSize(
+            largura_movimento,
+            altura_movimento
+        )
+
+        self.zm.setFixedSize(
+            largura_movimento,
+            altura_movimento
+        )
+
+        # =================================================
+        # BOTÃO GARFO
+        # =================================================
+
+        largura_garfo = int(
+            max(
+                120,
+                tamanho_base * 2.5
+            )
+        )
+
+        altura_garfo = int(
+            tamanho_base * 1.20
+        )
+
+        self.bt_garfo.setFixedSize(
+            largura_garfo,
+            altura_garfo
+        )
+
+        # =================================================
+        # NÃO FORÇAR TAMANHO DOS BLOCOS
+        # =================================================
+
+        self.xy_box.setMinimumWidth(
+            0
+        )
+
+        self.z_box.setMinimumWidth(
+            0
+        )
+
+        self.garfo_box.setMinimumWidth(
+            0
+        )
+
+        # =================================================
+        # BOTÕES DE PASSO
+        # =================================================
+
+        tamanho_passo = int(
+            max(
+                32,
+                min(
+                    44,
+                    largura * 0.043
+                )
+            )
+        )
+
+        self.bt_menos.setFixedSize(
+            tamanho_passo,
+            tamanho_passo
+        )
+
+        self.bt_mais.setFixedSize(
+            tamanho_passo,
+            tamanho_passo
+        )
+
+        # =================================================
+        # STOP / CONTINUAR
+        # =================================================
+
+        altura_inferior = int(
+            max(
+                36,
+                min(
+                    46,
+                    altura * 0.095
+                )
+            )
+        )
+
+        self.stop_button.setFixedHeight(
+            altura_inferior
+        )
+
+        self.continuar_button.setFixedHeight(
+            altura_inferior
+        )
 
     # =====================================================
     # PASSO +
@@ -499,7 +772,6 @@ class ManualPage(QWidget):
                 f"PASSO ALTERADO PARA: {self.passo} mm"
             )
 
-
     # =====================================================
     # PASSO -
     # =====================================================
@@ -518,7 +790,6 @@ class ManualPage(QWidget):
                 f"PASSO ALTERADO PARA: {self.passo} mm"
             )
 
-
     # =====================================================
     # BOTÃO X+
     # =====================================================
@@ -526,13 +797,17 @@ class ManualPage(QWidget):
     def botao_x_mais(self):
 
         print()
-        print(">>> BOTÃO X+ PRESSIONADO")
-        print(f">>> PASSO: {self.passo} mm")
+        print(
+            ">>> BOTÃO X+ PRESSIONADO"
+        )
+
+        print(
+            f">>> PASSO: {self.passo} mm"
+        )
 
         self.mover_x(
             self.passo
         )
-
 
     # =====================================================
     # BOTÃO X-
@@ -541,13 +816,17 @@ class ManualPage(QWidget):
     def botao_x_menos(self):
 
         print()
-        print(">>> BOTÃO X- PRESSIONADO")
-        print(f">>> PASSO: {self.passo} mm")
+        print(
+            ">>> BOTÃO X- PRESSIONADO"
+        )
+
+        print(
+            f">>> PASSO: {self.passo} mm"
+        )
 
         self.mover_x(
             -self.passo
         )
-
 
     # =====================================================
     # BOTÃO Y+
@@ -556,13 +835,17 @@ class ManualPage(QWidget):
     def botao_y_mais(self):
 
         print()
-        print(">>> BOTÃO Y+ PRESSIONADO")
-        print(f">>> PASSO: {self.passo} mm")
+        print(
+            ">>> BOTÃO Y+ PRESSIONADO"
+        )
+
+        print(
+            f">>> PASSO: {self.passo} mm"
+        )
 
         self.mover_y(
             self.passo
         )
-
 
     # =====================================================
     # BOTÃO Y-
@@ -571,13 +854,17 @@ class ManualPage(QWidget):
     def botao_y_menos(self):
 
         print()
-        print(">>> BOTÃO Y- PRESSIONADO")
-        print(f">>> PASSO: {self.passo} mm")
+        print(
+            ">>> BOTÃO Y- PRESSIONADO"
+        )
+
+        print(
+            f">>> PASSO: {self.passo} mm"
+        )
 
         self.mover_y(
             -self.passo
         )
-
 
     # =====================================================
     # BOTÃO Z+
@@ -586,13 +873,17 @@ class ManualPage(QWidget):
     def botao_z_mais(self):
 
         print()
-        print(">>> BOTÃO Z+ PRESSIONADO")
-        print(f">>> PASSO: {self.passo} mm")
+        print(
+            ">>> BOTÃO Z+ PRESSIONADO"
+        )
+
+        print(
+            f">>> PASSO: {self.passo} mm"
+        )
 
         self.mover_z(
             self.passo
         )
-
 
     # =====================================================
     # BOTÃO Z-
@@ -601,13 +892,17 @@ class ManualPage(QWidget):
     def botao_z_menos(self):
 
         print()
-        print(">>> BOTÃO Z- PRESSIONADO")
-        print(f">>> PASSO: {self.passo} mm")
+        print(
+            ">>> BOTÃO Z- PRESSIONADO"
+        )
+
+        print(
+            f">>> PASSO: {self.passo} mm"
+        )
 
         self.mover_z(
             -self.passo
         )
-
 
     # =====================================================
     # MOVIMENTO X
@@ -616,12 +911,19 @@ class ManualPage(QWidget):
     def mover_x(self, valor):
 
         print()
-        print(">>> MANUAL PAGE")
-        print(f">>> SOLICITADO X: {valor}")
+        print(
+            ">>> MANUAL PAGE"
+        )
+
+        print(
+            f">>> SOLICITADO X: {valor}"
+        )
 
         if not self.mks.conectado:
 
-            print(">>> MKS DESCONECTADA")
+            print(
+                ">>> MKS DESCONECTADA"
+            )
 
             return
 
@@ -633,7 +935,6 @@ class ManualPage(QWidget):
             f">>> RESULTADO X: {resultado}"
         )
 
-
     # =====================================================
     # MOVIMENTO Y
     # =====================================================
@@ -641,12 +942,19 @@ class ManualPage(QWidget):
     def mover_y(self, valor):
 
         print()
-        print(">>> MANUAL PAGE")
-        print(f">>> SOLICITADO Y: {valor}")
+        print(
+            ">>> MANUAL PAGE"
+        )
+
+        print(
+            f">>> SOLICITADO Y: {valor}"
+        )
 
         if not self.mks.conectado:
 
-            print(">>> MKS DESCONECTADA")
+            print(
+                ">>> MKS DESCONECTADA"
+            )
 
             return
 
@@ -658,7 +966,6 @@ class ManualPage(QWidget):
             f">>> RESULTADO Y: {resultado}"
         )
 
-
     # =====================================================
     # MOVIMENTO Z
     # =====================================================
@@ -666,12 +973,19 @@ class ManualPage(QWidget):
     def mover_z(self, valor):
 
         print()
-        print(">>> MANUAL PAGE")
-        print(f">>> SOLICITADO Z: {valor}")
+        print(
+            ">>> MANUAL PAGE"
+        )
+
+        print(
+            f">>> SOLICITADO Z: {valor}"
+        )
 
         if not self.mks.conectado:
 
-            print(">>> MKS DESCONECTADA")
+            print(
+                ">>> MKS DESCONECTADA"
+            )
 
             return
 
@@ -683,27 +997,16 @@ class ManualPage(QWidget):
             f">>> RESULTADO Z: {resultado}"
         )
 
-
     # =====================================================
     # ACIONAR GARFO
-    #
-    # M3 S1000
-    # ↓
-    # HIGH POR 1 SEGUNDO
-    # ↓
-    # M3 S0
-    #
-    # QTimer mantém a interface responsiva.
     # =====================================================
 
     def acionar_garfo(self):
 
         print()
-        print(">>> BOTÃO ACIONAR GARFO PRESSIONADO")
-
-        # ---------------------------------------------
-        # IMPEDIR NOVO ACIONAMENTO
-        # ---------------------------------------------
+        print(
+            ">>> BOTÃO ACIONAR GARFO PRESSIONADO"
+        )
 
         if self.garfo_acionado:
 
@@ -713,10 +1016,6 @@ class ManualPage(QWidget):
 
             return
 
-        # ---------------------------------------------
-        # VERIFICAR CONEXÃO
-        # ---------------------------------------------
-
         if not self.mks.conectado:
 
             print(
@@ -724,10 +1023,6 @@ class ManualPage(QWidget):
             )
 
             return
-
-        # ---------------------------------------------
-        # LIGAR TTL
-        # ---------------------------------------------
 
         print(
             ">>> ENVIANDO M3 S1000"
@@ -745,10 +1040,6 @@ class ManualPage(QWidget):
 
             return
 
-        # ---------------------------------------------
-        # ESTADO
-        # ---------------------------------------------
-
         self.garfo_acionado = True
 
         self.bt_garfo.setEnabled(
@@ -756,14 +1047,8 @@ class ManualPage(QWidget):
         )
 
         self.bt_garfo.setText(
-            "GARFO ACIONADO"
+            "GARFO\nACIONADO"
         )
-
-        # ---------------------------------------------
-        # TIMER
-        #
-        # 1000 ms = 1 segundo de HIGH
-        # ---------------------------------------------
 
         print(
             ">>> TTL HIGH POR 1 SEGUNDO"
@@ -772,7 +1057,6 @@ class ManualPage(QWidget):
         self.timer_garfo.start(
             1000
         )
-
 
     # =====================================================
     # DESLIGAR GARFO
@@ -798,7 +1082,7 @@ class ManualPage(QWidget):
             )
 
             self.bt_garfo.setText(
-                "ACIONAR GARFO"
+                "ACIONAR\nGARFO"
             )
 
             return
@@ -822,9 +1106,8 @@ class ManualPage(QWidget):
         )
 
         self.bt_garfo.setText(
-            "ACIONAR GARFO"
+            "ACIONAR\nGARFO"
         )
-
 
     # =====================================================
     # STOP
@@ -833,17 +1116,17 @@ class ManualPage(QWidget):
     def stop(self):
 
         print()
-        print(">>> STOP PRESSIONADO")
+        print(
+            ">>> STOP PRESSIONADO"
+        )
 
         if not self.mks.conectado:
 
-            print(">>> MKS DESCONECTADA")
+            print(
+                ">>> MKS DESCONECTADA"
+            )
 
             return
-
-        # ---------------------------------------------
-        # CANCELAR TIMER DO GARFO
-        # ---------------------------------------------
 
         if self.timer_garfo.isActive():
 
@@ -864,17 +1147,12 @@ class ManualPage(QWidget):
             )
 
             self.bt_garfo.setText(
-                "ACIONAR GARFO"
+                "ACIONAR\nGARFO"
             )
-
-        # ---------------------------------------------
-        # STOP DA MKS
-        # ---------------------------------------------
 
         self.mks.enviar_comando(
             "!"
         )
-
 
     # =====================================================
     # CONTINUAR
@@ -883,11 +1161,15 @@ class ManualPage(QWidget):
     def reset(self):
 
         print()
-        print(">>> CONTINUAR PRESSIONADO")
+        print(
+            ">>> CONTINUAR PRESSIONADO"
+        )
 
         if not self.mks.conectado:
 
-            print(">>> MKS DESCONECTADA")
+            print(
+                ">>> MKS DESCONECTADA"
+            )
 
             return
 
