@@ -15,7 +15,8 @@ from PySide6.QtWidgets import (
     QPushButton,
     QGridLayout,
     QFrame,
-    QSizePolicy
+    QSizePolicy,
+    QDoubleSpinBox
 )
 
 from PySide6.QtCore import (
@@ -38,7 +39,11 @@ class ManualPage(QWidget):
             self.mks
         )
 
-        self.passo = 10
+        # =================================================
+        # DESLOCAMENTO
+        # =================================================
+
+        self.passo = 10.0
 
         # =================================================
         # CONTROLE DO GARFO
@@ -115,45 +120,71 @@ class ManualPage(QWidget):
         )
 
         # =================================================
-        # CONTROLE DE PASSO
+        # CONTROLE DE DESLOCAMENTO
         # =================================================
 
         self.passo_box = QHBoxLayout()
 
         self.passo_box.setSpacing(
-            5
+            6
         )
 
         passo_texto = QLabel(
             "Deslocamento"
         )
 
-        self.bt_menos = QPushButton(
-            "-"
+        # -------------------------------------------------
+        # CAMPO NUMÉRICO
+        #
+        # Permite valores quebrados:
+        # 0,1
+        # 0,5
+        # 1,25
+        # 2,75
+        # etc.
+        # -------------------------------------------------
+
+        self.passo_spin = QDoubleSpinBox()
+
+        self.passo_spin.setDecimals(
+            2
         )
 
-        self.bt_mais = QPushButton(
-            "+"
+        self.passo_spin.setRange(
+            0.01,
+            1000.00
         )
 
-        self.passo_label = QLabel(
-            "10 mm"
+        self.passo_spin.setSingleStep(
+            0.1
         )
 
-        self.passo_label.setAlignment(
+        self.passo_spin.setValue(
+            self.passo
+        )
+
+        self.passo_spin.setSuffix(
+            " mm"
+        )
+
+        self.passo_spin.setAlignment(
             Qt.AlignCenter
         )
 
-        self.bt_menos.setObjectName(
+        self.passo_spin.setObjectName(
             "actionButton"
         )
 
-        self.bt_mais.setObjectName(
-            "actionButton"
+        self.passo_spin.setMinimumWidth(
+            110
         )
 
-        self.passo_label.setMinimumWidth(
-            52
+        # -------------------------------------------------
+        # ATUALIZAR VALOR
+        # -------------------------------------------------
+
+        self.passo_spin.valueChanged.connect(
+            self.alterar_passo
         )
 
         self.passo_box.addWidget(
@@ -165,15 +196,7 @@ class ManualPage(QWidget):
         )
 
         self.passo_box.addWidget(
-            self.bt_menos
-        )
-
-        self.passo_box.addWidget(
-            self.passo_label
-        )
-
-        self.passo_box.addWidget(
-            self.bt_mais
+            self.passo_spin
         )
 
         self.passo_box.addStretch()
@@ -523,14 +546,6 @@ class ManualPage(QWidget):
         # EVENTOS
         # =================================================
 
-        self.bt_mais.clicked.connect(
-            self.aumentar_passo
-        )
-
-        self.bt_menos.clicked.connect(
-            self.diminuir_passo
-        )
-
         self.xp.clicked.connect(
             self.botao_x_mais
         )
@@ -635,9 +650,6 @@ class ManualPage(QWidget):
         # BOTÕES XY
         # =================================================
 
-        # Agora XY tem o mesmo formato dos botões Z:
-        # retangular em vez de quadrado.
-
         largura_movimento = int(
             tamanho_base * 1.25
         )
@@ -709,27 +721,11 @@ class ManualPage(QWidget):
         )
 
         # =================================================
-        # BOTÕES DE PASSO
+        # CAMPO DE DESLOCAMENTO
         # =================================================
 
-        tamanho_passo = int(
-            max(
-                32,
-                min(
-                    44,
-                    largura * 0.043
-                )
-            )
-        )
-
-        self.bt_menos.setFixedSize(
-            tamanho_passo,
-            tamanho_passo
-        )
-
-        self.bt_mais.setFixedSize(
-            tamanho_passo,
-            tamanho_passo
+        self.passo_spin.setFixedHeight(
+            40
         )
 
         # =================================================
@@ -755,40 +751,22 @@ class ManualPage(QWidget):
         )
 
     # =====================================================
-    # PASSO +
+    # ALTERAR DESLOCAMENTO
     # =====================================================
 
-    def aumentar_passo(self):
+    def alterar_passo(
+        self,
+        valor
+    ):
 
-        if self.passo < 100:
+        self.passo = float(
+            valor
+        )
 
-            self.passo += 10
-
-            self.passo_label.setText(
-                f"{self.passo} mm"
-            )
-
-            print(
-                f"PASSO ALTERADO PARA: {self.passo} mm"
-            )
-
-    # =====================================================
-    # PASSO -
-    # =====================================================
-
-    def diminuir_passo(self):
-
-        if self.passo > 10:
-
-            self.passo -= 10
-
-            self.passo_label.setText(
-                f"{self.passo} mm"
-            )
-
-            print(
-                f"PASSO ALTERADO PARA: {self.passo} mm"
-            )
+        print(
+            f"DESLOCAMENTO ALTERADO PARA: "
+            f"{self.passo:g} mm"
+        )
 
     # =====================================================
     # BOTÃO X+
@@ -802,7 +780,7 @@ class ManualPage(QWidget):
         )
 
         print(
-            f">>> PASSO: {self.passo} mm"
+            f">>> DESLOCAMENTO: {self.passo:g} mm"
         )
 
         self.mover_x(
@@ -821,7 +799,7 @@ class ManualPage(QWidget):
         )
 
         print(
-            f">>> PASSO: {self.passo} mm"
+            f">>> DESLOCAMENTO: {self.passo:g} mm"
         )
 
         self.mover_x(
@@ -840,7 +818,7 @@ class ManualPage(QWidget):
         )
 
         print(
-            f">>> PASSO: {self.passo} mm"
+            f">>> DESLOCAMENTO: {self.passo:g} mm"
         )
 
         self.mover_y(
@@ -859,7 +837,7 @@ class ManualPage(QWidget):
         )
 
         print(
-            f">>> PASSO: {self.passo} mm"
+            f">>> DESLOCAMENTO: {self.passo:g} mm"
         )
 
         self.mover_y(
@@ -878,7 +856,7 @@ class ManualPage(QWidget):
         )
 
         print(
-            f">>> PASSO: {self.passo} mm"
+            f">>> DESLOCAMENTO: {self.passo:g} mm"
         )
 
         self.mover_z(
@@ -897,7 +875,7 @@ class ManualPage(QWidget):
         )
 
         print(
-            f">>> PASSO: {self.passo} mm"
+            f">>> DESLOCAMENTO: {self.passo:g} mm"
         )
 
         self.mover_z(

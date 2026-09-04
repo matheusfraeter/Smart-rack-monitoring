@@ -10,6 +10,7 @@
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
+    QHBoxLayout,
     QLabel,
     QPushButton,
     QGridLayout,
@@ -214,7 +215,9 @@ class RackPage(QWidget):
         ]
 
         self.niveis = 3
-        self.colunas = 4
+
+        # AGORA SÃO SOMENTE 2 COLUNAS
+        self.colunas = 2
 
         # =====================================
         # REFERÊNCIAS DAS GRADES
@@ -343,7 +346,11 @@ class RackPage(QWidget):
             QSizePolicy.Preferred
         )
 
-        self.layout_racks = QVBoxLayout(
+        # =====================================
+        # AS ESTANTES AGORA FICAM LADO A LADO
+        # =====================================
+
+        self.layout_racks = QHBoxLayout(
             self.conteudo
         )
 
@@ -355,7 +362,7 @@ class RackPage(QWidget):
         )
 
         self.layout_racks.setSpacing(
-            10
+            12
         )
 
         # =====================================
@@ -369,10 +376,13 @@ class RackPage(QWidget):
             )
 
             self.layout_racks.addWidget(
-                frame
+                frame,
+                1
             )
 
-        self.layout_racks.addStretch()
+        self.layout_racks.addStretch(
+            0
+        )
 
         self.scroll.setWidget(
             self.conteudo
@@ -578,6 +588,18 @@ class RackPage(QWidget):
             )
 
         # =====================================
+        # IGNORAR EVENTOS ENQUANTO UM
+        # DIÁLOGO MODAL ESTIVER ABERTO
+        # =====================================
+
+        if QApplication.activeModalWidget() is not None:
+
+            return super().eventFilter(
+                obj,
+                event
+            )
+
+        # =====================================
         # MOUSE PRESS
         # =====================================
 
@@ -744,6 +766,11 @@ class RackPage(QWidget):
             "rackFrame"
         )
 
+        frame.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Preferred
+        )
+
         layout = QVBoxLayout(
             frame
         )
@@ -878,14 +905,9 @@ class RackPage(QWidget):
                     QSizePolicy.Fixed
                 )
 
-                # IMPORTANTE:
-                # O clique não é conectado diretamente
-                # ao QPushButton.
-                #
-                # O eventFilter global identifica:
-                #
-                # toque curto -> selecionar
-                # arrasto      -> rolagem
+                # O clique é tratado pelo eventFilter.
+                # Não conectar o clicked diretamente,
+                # para evitar conflito com o touch/scroll.
 
                 self.botoes[endereco] = botao
 
@@ -963,14 +985,26 @@ class RackPage(QWidget):
             return
 
         # =====================================
-        # ESPAÇOS
+        # AGORA SÃO DUAS ESTANTES LADO A LADO
         # =====================================
 
+        quantidade_estantes = len(
+            self.estantes
+        )
+
         margem = 30
+
+        espaco_entre_estantes = 12
 
         largura_util = (
             largura_disponivel
             - margem
+            - espaco_entre_estantes
+        )
+
+        largura_estante = (
+            largura_util
+            / quantidade_estantes
         )
 
         # =====================================
@@ -986,15 +1020,15 @@ class RackPage(QWidget):
         espacamento = 6
 
         total_espacamento = (
-            espacamento * 4
+            espacamento * 3
         )
 
         # =====================================
-        # CALCULAR LARGURA DAS CÉLULAS
+        # LARGURA DISPONÍVEL PARA CÉLULAS
         # =====================================
 
         largura_disponivel_celulas = (
-            largura_util
+            largura_estante
             - largura_nivel
             - total_espacamento
         )

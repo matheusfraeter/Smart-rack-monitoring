@@ -23,11 +23,11 @@ class ForkliftController:
         self.executando = False
 
         # =================================================
-        # VELOCIDADES
+        # VELOCIDADES PADRÃO
         # =================================================
 
-        self.velocidade_xy = 1000
-
+        self.velocidade_x = 1000
+        self.velocidade_y = 1000
         self.velocidade_z = 500
 
         # =================================================
@@ -48,6 +48,54 @@ class ForkliftController:
         return bool(
             self.mks.conectado
         )
+
+
+    # =====================================================
+    # OBTER VELOCIDADE
+    # =====================================================
+
+    def obter_velocidade(
+        self,
+        nome,
+        padrao
+    ):
+
+        valor = (
+            self.db.obter_configuracao_empilhadeira(
+                nome
+            )
+        )
+
+        if valor is None:
+
+            return padrao
+
+        try:
+
+            valor = float(
+                valor
+            )
+
+        except (
+            ValueError,
+            TypeError
+        ):
+
+            print(
+                f"ERRO: velocidade inválida: {nome}"
+            )
+
+            return padrao
+
+        if valor <= 0:
+
+            print(
+                f"ERRO: velocidade deve ser maior que zero: {nome}"
+            )
+
+            return padrao
+
+        return valor
 
 
     # =====================================================
@@ -94,9 +142,6 @@ class ForkliftController:
 
     # =====================================================
     # AGUARDAR POSIÇÃO
-    #
-    # A posição precisa ser exatamente igual
-    # ao valor solicitado.
     # =====================================================
 
     def aguardar_posicao(
@@ -386,83 +431,17 @@ class ForkliftController:
     # =====================================================
     # LEVANTAR PALLET
     #
-    # Usa:
-    # Z atual + Z_LEVANTAR
+    # Neste eixo:
+    # aumentar Z = descer
+    # diminuir Z = subir
+    #
+    # LEVANTAR = Z atual - Z_LEVANTAR
     # =====================================================
 
     def levantar_pallet(self):
 
         ajuste = self.obter_ajuste_z(
             "Z_LEVANTAR"
-        )
-
-
-        if ajuste is None:
-
-            return False
-
-
-        z_atual = self.obter_posicao_atual(
-            "Z"
-        )
-
-
-        if z_atual is None:
-
-            return False
-
-
-        destino = (
-            z_atual + ajuste
-        )
-
-
-        print()
-        print(
-            "===================================="
-        )
-
-        print(
-            " LEVANTAR PALLET"
-        )
-
-        print(
-            "===================================="
-        )
-
-        print(
-            f"Z atual: {z_atual}"
-        )
-
-        print(
-            f"Ajuste: +{ajuste}"
-        )
-
-        print(
-            f"Z destino: {destino}"
-        )
-
-        print(
-            "===================================="
-        )
-
-
-        return self.mover_z(
-            destino
-        )
-
-
-    # =====================================================
-    # APOIAR PALLET
-    #
-    # Usa:
-    # Z atual - Z_APOIAR
-    # =====================================================
-
-    def apoiar_pallet(self):
-
-        ajuste = self.obter_ajuste_z(
-            "Z_APOIAR"
         )
 
 
@@ -492,7 +471,7 @@ class ForkliftController:
         )
 
         print(
-            " APOIAR PALLET"
+            " LEVANTAR PALLET"
         )
 
         print(
@@ -505,6 +484,78 @@ class ForkliftController:
 
         print(
             f"Ajuste: -{ajuste}"
+        )
+
+        print(
+            f"Z destino: {destino}"
+        )
+
+        print(
+            "===================================="
+        )
+
+
+        return self.mover_z(
+            destino
+        )
+
+
+    # =====================================================
+    # APOIAR PALLET
+    #
+    # Neste eixo:
+    # aumentar Z = descer
+    # diminuir Z = subir
+    #
+    # APOIAR = Z atual + Z_APOIAR
+    # =====================================================
+
+    def apoiar_pallet(self):
+
+        ajuste = self.obter_ajuste_z(
+            "Z_APOIAR"
+        )
+
+
+        if ajuste is None:
+
+            return False
+
+
+        z_atual = self.obter_posicao_atual(
+            "Z"
+        )
+
+
+        if z_atual is None:
+
+            return False
+
+
+        destino = (
+            z_atual + ajuste
+        )
+
+
+        print()
+        print(
+            "===================================="
+        )
+
+        print(
+            " APOIAR PALLET"
+        )
+
+        print(
+            "===================================="
+        )
+
+        print(
+            f"Z atual: {z_atual}"
+        )
+
+        print(
+            f"Ajuste: +{ajuste}"
         )
 
         print(
@@ -557,9 +608,20 @@ class ForkliftController:
             return False
 
 
+        velocidade = self.obter_velocidade(
+            "VELOCIDADE_X",
+            self.velocidade_x
+        )
+
+
         comando = (
             "G90\n"
-            f"G0 X{x:g} F{self.velocidade_xy}"
+            f"G1 X{x:g} F{velocidade:g}"
+        )
+
+
+        print(
+            f"Velocidade X: {velocidade:g} mm/min"
         )
 
 
@@ -613,9 +675,20 @@ class ForkliftController:
             return False
 
 
+        velocidade = self.obter_velocidade(
+            "VELOCIDADE_Y",
+            self.velocidade_y
+        )
+
+
         comando = (
             "G90\n"
-            f"G0 Y{y:g} F{self.velocidade_xy}"
+            f"G1 Y{y:g} F{velocidade:g}"
+        )
+
+
+        print(
+            f"Velocidade Y: {velocidade:g} mm/min"
         )
 
 
@@ -669,9 +742,20 @@ class ForkliftController:
             return False
 
 
+        velocidade = self.obter_velocidade(
+            "VELOCIDADE_Z",
+            self.velocidade_z
+        )
+
+
         comando = (
             "G90\n"
-            f"G0 Z{z:g} F{self.velocidade_z}"
+            f"G1 Z{z:g} F{velocidade:g}"
+        )
+
+
+        print(
+            f"Velocidade Z: {velocidade:g} mm/min"
         )
 
 
@@ -750,10 +834,6 @@ class ForkliftController:
 
     # =====================================================
     # OBTER POSIÇÃO ESPECIAL
-    #
-    # RECEBIMENTO
-    # EXPEDICAO
-    # Z_TRANSPORTE
     # =====================================================
 
     def obter_posicao_maquina(
@@ -982,10 +1062,7 @@ class ForkliftController:
     # =====================================================
     # ACIONAR GARFO
     #
-    # TEMPORÁRIO:
-    # HIGH por 1 segundo.
-    #
-    # O TEMPO DEFINITIVO AINDA SERÁ CALCULADO.
+    # HIGH por 5,5 segundos.
     # =====================================================
 
     def acionar_garfo(self):
@@ -1017,12 +1094,12 @@ class ForkliftController:
 
 
         print(
-            "Mantendo TTL HIGH por 1 segundo..."
+            "Mantendo TTL HIGH por 5,5 segundo..."
         )
 
 
         time.sleep(
-            1.0
+            5.5
         )
 
 
@@ -1046,21 +1123,23 @@ class ForkliftController:
     #
     # RECEBIMENTO
     # ↓
-    # GARFO
+    # APOIAR
     # ↓
-    # Z SOBE
+    # PEGAR
     # ↓
-    # GARFO
+    # LEVANTAR
+    # ↓
+    # AJUSTAR GARFO
     # ↓
     # Z TRANSPORTE
     # ↓
     # CÉLULA
     # ↓
-    # GARFO
+    # SOLTAR
     # ↓
-    # Z DESCE
+    # APOIAR
     # ↓
-    # GARFO
+    # RECOLHER GARFO
     # ↓
     # Z TRANSPORTE
     # ↓
@@ -1131,11 +1210,25 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 2. PEGAR PALLET
+            # 2. APOIAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 2 - PEGAR PALLET"
+                "ETAPA 2 - APOIAR PALLET"
+            )
+
+
+            if not self.apoiar_pallet():
+
+                return False
+
+
+            # -----------------------------------------
+            # 3. PEGAR PALLET
+            # -----------------------------------------
+
+            print(
+                "ETAPA 3 - PEGAR PALLET"
             )
 
 
@@ -1145,11 +1238,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 3. LEVANTAR PALLET
+            # 4. LEVANTAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 3 - LEVANTAR PALLET"
+                "ETAPA 4 - LEVANTAR PALLET"
             )
 
 
@@ -1159,11 +1252,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 4. AJUSTAR GARFO
+            # 5. AJUSTAR GARFO
             # -----------------------------------------
 
             print(
-                "ETAPA 4 - AJUSTAR GARFO"
+                "ETAPA 5 - AJUSTAR GARFO"
             )
 
 
@@ -1173,11 +1266,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 5. Z TRANSPORTE
+            # 6. Z TRANSPORTE
             # -----------------------------------------
 
             print(
-                "ETAPA 5 - Z TRANSPORTE"
+                "ETAPA 6 - Z TRANSPORTE"
             )
 
 
@@ -1187,11 +1280,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 6. DESTINO
+            # 7. DESTINO
             # -----------------------------------------
 
             print(
-                "ETAPA 6 - DESTINO"
+                "ETAPA 7 - DESTINO"
             )
 
 
@@ -1203,11 +1296,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 7. SOLTAR PALLET
+            # 8. SOLTAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 7 - SOLTAR PALLET"
+                "ETAPA 8 - SOLTAR PALLET"
             )
 
 
@@ -1217,11 +1310,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 8. APOIAR PALLET
+            # 9. APOIAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 8 - APOIAR PALLET"
+                "ETAPA 9 - APOIAR PALLET"
             )
 
 
@@ -1231,11 +1324,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 9. RECOLHER GARFO
+            # 10. RECOLHER GARFO
             # -----------------------------------------
 
             print(
-                "ETAPA 9 - RECOLHER GARFO"
+                "ETAPA 10 - RECOLHER GARFO"
             )
 
 
@@ -1245,11 +1338,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 10. Z TRANSPORTE
+            # 11. Z TRANSPORTE
             # -----------------------------------------
 
             print(
-                "ETAPA 10 - Z TRANSPORTE"
+                "ETAPA 11 - Z TRANSPORTE"
             )
 
 
@@ -1259,25 +1352,22 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 11. VOLTAR PARA ZERO
+            # 12. VOLTAR PARA ZERO
             # -----------------------------------------
 
             print(
-                "ETAPA 11 - RETORNAR PARA ZERO"
+                "ETAPA 12 - RETORNAR PARA ZERO"
             )
 
 
-            if not self.mover_x(
-                0
-            ):
-
+            if not self.mover_x(0):
                 return False
 
 
-            if not self.mover_y(
-                0
-            ):
+            if not self.mover_y(0):
+                return False
 
+            if not self.mover_z(0):
                 return False
 
 
@@ -1305,6 +1395,30 @@ class ForkliftController:
 
     # =====================================================
     # RETIRAR PALLET
+    #
+    # CÉLULA
+    # ↓
+    # APOIAR
+    # ↓
+    # PEGAR
+    # ↓
+    # LEVANTAR
+    # ↓
+    # AJUSTAR GARFO
+    # ↓
+    # Z TRANSPORTE
+    # ↓
+    # EXPEDIÇÃO
+    # ↓
+    # SOLTAR
+    # ↓
+    # APOIAR
+    # ↓
+    # RECOLHER GARFO
+    # ↓
+    # Z TRANSPORTE
+    # ↓
+    # ZERO
     # =====================================================
 
     def retirar_pallet(
@@ -1359,7 +1473,7 @@ class ForkliftController:
             # -----------------------------------------
 
             print(
-                "ETAPA 1 - ORIGEM"
+                "ETAPA 1 - IR PARA CÉLULA"
             )
 
 
@@ -1371,11 +1485,25 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 2. PEGAR PALLET
+            # 2. APOIAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 2 - PEGAR PALLET"
+                "ETAPA 2 - APOIAR PALLET"
+            )
+
+
+            if not self.apoiar_pallet():
+
+                return False
+
+
+            # -----------------------------------------
+            # 3. PEGAR PALLET
+            # -----------------------------------------
+
+            print(
+                "ETAPA 3 - PEGAR PALLET"
             )
 
 
@@ -1385,11 +1513,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 3. LEVANTAR PALLET
+            # 4. LEVANTAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 3 - LEVANTAR PALLET"
+                "ETAPA 4 - LEVANTAR PALLET"
             )
 
 
@@ -1399,11 +1527,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 4. AJUSTAR GARFO
+            # 5. AJUSTAR GARFO
             # -----------------------------------------
 
             print(
-                "ETAPA 4 - AJUSTAR GARFO"
+                "ETAPA 5 - AJUSTAR GARFO"
             )
 
 
@@ -1413,11 +1541,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 5. Z TRANSPORTE
+            # 6. Z TRANSPORTE
             # -----------------------------------------
 
             print(
-                "ETAPA 5 - Z TRANSPORTE"
+                "ETAPA 6 - Z TRANSPORTE"
             )
 
 
@@ -1427,11 +1555,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 6. EXPEDIÇÃO
+            # 7. EXPEDIÇÃO
             # -----------------------------------------
 
             print(
-                "ETAPA 6 - EXPEDIÇÃO"
+                "ETAPA 7 - EXPEDIÇÃO"
             )
 
 
@@ -1443,11 +1571,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 7. SOLTAR PALLET
+            # 8. SOLTAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 7 - SOLTAR PALLET"
+                "ETAPA 8 - SOLTAR PALLET"
             )
 
 
@@ -1457,11 +1585,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 8. APOIAR PALLET
+            # 9. APOIAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 8 - APOIAR PALLET"
+                "ETAPA 9 - APOIAR PALLET"
             )
 
 
@@ -1471,11 +1599,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 9. RECOLHER GARFO
+            # 10. RECOLHER GARFO
             # -----------------------------------------
 
             print(
-                "ETAPA 9 - RECOLHER GARFO"
+                "ETAPA 10 - RECOLHER GARFO"
             )
 
 
@@ -1485,11 +1613,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 10. Z TRANSPORTE
+            # 11. Z TRANSPORTE
             # -----------------------------------------
 
             print(
-                "ETAPA 10 - Z TRANSPORTE"
+                "ETAPA 11 - Z TRANSPORTE"
             )
 
 
@@ -1499,26 +1627,23 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 11. VOLTAR PARA ZERO
+            # 12. VOLTAR PARA ZERO
             # -----------------------------------------
 
             print(
-                "ETAPA 11 - RETORNAR PARA ZERO"
+                "ETAPA 12 - RETORNAR PARA ZERO"
             )
 
 
-            if not self.mover_x(
-                0
-            ):
-
-                return False
+            if not self.mover_x(0):
+             return False
 
 
-            if not self.mover_y(
-                0
-            ):
-
-                return False
+            if not self.mover_y(0):
+             return False
+            
+            if not self.mover_z(0):
+             return False
 
 
             print()

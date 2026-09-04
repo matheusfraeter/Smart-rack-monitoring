@@ -484,6 +484,173 @@ class CoordinatesPage(QWidget):
         )
 
         # =====================================================
+        # VELOCIDADE DOS EIXOS
+        # =====================================================
+
+        titulo_velocidade = QLabel(
+            "VELOCIDADE DOS EIXOS"
+        )
+
+        titulo_velocidade.setAlignment(
+            Qt.AlignCenter
+        )
+
+        self.layout_conteudo.addWidget(
+            titulo_velocidade
+        )
+
+        velocidades = QHBoxLayout()
+
+        velocidades.setSpacing(
+            10
+        )
+
+        # =====================================================
+        # VELOCIDADE X
+        # =====================================================
+
+        bloco_velocidade_x = QVBoxLayout()
+
+        label_velocidade_x = QLabel(
+            "VELOCIDADE X"
+        )
+
+        label_velocidade_x.setAlignment(
+            Qt.AlignCenter
+        )
+
+        self.campo_velocidade_x = self.criar_campo(
+            1000.0
+        )
+
+        self.campo_velocidade_x.setRange(
+            1.0,
+            10000.0
+        )
+
+        self.campo_velocidade_x.setDecimals(
+            0
+        )
+
+        self.campo_velocidade_x.setSingleStep(
+            50.0
+        )
+
+        self.campo_velocidade_x.setSuffix(
+            " mm/min"
+        )
+
+        bloco_velocidade_x.addWidget(
+            label_velocidade_x
+        )
+
+        bloco_velocidade_x.addWidget(
+            self.campo_velocidade_x
+        )
+
+        # =====================================================
+        # VELOCIDADE Y
+        # =====================================================
+
+        bloco_velocidade_y = QVBoxLayout()
+
+        label_velocidade_y = QLabel(
+            "VELOCIDADE Y"
+        )
+
+        label_velocidade_y.setAlignment(
+            Qt.AlignCenter
+        )
+
+        self.campo_velocidade_y = self.criar_campo(
+            1000.0
+        )
+
+        self.campo_velocidade_y.setRange(
+            1.0,
+            10000.0
+        )
+
+        self.campo_velocidade_y.setDecimals(
+            0
+        )
+
+        self.campo_velocidade_y.setSingleStep(
+            50.0
+        )
+
+        self.campo_velocidade_y.setSuffix(
+            " mm/min"
+        )
+
+        bloco_velocidade_y.addWidget(
+            label_velocidade_y
+        )
+
+        bloco_velocidade_y.addWidget(
+            self.campo_velocidade_y
+        )
+
+        # =====================================================
+        # VELOCIDADE Z
+        # =====================================================
+
+        bloco_velocidade_z = QVBoxLayout()
+
+        label_velocidade_z = QLabel(
+            "VELOCIDADE Z"
+        )
+
+        label_velocidade_z.setAlignment(
+            Qt.AlignCenter
+        )
+
+        self.campo_velocidade_z = self.criar_campo(
+            500.0
+        )
+
+        self.campo_velocidade_z.setRange(
+            1.0,
+            10000.0
+        )
+
+        self.campo_velocidade_z.setDecimals(
+            0
+        )
+
+        self.campo_velocidade_z.setSingleStep(
+            50.0
+        )
+
+        self.campo_velocidade_z.setSuffix(
+            " mm/min"
+        )
+
+        bloco_velocidade_z.addWidget(
+            label_velocidade_z
+        )
+
+        bloco_velocidade_z.addWidget(
+            self.campo_velocidade_z
+        )
+
+        velocidades.addLayout(
+            bloco_velocidade_x
+        )
+
+        velocidades.addLayout(
+            bloco_velocidade_y
+        )
+
+        velocidades.addLayout(
+            bloco_velocidade_z
+        )
+
+        self.layout_conteudo.addLayout(
+            velocidades
+        )
+
+        # =====================================================
         # BOTÕES
         # =====================================================
 
@@ -741,6 +908,18 @@ class CoordinatesPage(QWidget):
         # =====================================================
 
         if not self.isVisible():
+
+            return super().eventFilter(
+                obj,
+                event
+            )
+
+        # =====================================================
+        # IGNORAR EVENTOS ENQUANTO UM
+        # DIÁLOGO MODAL ESTIVER ABERTO
+        # =====================================================
+
+        if QApplication.activeModalWidget() is not None:
 
             return super().eventFilter(
                 obj,
@@ -1210,6 +1389,18 @@ class CoordinatesPage(QWidget):
             True
         )
 
+        self.campo_velocidade_x.setEnabled(
+            True
+        )
+
+        self.campo_velocidade_y.setEnabled(
+            True
+        )
+
+        self.campo_velocidade_z.setEnabled(
+            True
+        )
+
         self.bt_salvar.setEnabled(
             True
         )
@@ -1241,6 +1432,18 @@ class CoordinatesPage(QWidget):
         )
 
         self.campo_z_apoiar.setEnabled(
+            False
+        )
+
+        self.campo_velocidade_x.setEnabled(
+            False
+        )
+
+        self.campo_velocidade_y.setEnabled(
+            False
+        )
+
+        self.campo_velocidade_z.setEnabled(
             False
         )
 
@@ -1458,6 +1661,28 @@ class CoordinatesPage(QWidget):
             )
         )
 
+        velocidade_x = (
+            self.db.obter_configuracao_empilhadeira(
+                "VELOCIDADE_X"
+            )
+        )
+
+        velocidade_y = (
+            self.db.obter_configuracao_empilhadeira(
+                "VELOCIDADE_Y"
+            )
+        )
+
+        velocidade_z = (
+            self.db.obter_configuracao_empilhadeira(
+                "VELOCIDADE_Z"
+            )
+        )
+
+        # ---------------------------------------------
+        # VALORES PADRÃO
+        # ---------------------------------------------
+
         if z_levantar is not None:
 
             self.campo_z_levantar.setValue(
@@ -1468,6 +1693,42 @@ class CoordinatesPage(QWidget):
 
             self.campo_z_apoiar.setValue(
                 z_apoiar
+            )
+
+        if velocidade_x is not None:
+
+            self.campo_velocidade_x.setValue(
+                velocidade_x
+            )
+
+        else:
+
+            self.campo_velocidade_x.setValue(
+                1000
+            )
+
+        if velocidade_y is not None:
+
+            self.campo_velocidade_y.setValue(
+                velocidade_y
+            )
+
+        else:
+
+            self.campo_velocidade_y.setValue(
+                1000
+            )
+
+        if velocidade_z is not None:
+
+            self.campo_velocidade_z.setValue(
+                velocidade_z
+            )
+
+        else:
+
+            self.campo_velocidade_z.setValue(
+                500
             )
 
         self.ajustar_alturas_tabelas()
@@ -1627,10 +1888,25 @@ class CoordinatesPage(QWidget):
             self.campo_z_apoiar.value()
         )
 
+        self.db.salvar_configuracao_empilhadeira(
+            "VELOCIDADE_X",
+            self.campo_velocidade_x.value()
+        )
+
+        self.db.salvar_configuracao_empilhadeira(
+            "VELOCIDADE_Y",
+            self.campo_velocidade_y.value()
+        )
+
+        self.db.salvar_configuracao_empilhadeira(
+            "VELOCIDADE_Z",
+            self.campo_velocidade_z.value()
+        )
+
         QMessageBox.information(
             self,
             "Sucesso",
-            "Coordenadas salvas com sucesso."
+            "Coordenadas e velocidades salvas com sucesso."
         )
 
         self.carregar_coordenadas()

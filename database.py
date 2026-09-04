@@ -4,7 +4,7 @@
 ---------------------------------------------------------
  Arquivo.....: database.py
  Descrição...: Gerenciamento do banco SQLite
- Versão......: 0.6
+ Versão......: 0.8
 =========================================================
 """
 
@@ -207,6 +207,20 @@ class Database:
                 """
             )
 
+        # ---------------------------------------------
+        # REMOVE COLUNAS 3 E 4
+        #
+        # O rack agora possui somente 2 colunas.
+        # ---------------------------------------------
+
+        cursor.execute(
+            """
+            DELETE FROM rack_positions
+
+            WHERE coluna > 2
+            """
+        )
+
         conexao.commit()
 
         conexao.close()
@@ -215,10 +229,10 @@ class Database:
     # =================================================
     # CRIAR RACK INICIAL
     #
-    # A11 até A34
-    # B11 até B34
+    # A11 até A32
+    # B11 até B32
     #
-    # TOTAL 24 POSIÇÕES
+    # TOTAL 12 POSIÇÕES
     # =================================================
 
     def criar_rack_inicial(self):
@@ -239,7 +253,7 @@ class Database:
 
                 for coluna in range(
                     1,
-                    5
+                    3
                 ):
 
                     endereco = (
@@ -375,6 +389,9 @@ class Database:
     #
     # Z_LEVANTAR
     # Z_APOIAR
+    # VELOCIDADE_X
+    # VELOCIDADE_Y
+    # VELOCIDADE_Z
     # =================================================
 
     def criar_configuracoes_empilhadeira(self):
@@ -391,6 +408,18 @@ class Database:
             (
                 "Z_APOIAR",
                 10.0
+            ),
+            (
+                "VELOCIDADE_X",
+                1000.0
+            ),
+            (
+                "VELOCIDADE_Y",
+                1000.0
+            ),
+            (
+                "VELOCIDADE_Z",
+                500.0
             )
         ]
 
