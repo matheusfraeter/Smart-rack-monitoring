@@ -383,6 +383,101 @@ class ForkliftController:
 
 
     # =====================================================
+    # GARANTIR X = 0 ANTES DE MOVER Y
+    #
+    # REGRA DE SEGURANÇA:
+    # Y só pode se movimentar quando X estiver em 0.
+    # =====================================================
+
+    def garantir_x_zero_antes_y(self):
+
+        x_atual = self.obter_posicao_atual(
+            "X"
+        )
+
+        if x_atual is None:
+
+            return False
+
+
+        if x_atual == 0:
+
+            print(
+                "SEGURANÇA Y: X já está em 0."
+            )
+
+            return True
+
+
+        print()
+        print(
+            "===================================="
+        )
+
+        print(
+            " SEGURANÇA ANTES DO Y"
+        )
+
+        print(
+            "===================================="
+        )
+
+        print(
+            f"X atual: {x_atual}"
+        )
+
+        print(
+            "X precisa estar em 0 antes de mover Y."
+        )
+
+        print(
+            "Movendo X para 0..."
+        )
+
+        print(
+            "===================================="
+        )
+
+
+        if not self.mover_x(
+            0
+        ):
+
+            print(
+                "ERRO: não foi possível colocar X em 0."
+            )
+
+            return False
+
+
+        x_confirmacao = self.obter_posicao_atual(
+            "X"
+        )
+
+
+        if x_confirmacao is None:
+
+            return False
+
+
+        if x_confirmacao != 0:
+
+            print(
+                f"ERRO DE SEGURANÇA: X ainda está em "
+                f"{x_confirmacao}."
+            )
+
+            return False
+
+
+        print(
+            "X está em 0. Y liberado."
+        )
+
+        return True
+
+
+    # =====================================================
     # OBTER AJUSTE Z
     # =====================================================
 
@@ -641,6 +736,9 @@ class ForkliftController:
 
     # =====================================================
     # MOVER Y
+    #
+    # REGRA:
+    # X precisa estar em 0 antes do movimento de Y.
     # =====================================================
 
     def mover_y(
@@ -661,6 +759,15 @@ class ForkliftController:
                 "ERRO: Y inválido:",
                 y
             )
+
+            return False
+
+
+        # -----------------------------------------
+        # GARANTIR SEGURANÇA
+        # -----------------------------------------
+
+        if not self.garantir_x_zero_antes_y():
 
             return False
 
@@ -776,10 +883,8 @@ class ForkliftController:
     # =====================================================
     # MOVER XY
     #
-    # PRIMEIRO X
-    # CONFIRMA X
+    # PRIMEIRO GARANTE X = 0
     # DEPOIS Y
-    # CONFIRMA Y
     # =====================================================
 
     def mover_xy(
@@ -788,15 +893,20 @@ class ForkliftController:
         y
     ):
 
-        if not self.mover_x(
-            x
-        ):
+        if not self.garantir_x_zero_antes_y():
 
             return False
 
 
         if not self.mover_y(
             y
+        ):
+
+            return False
+
+
+        if not self.mover_x(
+            x
         ):
 
             return False
@@ -862,9 +972,15 @@ class ForkliftController:
     # =====================================================
     # MOVER PARA POSIÇÃO ESPECIAL
     #
-    # X → CONFIRMA
-    # Y → CONFIRMA
-    # Z → CONFIRMA
+    # REGRA DE SEGURANÇA:
+    #
+    # X = 0
+    # ↓
+    # Y da posição
+    # ↓
+    # X da posição
+    # ↓
+    # Z da posição
     # =====================================================
 
     def mover_para_posicao_maquina(
@@ -920,12 +1036,20 @@ class ForkliftController:
         )
 
 
+        # -----------------------------------------
+        # PRIMEIRO X = 0
+        # -----------------------------------------
+
         if not self.mover_x(
-            posicao["X"]
+            0
         ):
 
             return False
 
+
+        # -----------------------------------------
+        # DEPOIS Y
+        # -----------------------------------------
 
         if not self.mover_y(
             posicao["Y"]
@@ -933,6 +1057,21 @@ class ForkliftController:
 
             return False
 
+
+        # -----------------------------------------
+        # DEPOIS X FINAL
+        # -----------------------------------------
+
+        if not self.mover_x(
+            posicao["X"]
+        ):
+
+            return False
+
+
+        # -----------------------------------------
+        # POR ÚLTIMO Z
+        # -----------------------------------------
 
         if not self.mover_z(
             posicao["Z"]
@@ -977,9 +1116,15 @@ class ForkliftController:
     # =====================================================
     # MOVER PARA CÉLULA
     #
-    # X → CONFIRMA
-    # Y → CONFIRMA
-    # Z → CONFIRMA
+    # REGRA DE SEGURANÇA:
+    #
+    # X = 0
+    # ↓
+    # Y da célula
+    # ↓
+    # X da célula
+    # ↓
+    # Z da célula
     # =====================================================
 
     def mover_para_celula(
@@ -1035,12 +1180,20 @@ class ForkliftController:
         )
 
 
+        # -----------------------------------------
+        # PRIMEIRO X = 0
+        # -----------------------------------------
+
         if not self.mover_x(
-            coordenadas["X"]
+            0
         ):
 
             return False
 
+
+        # -----------------------------------------
+        # DEPOIS Y
+        # -----------------------------------------
 
         if not self.mover_y(
             coordenadas["Y"]
@@ -1048,6 +1201,21 @@ class ForkliftController:
 
             return False
 
+
+        # -----------------------------------------
+        # DEPOIS X FINAL
+        # -----------------------------------------
+
+        if not self.mover_x(
+            coordenadas["X"]
+        ):
+
+            return False
+
+
+        # -----------------------------------------
+        # POR ÚLTIMO Z
+        # -----------------------------------------
 
         if not self.mover_z(
             coordenadas["Z"]
@@ -1130,6 +1298,8 @@ class ForkliftController:
     # LEVANTAR
     # ↓
     # AJUSTAR GARFO
+    # ↓
+    # X = 0
     # ↓
     # Z TRANSPORTE
     # ↓
@@ -1266,11 +1436,27 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 6. Z TRANSPORTE
+            # 6. X SEGURO = 0
             # -----------------------------------------
 
             print(
-                "ETAPA 6 - Z TRANSPORTE"
+                "ETAPA 6 - X SEGURO"
+            )
+
+
+            if not self.mover_x(
+                0
+            ):
+
+                return False
+
+
+            # -----------------------------------------
+            # 7. Z TRANSPORTE
+            # -----------------------------------------
+
+            print(
+                "ETAPA 7 - Z TRANSPORTE"
             )
 
 
@@ -1280,11 +1466,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 7. DESTINO
+            # 8. DESTINO
             # -----------------------------------------
 
             print(
-                "ETAPA 7 - DESTINO"
+                "ETAPA 8 - DESTINO"
             )
 
 
@@ -1296,11 +1482,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 8. SOLTAR PALLET
+            # 9. SOLTAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 8 - SOLTAR PALLET"
+                "ETAPA 9 - SOLTAR PALLET"
             )
 
 
@@ -1310,11 +1496,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 9. APOIAR PALLET
+            # 10. APOIAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 9 - APOIAR PALLET"
+                "ETAPA 10 - APOIAR PALLET"
             )
 
 
@@ -1324,11 +1510,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 10. RECOLHER GARFO
+            # 11. RECOLHER GARFO
             # -----------------------------------------
 
             print(
-                "ETAPA 10 - RECOLHER GARFO"
+                "ETAPA 11 - RECOLHER GARFO"
             )
 
 
@@ -1338,11 +1524,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 11. Z TRANSPORTE
+            # 12. Z TRANSPORTE
             # -----------------------------------------
 
             print(
-                "ETAPA 11 - Z TRANSPORTE"
+                "ETAPA 12 - Z TRANSPORTE"
             )
 
 
@@ -1352,22 +1538,32 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 12. VOLTAR PARA ZERO
+            # 13. VOLTAR PARA ZERO
             # -----------------------------------------
 
             print(
-                "ETAPA 12 - RETORNAR PARA ZERO"
+                "ETAPA 13 - RETORNAR PARA ZERO"
             )
 
 
-            if not self.mover_x(0):
+            if not self.mover_x(
+                0
+            ):
+
                 return False
 
 
-            if not self.mover_y(0):
+            if not self.mover_y(
+                0
+            ):
+
                 return False
 
-            if not self.mover_z(0):
+
+            if not self.mover_z(
+                0
+            ):
+
                 return False
 
 
@@ -1405,6 +1601,8 @@ class ForkliftController:
     # LEVANTAR
     # ↓
     # AJUSTAR GARFO
+    # ↓
+    # X = 0
     # ↓
     # Z TRANSPORTE
     # ↓
@@ -1541,11 +1739,27 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 6. Z TRANSPORTE
+            # 6. X SEGURO = 0
             # -----------------------------------------
 
             print(
-                "ETAPA 6 - Z TRANSPORTE"
+                "ETAPA 6 - X SEGURO"
+            )
+
+
+            if not self.mover_x(
+                0
+            ):
+
+                return False
+
+
+            # -----------------------------------------
+            # 7. Z TRANSPORTE
+            # -----------------------------------------
+
+            print(
+                "ETAPA 7 - Z TRANSPORTE"
             )
 
 
@@ -1555,11 +1769,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 7. EXPEDIÇÃO
+            # 8. EXPEDIÇÃO
             # -----------------------------------------
 
             print(
-                "ETAPA 7 - EXPEDIÇÃO"
+                "ETAPA 8 - EXPEDIÇÃO"
             )
 
 
@@ -1571,11 +1785,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 8. SOLTAR PALLET
+            # 9. SOLTAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 8 - SOLTAR PALLET"
+                "ETAPA 9 - SOLTAR PALLET"
             )
 
 
@@ -1585,11 +1799,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 9. APOIAR PALLET
+            # 10. APOIAR PALLET
             # -----------------------------------------
 
             print(
-                "ETAPA 9 - APOIAR PALLET"
+                "ETAPA 10 - APOIAR PALLET"
             )
 
 
@@ -1599,11 +1813,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 10. RECOLHER GARFO
+            # 11. RECOLHER GARFO
             # -----------------------------------------
 
             print(
-                "ETAPA 10 - RECOLHER GARFO"
+                "ETAPA 11 - RECOLHER GARFO"
             )
 
 
@@ -1613,11 +1827,11 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 11. Z TRANSPORTE
+            # 12. Z TRANSPORTE
             # -----------------------------------------
 
             print(
-                "ETAPA 11 - Z TRANSPORTE"
+                "ETAPA 12 - Z TRANSPORTE"
             )
 
 
@@ -1627,23 +1841,33 @@ class ForkliftController:
 
 
             # -----------------------------------------
-            # 12. VOLTAR PARA ZERO
+            # 13. VOLTAR PARA ZERO
             # -----------------------------------------
 
             print(
-                "ETAPA 12 - RETORNAR PARA ZERO"
+                "ETAPA 13 - RETORNAR PARA ZERO"
             )
 
 
-            if not self.mover_x(0):
-             return False
+            if not self.mover_x(
+                0
+            ):
+
+                return False
 
 
-            if not self.mover_y(0):
-             return False
-            
-            if not self.mover_z(0):
-             return False
+            if not self.mover_y(
+                0
+            ):
+
+                return False
+
+
+            if not self.mover_z(
+                0
+            ):
+
+                return False
 
 
             print()
