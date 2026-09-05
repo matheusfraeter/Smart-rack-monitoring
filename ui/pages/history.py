@@ -16,15 +16,12 @@ from PySide6.QtWidgets import (
     QHeaderView,
     QFrame,
     QScrollArea,
-    QSizePolicy,
-    QApplication
+    QSizePolicy
 )
 
 from PySide6.QtCore import (
     Qt,
-    QTimer,
-    QEvent,
-    QPoint
+    QTimer
 )
 
 from controllers.history_controller import HistoryController
@@ -43,34 +40,10 @@ class HistoryPage(QWidget):
         self.controller = HistoryController()
 
         # =====================================
-        # CONTROLE DO GESTO
-        # =====================================
-
-        self._touch_ativo = False
-        self._touch_arrastando = False
-
-        self._touch_posicao_inicial = QPoint()
-        self._touch_posicao_anterior = QPoint()
-
-        self._touch_limite_arrasto = 12
-
-        # =====================================
         # CRIAR INTERFACE
         # =====================================
 
         self.criar_interface()
-
-        # =====================================
-        # FILTRO GLOBAL
-        # =====================================
-
-        app = QApplication.instance()
-
-        if app is not None:
-
-            app.installEventFilter(
-                self
-            )
 
         # =====================================
         # ATUALIZAÇÃO AUTOMÁTICA
@@ -125,11 +98,6 @@ class HistoryPage(QWidget):
 
         self.scroll.setVerticalScrollBarPolicy(
             Qt.ScrollBarAsNeeded
-        )
-
-        self.scroll.viewport().setAttribute(
-            Qt.WA_AcceptTouchEvents,
-            True
         )
 
         # =====================================
@@ -220,16 +188,6 @@ class HistoryPage(QWidget):
             QSizePolicy.Fixed
         )
 
-        self.tabela.setAttribute(
-            Qt.WA_AcceptTouchEvents,
-            True
-        )
-
-        self.tabela.viewport().setAttribute(
-            Qt.WA_AcceptTouchEvents,
-            True
-        )
-
         # =====================================
         # CABEÇALHO
         # =====================================
@@ -276,402 +234,6 @@ class HistoryPage(QWidget):
         # =====================================
 
         self.carregar_historico()
-
-    # =====================================
-    # PONTO DENTRO DO SCROLL
-    # =====================================
-
-    def ponto_dentro_scroll(
-        self,
-        ponto_global
-    ):
-
-        viewport = self.scroll.viewport()
-
-        ponto_local = (
-            viewport.mapFromGlobal(
-                ponto_global
-            )
-        )
-
-        return viewport.rect().contains(
-            ponto_local
-        )
-
-    # =====================================
-    # INICIAR GESTO
-    # =====================================
-
-    def iniciar_gesto(
-        self,
-        posicao
-    ):
-
-        self._touch_ativo = True
-
-        self._touch_arrastando = False
-
-        self._touch_posicao_inicial = (
-            posicao
-        )
-
-        self._touch_posicao_anterior = (
-            posicao
-        )
-
-    # =====================================
-    # MOVER GESTO
-    # =====================================
-
-    def mover_gesto(
-        self,
-        posicao
-    ):
-
-        if not self._touch_ativo:
-
-            return False
-
-        deslocamento = (
-            posicao
-            -
-            self._touch_posicao_inicial
-        )
-
-        # =====================================
-        # INÍCIO DO ARRASTO
-        # =====================================
-
-        if not self._touch_arrastando:
-
-            if (
-                deslocamento.manhattanLength()
-                <
-                self._touch_limite_arrasto
-            ):
-
-                return False
-
-            self._touch_arrastando = True
-
-            # =================================
-            # REMOVER SELEÇÃO
-            # =================================
-
-            self.tabela.clearSelection()
-
-            self.tabela.clearFocus()
-
-            self.tabela.setSelectionMode(
-                QTableWidget.NoSelection
-            )
-
-        # =====================================
-        # MOVIMENTO REAL
-        # =====================================
-
-        delta_y = (
-            posicao.y()
-            -
-            self._touch_posicao_anterior.y()
-        )
-
-        barra = (
-            self.scroll.verticalScrollBar()
-        )
-
-        novo_valor = (
-            barra.value()
-            -
-            delta_y
-        )
-
-        novo_valor = max(
-            barra.minimum(),
-            min(
-                barra.maximum(),
-                novo_valor
-            )
-        )
-
-        barra.setValue(
-            novo_valor
-        )
-
-        self._touch_posicao_anterior = (
-            posicao
-        )
-
-        return True
-
-    # =====================================
-    # FINALIZAR GESTO
-    # =====================================
-
-    def finalizar_gesto(self):
-
-        foi_arrasto = (
-            self._touch_arrastando
-        )
-
-        self._touch_ativo = False
-
-        self._touch_arrastando = False
-
-        # =====================================
-        # RESTAURAR SELEÇÃO
-        # =====================================
-
-        self.tabela.setSelectionMode(
-            QTableWidget.SingleSelection
-        )
-
-        return foi_arrasto
-
-    # =====================================
-    # EVENT FILTER GLOBAL
-    # =====================================
-
-    def eventFilter(
-        self,
-        obj,
-        event
-    ):
-
-        # =====================================
-        # IMPORTANTE:
-        # NÃO PROCESSAR EVENTOS QUANDO
-        # O HISTÓRICO NÃO ESTÁ VISÍVEL.
-        # =====================================
-
-        if not self.isVisible():
-
-            return super().eventFilter(
-                obj,
-                event
-            )
-
-        # =====================================
-        # MOUSE PRESS
-        # =====================================
-
-        if event.type() == QEvent.MouseButtonPress:
-
-            if event.button() != Qt.LeftButton:
-
-                return super().eventFilter(
-                    obj,
-                    event
-                )
-
-            ponto = (
-                event.globalPosition()
-                .toPoint()
-            )
-
-            if not self.ponto_dentro_scroll(
-                ponto
-            ):
-
-                return super().eventFilter(
-                    obj,
-                    event
-                )
-
-            self.iniciar_gesto(
-                ponto
-            )
-
-            return super().eventFilter(
-                obj,
-                event
-            )
-
-        # =====================================
-        # MOUSE MOVE
-        # =====================================
-
-        if event.type() == QEvent.MouseMove:
-
-            if not self._touch_ativo:
-
-                return super().eventFilter(
-                    obj,
-                    event
-                )
-
-            ponto = (
-                event.globalPosition()
-                .toPoint()
-            )
-
-            arrastando = self.mover_gesto(
-                ponto
-            )
-
-            if arrastando:
-
-                event.accept()
-
-                return True
-
-            return super().eventFilter(
-                obj,
-                event
-            )
-
-        # =====================================
-        # MOUSE RELEASE
-        # =====================================
-
-        if event.type() == QEvent.MouseButtonRelease:
-
-            if event.button() != Qt.LeftButton:
-
-                return super().eventFilter(
-                    obj,
-                    event
-                )
-
-            if not self._touch_ativo:
-
-                return super().eventFilter(
-                    obj,
-                    event
-                )
-
-            foi_arrasto = (
-                self.finalizar_gesto()
-            )
-
-            if foi_arrasto:
-
-                event.accept()
-
-                return True
-
-            return super().eventFilter(
-                obj,
-                event
-            )
-
-        # =====================================
-        # TOUCH BEGIN
-        # =====================================
-
-        if event.type() == QEvent.TouchBegin:
-
-            pontos = event.touchPoints()
-
-            if not pontos:
-
-                return super().eventFilter(
-                    obj,
-                    event
-                )
-
-            ponto = (
-                pontos[0]
-                .globalPosition()
-                .toPoint()
-            )
-
-            if not self.ponto_dentro_scroll(
-                ponto
-            ):
-
-                return super().eventFilter(
-                    obj,
-                    event
-                )
-
-            self.iniciar_gesto(
-                ponto
-            )
-
-            event.accept()
-
-            return True
-
-        # =====================================
-        # TOUCH UPDATE
-        # =====================================
-
-        if event.type() == QEvent.TouchUpdate:
-
-            if not self._touch_ativo:
-
-                return super().eventFilter(
-                    obj,
-                    event
-                )
-
-            pontos = event.touchPoints()
-
-            if not pontos:
-
-                return super().eventFilter(
-                    obj,
-                    event
-                )
-
-            ponto = (
-                pontos[0]
-                .globalPosition()
-                .toPoint()
-            )
-
-            arrastando = self.mover_gesto(
-                ponto
-            )
-
-            if arrastando:
-
-                event.accept()
-
-                return True
-
-            return True
-
-        # =====================================
-        # TOUCH END
-        # =====================================
-
-        if event.type() == QEvent.TouchEnd:
-
-            if not self._touch_ativo:
-
-                return super().eventFilter(
-                    obj,
-                    event
-                )
-
-            self.finalizar_gesto()
-
-            event.accept()
-
-            return True
-
-        # =====================================
-        # TOUCH CANCEL
-        # =====================================
-
-        if event.type() == QEvent.TouchCancel:
-
-            self._touch_ativo = False
-
-            self._touch_arrastando = False
-
-            self.tabela.setSelectionMode(
-                QTableWidget.SingleSelection
-            )
-
-            return True
-
-        return super().eventFilter(
-            obj,
-            event
-        )
 
     # =====================================
     # ALTURA DA TABELA
@@ -775,13 +337,5 @@ class HistoryPage(QWidget):
     ):
 
         self.timer.stop()
-
-        app = QApplication.instance()
-
-        if app is not None:
-
-            app.removeEventFilter(
-                self
-            )
 
         event.accept()

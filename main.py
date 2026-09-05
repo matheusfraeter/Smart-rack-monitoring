@@ -2,29 +2,31 @@ import sys
 from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import Qt
 
 from gui import SmartRackGUI
 
+
 # ===============================
-# Compatibilidade com tela touch
+# CRIA A APLICAÇÃO
 # ===============================
 
-QApplication.setAttribute(
-    Qt.AA_SynthesizeMouseForUnhandledTouchEvents,
-    True
+app = QApplication(
+    sys.argv
 )
 
-app = QApplication(sys.argv)
-
 
 # ===============================
-# Carrega o tema global
+# CARREGA O TEMA GLOBAL
 # ===============================
 
 base_path = Path(__file__).resolve().parent
 
-tema = base_path / "assets" / "styles" / "theme.qss"
+tema = (
+    base_path
+    / "assets"
+    / "styles"
+    / "theme.qss"
+)
 
 
 if tema.exists():
@@ -48,7 +50,7 @@ else:
 
 
 # ===============================
-# Janela principal
+# JANELA PRINCIPAL
 # ===============================
 
 janela = SmartRackGUI()

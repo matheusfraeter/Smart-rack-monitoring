@@ -18,85 +18,253 @@ class Movement:
     # EIXO X
     # =====================================================
 
-    def mover_x(self, valor):
+    def mover_x(
+        self,
+        valor,
+        velocidade=1000
+    ):
 
         try:
 
-            valor = float(valor)
+            valor = float(
+                valor
+            )
 
         except (ValueError, TypeError):
 
-            print("ERRO: valor X inválido:", valor)
+            print(
+                "ERRO: valor X inválido:",
+                valor
+            )
 
             return False
 
-        comando = f"G91\nG1 X{valor:g} F1000"
+        try:
+
+            velocidade = float(
+                velocidade
+            )
+
+        except (ValueError, TypeError):
+
+            print(
+                "ERRO: velocidade X inválida:",
+                velocidade
+            )
+
+            return False
+
+        if velocidade <= 0:
+
+            print(
+                "ERRO: velocidade deve ser maior que zero."
+            )
+
+            return False
+
+        comando = (
+            f"G91\n"
+            f"G1 X{valor:g} F{velocidade:g}"
+        )
 
         print()
-        print("====================================")
-        print(" MOVIMENTO X")
-        print("====================================")
-        print("Valor:", valor)
-        print("G-CODE:")
-        print(repr(comando))
-        print("====================================")
+        print(
+            "===================================="
+        )
+        print(
+            " MOVIMENTO X"
+        )
+        print(
+            "===================================="
+        )
+        print(
+            "Valor:",
+            valor
+        )
+        print(
+            "Velocidade:",
+            velocidade
+        )
+        print(
+            "G-CODE:"
+        )
+        print(
+            repr(comando)
+        )
+        print(
+            "===================================="
+        )
 
-        return self.mks.enviar_comando(comando)
+        return self.mks.enviar_comando(
+            comando
+        )
 
     # =====================================================
     # EIXO Y
     # =====================================================
 
-    def mover_y(self, valor):
+    def mover_y(
+        self,
+        valor,
+        velocidade=1000
+    ):
 
         try:
 
-            valor = float(valor)
+            valor = float(
+                valor
+            )
 
         except (ValueError, TypeError):
 
-            print("ERRO: valor Y inválido:", valor)
+            print(
+                "ERRO: valor Y inválido:",
+                valor
+            )
 
             return False
 
-        comando = f"G91\nG1 Y{valor:g} F1000"
+        try:
+
+            velocidade = float(
+                velocidade
+            )
+
+        except (ValueError, TypeError):
+
+            print(
+                "ERRO: velocidade Y inválida:",
+                velocidade
+            )
+
+            return False
+
+        if velocidade <= 0:
+
+            print(
+                "ERRO: velocidade deve ser maior que zero."
+            )
+
+            return False
+
+        comando = (
+            f"G91\n"
+            f"G1 Y{valor:g} F{velocidade:g}"
+        )
 
         print()
-        print("====================================")
-        print(" MOVIMENTO Y")
-        print("====================================")
-        print("Valor:", valor)
-        print("G-CODE:")
-        print(repr(comando))
-        print("====================================")
+        print(
+            "===================================="
+        )
+        print(
+            " MOVIMENTO Y"
+        )
+        print(
+            "===================================="
+        )
+        print(
+            "Valor:",
+            valor
+        )
+        print(
+            "Velocidade:",
+            velocidade
+        )
+        print(
+            "G-CODE:"
+        )
+        print(
+            repr(comando)
+        )
+        print(
+            "===================================="
+        )
 
-        return self.mks.enviar_comando(comando)
+        return self.mks.enviar_comando(
+            comando
+        )
 
     # =====================================================
     # EIXO Z
     # =====================================================
 
-    def mover_z(self, valor):
+    def mover_z(
+        self,
+        valor,
+        velocidade=500
+    ):
 
         try:
 
-            valor = float(valor)
+            valor = float(
+                valor
+            )
 
         except (ValueError, TypeError):
 
-            print("ERRO: valor Z inválido:", valor)
+            print(
+                "ERRO: valor Z inválido:",
+                valor
+            )
 
             return False
 
-        comando = f"G91\nG1 Z{valor:g} F500"
+        try:
+
+            velocidade = float(
+                velocidade
+            )
+
+        except (ValueError, TypeError):
+
+            print(
+                "ERRO: velocidade Z inválida:",
+                velocidade
+            )
+
+            return False
+
+        if velocidade <= 0:
+
+            print(
+                "ERRO: velocidade deve ser maior que zero."
+            )
+
+            return False
+
+        comando = (
+            f"G91\n"
+            f"G1 Z{valor:g} F{velocidade:g}"
+        )
 
         print()
-        print("====================================")
-        print(" MOVIMENTO Z")
-        print("====================================")
-        print("Valor:", valor)
-        print("G-CODE:")
-        print(repr(comando))
-        print("====================================")
+        print(
+            "===================================="
+        )
+        print(
+            " MOVIMENTO Z"
+        )
+        print(
+            "===================================="
+        )
+        print(
+            "Valor:",
+            valor
+        )
+        print(
+            "Velocidade:",
+            velocidade
+        )
+        print(
+            "G-CODE:"
+        )
+        print(
+            repr(comando)
+        )
+        print(
+            "===================================="
+        )
 
-        return self.mks.enviar_comando(comando)
+        return self.mks.enviar_comando(
+            comando
+        )

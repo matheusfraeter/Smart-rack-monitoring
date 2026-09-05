@@ -17,16 +17,13 @@ from PySide6.QtWidgets import (
     QFrame,
     QScrollArea,
     QMessageBox,
-    QSizePolicy,
-    QApplication
+    QSizePolicy
 )
 
 from PySide6.QtCore import (
     Qt,
     QThread,
-    Signal,
-    QEvent,
-    QPoint
+    Signal
 )
 
 from controllers.rack_controller import RackController
@@ -233,42 +230,10 @@ class RackPage(QWidget):
         self.altura_celula = 55
 
         # =====================================
-        # CONTROLE DO TOQUE / ARRASTO
-        # =====================================
-
-        self._touch_ativo = False
-        self._touch_arrastando = False
-
-        self._touch_posicao_inicial = QPoint()
-        self._touch_posicao_anterior = QPoint()
-
-        self._touch_scroll_inicial = 0
-
-        # Distância mínima para considerar
-        # que o dedo começou a arrastar.
-        self._touch_limite_arrasto = 12
-
-        # Endereço da célula onde começou
-        # o toque/clique.
-        self._endereco_touch = None
-
-        # =====================================
         # CRIAR INTERFACE
         # =====================================
 
         self.criar_interface()
-
-        # =====================================
-        # EVENT FILTER GLOBAL
-        # =====================================
-
-        app = QApplication.instance()
-
-        if app is not None:
-
-            app.installEventFilter(
-                self
-            )
 
     # =================================================
     # INTERFACE
@@ -404,352 +369,6 @@ class RackPage(QWidget):
         # =====================================
 
         self.atualizar_tamanho_rack()
-
-    # =================================================
-    # ENCONTRAR ENDEREÇO SOB O TOQUE
-    # =================================================
-
-    def encontrar_endereco(
-        self,
-        ponto_global
-    ):
-
-        for endereco, botao in self.botoes.items():
-
-            if not botao.isVisible():
-
-                continue
-
-            topo_esquerdo = (
-                botao.mapToGlobal(
-                    QPoint(0, 0)
-                )
-            )
-
-            largura = botao.width()
-            altura = botao.height()
-
-            if (
-                topo_esquerdo.x()
-                <= ponto_global.x()
-                <= topo_esquerdo.x() + largura
-                and
-                topo_esquerdo.y()
-                <= ponto_global.y()
-                <= topo_esquerdo.y() + altura
-            ):
-
-                return endereco
-
-        return None
-
-    # =================================================
-    # INICIAR TOUCH
-    # =================================================
-
-    def iniciar_touch(
-        self,
-        ponto_global
-    ):
-
-        self._touch_ativo = True
-
-        self._touch_arrastando = False
-
-        self._touch_posicao_inicial = (
-            ponto_global
-        )
-
-        self._touch_posicao_anterior = (
-            ponto_global
-        )
-
-        self._touch_scroll_inicial = (
-            self.scroll.verticalScrollBar().value()
-        )
-
-        self._endereco_touch = (
-            self.encontrar_endereco(
-                ponto_global
-            )
-        )
-
-    # =================================================
-    # MOVER TOUCH
-    # =================================================
-
-    def mover_touch(
-        self,
-        ponto_global
-    ):
-
-        if not self._touch_ativo:
-
-            return False
-
-        deslocamento_y = (
-            ponto_global.y()
-            - self._touch_posicao_inicial.y()
-        )
-
-        # =====================================
-        # DETECTAR INÍCIO DO ARRASTO
-        # =====================================
-
-        if not self._touch_arrastando:
-
-            distancia = (
-                ponto_global
-                - self._touch_posicao_inicial
-            ).manhattanLength()
-
-            if distancia >= self._touch_limite_arrasto:
-
-                self._touch_arrastando = True
-
-        # =====================================
-        # ROLAR
-        # =====================================
-
-        if self._touch_arrastando:
-
-            barra = (
-                self.scroll.verticalScrollBar()
-            )
-
-            novo_valor = (
-                self._touch_scroll_inicial
-                - deslocamento_y
-            )
-
-            novo_valor = max(
-                barra.minimum(),
-                min(
-                    barra.maximum(),
-                    int(novo_valor)
-                )
-            )
-
-            barra.setValue(
-                novo_valor
-            )
-
-            self._touch_posicao_anterior = (
-                ponto_global
-            )
-
-            return True
-
-        return False
-
-    # =================================================
-    # FINALIZAR TOUCH
-    # =================================================
-
-    def finalizar_touch(self):
-
-        if not self._touch_ativo:
-
-            return False, None
-
-        foi_arrasto = (
-            self._touch_arrastando
-        )
-
-        endereco = (
-            self._endereco_touch
-        )
-
-        self._touch_ativo = False
-        self._touch_arrastando = False
-        self._endereco_touch = None
-
-        return foi_arrasto, endereco
-
-    # =================================================
-    # EVENT FILTER
-    # =================================================
-
-    def eventFilter(
-        self,
-        obj,
-        event
-    ):
-
-        # =====================================
-        # SOMENTE A PÁGINA VISÍVEL
-        # =====================================
-
-        if not self.isVisible():
-
-            return super().eventFilter(
-                obj,
-                event
-            )
-
-        # =====================================
-        # IGNORAR EVENTOS ENQUANTO UM
-        # DIÁLOGO MODAL ESTIVER ABERTO
-        # =====================================
-
-        if QApplication.activeModalWidget() is not None:
-
-            return super().eventFilter(
-                obj,
-                event
-            )
-
-        # =====================================
-        # MOUSE PRESS
-        # =====================================
-
-        if (
-            event.type()
-            == QEvent.MouseButtonPress
-            and event.button()
-            == Qt.LeftButton
-        ):
-
-            if not hasattr(
-                event,
-                "globalPosition"
-            ):
-
-                return super().eventFilter(
-                    obj,
-                    event
-                )
-
-            ponto_global = (
-                event.globalPosition().toPoint()
-            )
-
-            # ---------------------------------
-            # SOMENTE QUANDO O TOQUE ESTÁ
-            # DENTRO DA ÁREA DE ROLAGEM
-            # ---------------------------------
-
-            viewport = (
-                self.scroll.viewport()
-            )
-
-            viewport_top_left = (
-                viewport.mapToGlobal(
-                    QPoint(0, 0)
-                )
-            )
-
-            viewport_rect = viewport.rect()
-
-            viewport_rect.moveTopLeft(
-                viewport_top_left
-            )
-
-            if viewport_rect.contains(
-                ponto_global
-            ):
-
-                self.iniciar_touch(
-                    ponto_global
-                )
-
-            return super().eventFilter(
-                obj,
-                event
-            )
-
-        # =====================================
-        # MOUSE MOVE
-        # =====================================
-
-        if (
-            event.type()
-            == QEvent.MouseMove
-            and self._touch_ativo
-        ):
-
-            if not hasattr(
-                event,
-                "globalPosition"
-            ):
-
-                return super().eventFilter(
-                    obj,
-                    event
-                )
-
-            ponto_global = (
-                event.globalPosition().toPoint()
-            )
-
-            if self.mover_touch(
-                ponto_global
-            ):
-
-                event.accept()
-
-                return True
-
-            return super().eventFilter(
-                obj,
-                event
-            )
-
-        # =====================================
-        # MOUSE RELEASE
-        # =====================================
-
-        if (
-            event.type()
-            == QEvent.MouseButtonRelease
-            and event.button()
-            == Qt.LeftButton
-        ):
-
-            if not self._touch_ativo:
-
-                return super().eventFilter(
-                    obj,
-                    event
-                )
-
-            foi_arrasto, endereco = (
-                self.finalizar_touch()
-            )
-
-            # ---------------------------------
-            # FOI ARRASTO
-            # ---------------------------------
-
-            if foi_arrasto:
-
-                event.accept()
-
-                return True
-
-            # ---------------------------------
-            # FOI TOQUE RÁPIDO
-            # ---------------------------------
-
-            if endereco is not None:
-
-                self.selecionar(
-                    endereco
-                )
-
-                event.accept()
-
-                return True
-
-            return super().eventFilter(
-                obj,
-                event
-            )
-
-        return super().eventFilter(
-            obj,
-            event
-        )
 
     # =================================================
     # CRIAR ESTANTE
@@ -905,9 +524,17 @@ class RackPage(QWidget):
                     QSizePolicy.Fixed
                 )
 
-                # O clique é tratado pelo eventFilter.
-                # Não conectar o clicked diretamente,
-                # para evitar conflito com o touch/scroll.
+                # =================================
+                # CLIQUE NORMAL
+                # =================================
+
+                botao.clicked.connect(
+                    lambda checked=False,
+                    endereco=endereco:
+                    self.selecionar(
+                        endereco
+                    )
+                )
 
                 self.botoes[endereco] = botao
 
@@ -1004,7 +631,8 @@ class RackPage(QWidget):
 
         largura_estante = (
             largura_util
-            / quantidade_estantes
+            /
+            quantidade_estantes
         )
 
         # =====================================
@@ -1377,7 +1005,9 @@ class RackPage(QWidget):
 
     def atualizar_tela(self):
 
-        posicoes = self.controller.listar_posicoes()
+        posicoes = (
+            self.controller.listar_posicoes()
+        )
 
         for endereco, ocupado, pallet in posicoes:
 

@@ -34,19 +34,15 @@ from ui.pages.settings import SettingsPage
 class SmartRackGUI(QMainWindow):
 
     # =================================================
-    # PROPORÇÃO DA JANELA
+    # TAMANHO MÍNIMO DA JANELA
     # =================================================
 
-    PROPORCAO_LARGURA = 800
-    PROPORCAO_ALTURA = 480
+    LARGURA_MINIMA = 800
+    ALTURA_MINIMA = 400
 
     def __init__(self):
 
         super().__init__()
-
-        # Indica que a janela está sendo redimensionada
-        # internamente para manter a proporção.
-        self._ajustando_tamanho = False
 
         # =====================================
         # COMUNICAÇÃO COM A MKS
@@ -67,8 +63,8 @@ class SmartRackGUI(QMainWindow):
         # =====================================
 
         self.setMinimumSize(
-            self.PROPORCAO_LARGURA,
-            self.PROPORCAO_ALTURA
+            self.LARGURA_MINIMA,
+            self.ALTURA_MINIMA
         )
 
         # =====================================
@@ -87,7 +83,9 @@ class SmartRackGUI(QMainWindow):
         # TENTA CONECTAR APÓS ABRIR A GUI
         # =====================================
 
-        self.timer_conexao = QTimer()
+        self.timer_conexao = QTimer(
+            self
+        )
 
         self.timer_conexao.setSingleShot(
             True
@@ -112,171 +110,55 @@ class SmartRackGUI(QMainWindow):
         if tela is None:
 
             self.resize(
-                self.PROPORCAO_LARGURA,
-                self.PROPORCAO_ALTURA
+                self.LARGURA_MINIMA,
+                self.ALTURA_MINIMA
             )
 
             return
+
+        # =====================================
+        # ÁREA REALMENTE DISPONÍVEL
+        #
+        # availableGeometry() desconta a barra
+        # de tarefas e outras áreas reservadas
+        # pelo sistema.
+        # =====================================
 
         area = tela.availableGeometry()
 
-        largura_tela = area.width()
-        altura_tela = area.height()
+        largura = area.width()
+        altura = area.height()
 
         # =====================================
-        # USAR 800x480 COMO MODELO
-        # =====================================
-
-        proporcao = (
-            self.PROPORCAO_LARGURA /
-            self.PROPORCAO_ALTURA
-        )
-
-        # -------------------------------------
-        # TENTAR OCUPAR O MÁXIMO POSSÍVEL
-        # SEM PERDER A PROPORÇÃO
-        # -------------------------------------
-
-        largura = largura_tela
-        altura = int(largura / proporcao)
-
-        # Caso a altura calculada ultrapasse
-        # a tela, limitar pela altura.
-
-        if altura > altura_tela:
-
-            altura = altura_tela
-            largura = int(
-                altura * proporcao
-            )
-
-        # =====================================
-        # GARANTIR O TAMANHO MÍNIMO
+        # GARANTIR RESPEITO AO TAMANHO MÍNIMO
+        #
+        # Se a tela for menor que 800x480,
+        # usamos o máximo disponível.
         # =====================================
 
         largura = max(
-            self.PROPORCAO_LARGURA,
-            largura
+            1,
+            min(
+                largura,
+                area.width()
+            )
         )
 
         altura = max(
-            self.PROPORCAO_ALTURA,
-            altura
-        )
-
-        # =====================================
-        # EVITAR PASSAR DA TELA
-        # =====================================
-
-        if largura > largura_tela:
-
-            largura = largura_tela
-            altura = int(
-                largura / proporcao
+            1,
+            min(
+                altura,
+                area.height()
             )
-
-        if altura > altura_tela:
-
-            altura = altura_tela
-            largura = int(
-                altura * proporcao
-            )
-
-        # =====================================
-        # REDIMENSIONAR
-        # =====================================
-
-        self.resize(
-            largura,
-            altura
         )
 
         # =====================================
-        # CENTRALIZAR
+        # A JANELA OCUPA TODA A ÁREA ÚTIL
         # =====================================
 
-        x = (
-            area.left()
-            + (largura_tela - largura) // 2
+        self.setGeometry(
+            area
         )
-
-        y = (
-            area.top()
-            + (altura_tela - altura) // 2
-        )
-
-        self.move(
-            x,
-            y
-        )
-
-    # =================================================
-    # MANTER PROPORÇÃO 800x480
-    # =================================================
-
-    def resizeEvent(self, event):
-
-        # Evita loop de resizeEvent
-        if self._ajustando_tamanho:
-
-            super().resizeEvent(event)
-
-            return
-
-        self._ajustando_tamanho = True
-
-        largura = self.width()
-        altura = self.height()
-
-        proporcao = (
-            self.PROPORCAO_LARGURA /
-            self.PROPORCAO_ALTURA
-        )
-
-        # =====================================
-        # DESCOBRIR QUAL DIMENSÃO FOI ALTERADA
-        # =====================================
-
-        # Usa a largura como referência
-        # e calcula a altura proporcional.
-
-        nova_altura = int(
-            largura / proporcao
-        )
-
-        # =====================================
-        # GARANTIR ALTURA MÍNIMA
-        # =====================================
-
-        if nova_altura < self.PROPORCAO_ALTURA:
-
-            nova_altura = self.PROPORCAO_ALTURA
-
-            nova_largura = int(
-                nova_altura * proporcao
-            )
-
-        else:
-
-            nova_largura = largura
-
-        # =====================================
-        # AJUSTAR TAMANHO
-        # =====================================
-
-        if (
-            nova_largura != largura
-            or nova_altura != altura
-        ):
-
-            self.resize(
-                nova_largura,
-                nova_altura
-            )
-
-        self._ajustando_tamanho = False
-
-        super().resizeEvent(event)
 
     # =================================================
     # TENTATIVA DE CONEXÃO

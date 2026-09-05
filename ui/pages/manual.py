@@ -16,7 +16,11 @@ from PySide6.QtWidgets import (
     QGridLayout,
     QFrame,
     QSizePolicy,
-    QDoubleSpinBox
+    QDialog,
+    QLineEdit,
+    QDialogButtonBox,
+    QMessageBox,
+    QScrollArea
 )
 
 from PySide6.QtCore import (
@@ -24,12 +28,277 @@ from PySide6.QtCore import (
     QTimer
 )
 
+from PySide6.QtGui import (
+    QGuiApplication
+)
+
 from movement import Movement
 
 
+# =========================================================
+# DIÁLOGO DE EDIÇÃO
+# =========================================================
+
+class EditValueDialog(QDialog):
+
+    def __init__(
+        self,
+        valor,
+        titulo,
+        minimo,
+        maximo,
+        decimais,
+        unidade,
+        parent=None
+    ):
+
+        super().__init__(
+            parent
+        )
+
+        self.minimo = minimo
+        self.maximo = maximo
+        self.decimais = decimais
+        self.unidade = unidade
+
+        self.setWindowTitle(
+            titulo
+        )
+
+        self.setModal(
+            True
+        )
+
+        self.setMinimumWidth(
+            320
+        )
+
+        layout = QVBoxLayout(
+            self
+        )
+
+        # =====================================
+        # TÍTULO
+        # =====================================
+
+        label = QLabel(
+            titulo
+        )
+
+        label.setAlignment(
+            Qt.AlignCenter
+        )
+
+        layout.addWidget(
+            label
+        )
+
+        # =====================================
+        # CAMPO
+        # =====================================
+
+        self.campo = QLineEdit()
+
+        self.campo.setAlignment(
+            Qt.AlignCenter
+        )
+
+        self.campo.setInputMethodHints(
+            Qt.ImhPreferNumbers
+        )
+
+        self.campo.setText(
+            f"{float(valor):.{decimais}f}"
+        )
+
+        self.campo.selectAll()
+
+        layout.addWidget(
+            self.campo
+        )
+
+        # =====================================
+        # UNIDADE
+        # =====================================
+
+        if unidade:
+
+            unidade_label = QLabel(
+                unidade
+            )
+
+            unidade_label.setAlignment(
+                Qt.AlignCenter
+            )
+
+            layout.addWidget(
+                unidade_label
+            )
+
+        # =====================================
+        # BOTÕES
+        # =====================================
+
+        botoes = QDialogButtonBox(
+            QDialogButtonBox.Ok |
+            QDialogButtonBox.Cancel
+        )
+
+        botoes.accepted.connect(
+            self.validar
+        )
+
+        botoes.rejected.connect(
+            self.reject
+        )
+
+        layout.addWidget(
+            botoes
+        )
+
+        self.campo.returnPressed.connect(
+            self.validar
+        )
+
+        # =====================================
+        # FOCO
+        # =====================================
+
+        self.campo.setFocus()
+
+        # =====================================
+        # TECLADO VIRTUAL
+        # =====================================
+
+        QTimer.singleShot(
+            200,
+            self.abrir_teclado
+        )
+
+    # =====================================================
+    # TECLADO VIRTUAL
+    # =====================================================
+
+    def abrir_teclado(self):
+
+        try:
+
+            QGuiApplication.inputMethod().show()
+
+        except Exception:
+
+            pass
+
+    # =====================================================
+    # VALIDAR
+    # =====================================================
+
+    def validar(self):
+
+        texto = (
+            self.campo.text()
+            .strip()
+            .replace(
+                ",",
+                "."
+            )
+        )
+
+        if not texto:
+
+            QMessageBox.warning(
+                self,
+                "Valor inválido",
+                "Digite um valor."
+            )
+
+            self.campo.setFocus()
+
+            return
+
+        try:
+
+            valor = float(
+                texto
+            )
+
+        except ValueError:
+
+            QMessageBox.warning(
+                self,
+                "Valor inválido",
+                "Digite um número válido."
+            )
+
+            self.campo.setFocus()
+            self.campo.selectAll()
+
+            return
+
+        if valor < self.minimo:
+
+            QMessageBox.warning(
+                self,
+                "Valor inválido",
+                (
+                    f"O valor mínimo permitido é "
+                    f"{self.minimo}."
+                )
+            )
+
+            self.campo.setFocus()
+            self.campo.selectAll()
+
+            return
+
+        if valor > self.maximo:
+
+            QMessageBox.warning(
+                self,
+                "Valor inválido",
+                (
+                    f"O valor máximo permitido é "
+                    f"{self.maximo}."
+                )
+            )
+
+            self.campo.setFocus()
+            self.campo.selectAll()
+
+            return
+
+        self.accept()
+
+    # =====================================================
+    # VALOR
+    # =====================================================
+
+    def valor(self):
+
+        texto = (
+            self.campo.text()
+            .strip()
+            .replace(
+                ",",
+                "."
+            )
+        )
+
+        return float(
+            texto
+        )
+
+
+# =========================================================
+# PÁGINA MANUAL
+# =========================================================
+
 class ManualPage(QWidget):
 
-    def __init__(self, mks):
+    def __init__(
+        self,
+        mks
+    ):
 
         super().__init__()
 
@@ -40,10 +309,16 @@ class ManualPage(QWidget):
         )
 
         # =================================================
-        # DESLOCAMENTO
+        # DESLOCAMENTO PADRÃO
         # =================================================
 
         self.passo = 10.0
+
+        # =================================================
+        # VELOCIDADE PADRÃO
+        # =================================================
+
+        self.velocidade = 1000.0
 
         # =================================================
         # CONTROLE DO GARFO
@@ -81,8 +356,56 @@ class ManualPage(QWidget):
 
     def criar_interface(self):
 
-        principal = QVBoxLayout(
+        # =================================================
+        # LAYOUT EXTERNO
+        # =================================================
+
+        layout_externo = QVBoxLayout(
             self
+        )
+
+        layout_externo.setContentsMargins(
+            0,
+            0,
+            0,
+            0
+        )
+
+        # =================================================
+        # SCROLL
+        # =================================================
+
+        scroll = QScrollArea()
+
+        scroll.setWidgetResizable(
+            True
+        )
+
+        scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
+        )
+
+        scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarAsNeeded
+        )
+
+        scroll.setFrameShape(
+            QScrollArea.NoFrame
+        )
+
+        # =================================================
+        # CONTEÚDO
+        # =================================================
+
+        conteudo = QWidget()
+
+        conteudo.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Minimum
+        )
+
+        principal = QVBoxLayout(
+            conteudo
         )
 
         principal.setContentsMargins(
@@ -120,7 +443,7 @@ class ManualPage(QWidget):
         )
 
         # =================================================
-        # CONTROLE DE DESLOCAMENTO
+        # CONTROLE DE DESLOCAMENTO E VELOCIDADE
         # =================================================
 
         self.passo_box = QHBoxLayout()
@@ -129,74 +452,102 @@ class ManualPage(QWidget):
             6
         )
 
+        # =================================================
+        # DESLOCAMENTO
+        # =================================================
+
         passo_texto = QLabel(
             "Deslocamento"
         )
 
-        # -------------------------------------------------
-        # CAMPO NUMÉRICO
-        #
-        # Permite valores quebrados:
-        # 0,1
-        # 0,5
-        # 1,25
-        # 2,75
-        # etc.
-        # -------------------------------------------------
-
-        self.passo_spin = QDoubleSpinBox()
-
-        self.passo_spin.setDecimals(
-            2
+        self.passo_button = QPushButton(
+            f"{self.passo:.2f} mm"
         )
 
-        self.passo_spin.setRange(
-            0.01,
-            1000.00
-        )
-
-        self.passo_spin.setSingleStep(
-            0.1
-        )
-
-        self.passo_spin.setValue(
-            self.passo
-        )
-
-        self.passo_spin.setSuffix(
-            " mm"
-        )
-
-        self.passo_spin.setAlignment(
-            Qt.AlignCenter
-        )
-
-        self.passo_spin.setObjectName(
+        self.passo_button.setObjectName(
             "actionButton"
         )
 
-        self.passo_spin.setMinimumWidth(
+        self.passo_button.setSizePolicy(
+            QSizePolicy.Fixed,
+            QSizePolicy.Fixed
+        )
+
+        self.passo_button.setMinimumWidth(
             110
         )
 
-        # -------------------------------------------------
-        # ATUALIZAR VALOR
-        # -------------------------------------------------
-
-        self.passo_spin.valueChanged.connect(
-            self.alterar_passo
+        self.passo_button.setFixedHeight(
+            40
         )
+
+        self.passo_button.clicked.connect(
+            self.editar_passo
+        )
+
+        # =================================================
+        # VELOCIDADE
+        # =================================================
+
+        velocidade_texto = QLabel(
+            "Velocidade"
+        )
+
+        self.velocidade_button = QPushButton(
+            f"{self.velocidade:.0f} mm/min"
+        )
+
+        self.velocidade_button.setObjectName(
+            "actionButton"
+        )
+
+        self.velocidade_button.setSizePolicy(
+            QSizePolicy.Fixed,
+            QSizePolicy.Fixed
+        )
+
+        self.velocidade_button.setMinimumWidth(
+            125
+        )
+
+        self.velocidade_button.setFixedHeight(
+            40
+        )
+
+        self.velocidade_button.clicked.connect(
+            self.editar_velocidade
+        )
+
+        # =================================================
+        # MONTAR LINHA
+        # =================================================
 
         self.passo_box.addWidget(
             passo_texto
         )
 
         self.passo_box.addSpacing(
-            5
+            4
         )
 
         self.passo_box.addWidget(
-            self.passo_spin
+            self.passo_button
+        )
+
+        self.passo_box.addSpacing(
+            12
+        )
+
+        self.passo_box.addWidget(
+            velocidade_texto
+        )
+
+        self.passo_box.addSpacing(
+            4
+        )
+
+        self.passo_box.addWidget(
+            self.velocidade_button
         )
 
         self.passo_box.addStretch()
@@ -313,9 +664,9 @@ class ManualPage(QWidget):
                 QSizePolicy.Fixed
             )
 
-        # -------------------------------------------------
+        # =================================================
         # DISPOSIÇÃO XY
-        # -------------------------------------------------
+        # =================================================
 
         self.grid_xy.addWidget(
             self.xp,
@@ -604,16 +955,129 @@ class ManualPage(QWidget):
         )
 
         # =================================================
+        # ESPAÇO FINAL
+        # =================================================
+
+        principal.addStretch()
+
+        # =================================================
+        # CONFIGURAR SCROLL
+        # =================================================
+
+        scroll.setWidget(
+            conteudo
+        )
+
+        layout_externo.addWidget(
+            scroll
+        )
+
+        # =================================================
         # TAMANHO INICIAL
         # =================================================
 
         self.atualizar_tamanho_botoes()
 
     # =====================================================
+    # EDITAR DESLOCAMENTO
+    # =====================================================
+
+    def editar_passo(self):
+
+        dialogo = EditValueDialog(
+            valor=self.passo,
+            titulo="Alterar deslocamento",
+            minimo=0.01,
+            maximo=1000.0,
+            decimais=2,
+            unidade="mm",
+            parent=self
+        )
+
+        if dialogo.exec() != QDialog.Accepted:
+
+            return
+
+        self.alterar_passo(
+            dialogo.valor()
+        )
+
+    # =====================================================
+    # EDITAR VELOCIDADE
+    # =====================================================
+
+    def editar_velocidade(self):
+
+        dialogo = EditValueDialog(
+            valor=self.velocidade,
+            titulo="Alterar velocidade",
+            minimo=1.0,
+            maximo=10000.0,
+            decimais=0,
+            unidade="mm/min",
+            parent=self
+        )
+
+        if dialogo.exec() != QDialog.Accepted:
+
+            return
+
+        self.alterar_velocidade(
+            dialogo.valor()
+        )
+
+    # =====================================================
+    # ALTERAR DESLOCAMENTO
+    # =====================================================
+
+    def alterar_passo(
+        self,
+        valor
+    ):
+
+        self.passo = float(
+            valor
+        )
+
+        self.passo_button.setText(
+            f"{self.passo:.2f} mm"
+        )
+
+        print(
+            f"DESLOCAMENTO ALTERADO PARA: "
+            f"{self.passo:g} mm"
+        )
+
+    # =====================================================
+    # ALTERAR VELOCIDADE
+    # =====================================================
+
+    def alterar_velocidade(
+        self,
+        valor
+    ):
+
+        self.velocidade = float(
+            valor
+        )
+
+        self.velocidade_button.setText(
+            f"{self.velocidade:.0f} mm/min"
+        )
+
+        print(
+            f"VELOCIDADE ALTERADA PARA: "
+            f"{self.velocidade:.0f} mm/min"
+        )
+
+    # =====================================================
     # REDIMENSIONAMENTO
     # =====================================================
 
-    def resizeEvent(self, event):
+    def resizeEvent(
+        self,
+        event
+    ):
 
         super().resizeEvent(
             event
@@ -721,10 +1185,14 @@ class ManualPage(QWidget):
         )
 
         # =================================================
-        # CAMPO DE DESLOCAMENTO
+        # CAMPOS SUPERIORES
         # =================================================
 
-        self.passo_spin.setFixedHeight(
+        self.passo_button.setFixedHeight(
+            40
+        )
+
+        self.velocidade_button.setFixedHeight(
             40
         )
 
@@ -751,24 +1219,6 @@ class ManualPage(QWidget):
         )
 
     # =====================================================
-    # ALTERAR DESLOCAMENTO
-    # =====================================================
-
-    def alterar_passo(
-        self,
-        valor
-    ):
-
-        self.passo = float(
-            valor
-        )
-
-        print(
-            f"DESLOCAMENTO ALTERADO PARA: "
-            f"{self.passo:g} mm"
-        )
-
-    # =====================================================
     # BOTÃO X+
     # =====================================================
 
@@ -781,6 +1231,10 @@ class ManualPage(QWidget):
 
         print(
             f">>> DESLOCAMENTO: {self.passo:g} mm"
+        )
+
+        print(
+            f">>> VELOCIDADE: {self.velocidade:.0f} mm/min"
         )
 
         self.mover_x(
@@ -802,6 +1256,10 @@ class ManualPage(QWidget):
             f">>> DESLOCAMENTO: {self.passo:g} mm"
         )
 
+        print(
+            f">>> VELOCIDADE: {self.velocidade:.0f} mm/min"
+        )
+
         self.mover_x(
             -self.passo
         )
@@ -819,6 +1277,10 @@ class ManualPage(QWidget):
 
         print(
             f">>> DESLOCAMENTO: {self.passo:g} mm"
+        )
+
+        print(
+            f">>> VELOCIDADE: {self.velocidade:.0f} mm/min"
         )
 
         self.mover_y(
@@ -840,6 +1302,10 @@ class ManualPage(QWidget):
             f">>> DESLOCAMENTO: {self.passo:g} mm"
         )
 
+        print(
+            f">>> VELOCIDADE: {self.velocidade:.0f} mm/min"
+        )
+
         self.mover_y(
             -self.passo
         )
@@ -857,6 +1323,10 @@ class ManualPage(QWidget):
 
         print(
             f">>> DESLOCAMENTO: {self.passo:g} mm"
+        )
+
+        print(
+            f">>> VELOCIDADE: {self.velocidade:.0f} mm/min"
         )
 
         self.mover_z(
@@ -878,6 +1348,10 @@ class ManualPage(QWidget):
             f">>> DESLOCAMENTO: {self.passo:g} mm"
         )
 
+        print(
+            f">>> VELOCIDADE: {self.velocidade:.0f} mm/min"
+        )
+
         self.mover_z(
             -self.passo
         )
@@ -886,7 +1360,10 @@ class ManualPage(QWidget):
     # MOVIMENTO X
     # =====================================================
 
-    def mover_x(self, valor):
+    def mover_x(
+        self,
+        valor
+    ):
 
         print()
         print(
@@ -906,7 +1383,8 @@ class ManualPage(QWidget):
             return
 
         resultado = self.movimento.mover_x(
-            valor
+            valor,
+            self.velocidade
         )
 
         print(
@@ -917,7 +1395,10 @@ class ManualPage(QWidget):
     # MOVIMENTO Y
     # =====================================================
 
-    def mover_y(self, valor):
+    def mover_y(
+        self,
+        valor
+    ):
 
         print()
         print(
@@ -937,7 +1418,8 @@ class ManualPage(QWidget):
             return
 
         resultado = self.movimento.mover_y(
-            valor
+            valor,
+            self.velocidade
         )
 
         print(
@@ -948,7 +1430,10 @@ class ManualPage(QWidget):
     # MOVIMENTO Z
     # =====================================================
 
-    def mover_z(self, valor):
+    def mover_z(
+        self,
+        valor
+    ):
 
         print()
         print(
@@ -968,7 +1453,8 @@ class ManualPage(QWidget):
             return
 
         resultado = self.movimento.mover_z(
-            valor
+            valor,
+            self.velocidade
         )
 
         print(
