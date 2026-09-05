@@ -188,7 +188,7 @@ class HistoryPage(QWidget):
         )
 
         self.tabela.setAlternatingRowColors(
-            True
+            False
         )
 
         self.tabela.verticalHeader().setVisible(

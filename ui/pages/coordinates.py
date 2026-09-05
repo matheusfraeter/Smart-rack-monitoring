@@ -47,11 +47,21 @@ class PasswordDialog(QDialog):
 
         super().__init__(parent)
 
-        self.setWindowTitle("Acesso")
-        self.setModal(True)
-        self.setMinimumWidth(300)
+        self.setWindowTitle(
+            "Acesso"
+        )
 
-        layout = QVBoxLayout(self)
+        self.setModal(
+            True
+        )
+
+        self.setMinimumWidth(
+            300
+        )
+
+        layout = QVBoxLayout(
+            self
+        )
 
         titulo = QLabel(
             "Digite a senha para desbloquear:"
@@ -130,9 +140,9 @@ class CoordinatesPage(QWidget):
         self.campos = []
         self.campos_maquina = []
 
-        # =====================================================
+        # =================================================
         # ESTADO DO GESTO
-        # =====================================================
+        # =================================================
 
         self._touch_ativo = False
         self._touch_arrastando = False
@@ -142,18 +152,18 @@ class CoordinatesPage(QWidget):
 
         self._touch_limite_arrasto = 12
 
-        # =====================================================
+        # =================================================
         # ESTADO ESPECÍFICO DOS SPINBOX
-        # =====================================================
+        # =================================================
 
         self._spinbox_pendente = None
         self._spinbox_direcao = 0
 
         self.criar_interface()
 
-        # =====================================================
+        # =================================================
         # FILTRO GLOBAL
-        # =====================================================
+        # =================================================
 
         app = QApplication.instance()
 
@@ -184,9 +194,9 @@ class CoordinatesPage(QWidget):
             10
         )
 
-        # =====================================================
+        # =================================================
         # SCROLL
-        # =====================================================
+        # =================================================
 
         self.scroll = QScrollArea()
 
@@ -206,9 +216,9 @@ class CoordinatesPage(QWidget):
             self.scroll
         )
 
-        # =====================================================
+        # =================================================
         # CONTEÚDO
-        # =====================================================
+        # =================================================
 
         self.conteudo = QWidget()
 
@@ -231,9 +241,9 @@ class CoordinatesPage(QWidget):
             self.conteudo
         )
 
-        # =====================================================
+        # =================================================
         # TÍTULO
-        # =====================================================
+        # =================================================
 
         titulo = QLabel(
             "COORDENADAS"
@@ -251,9 +261,9 @@ class CoordinatesPage(QWidget):
             titulo
         )
 
-        # =====================================================
+        # =================================================
         # COORDENADAS DO RACK
-        # =====================================================
+        # =================================================
 
         titulo_rack = QLabel(
             "COORDENADAS DO RACK"
@@ -309,9 +319,9 @@ class CoordinatesPage(QWidget):
             self.tabela
         )
 
-        # =====================================================
+        # =================================================
         # POSIÇÕES DA EMPILHADEIRA
-        # =====================================================
+        # =================================================
 
         titulo_maquina = QLabel(
             "POSIÇÕES DA EMPILHADEIRA"
@@ -341,7 +351,9 @@ class CoordinatesPage(QWidget):
         )
 
         self.tabela_maquina.setRowCount(
-            len(self.POSICOES_MAQUINA)
+            len(
+                self.POSICOES_MAQUINA
+            )
         )
 
         self.tabela_maquina.setEditTriggers(
@@ -389,9 +401,9 @@ class CoordinatesPage(QWidget):
             self.tabela_maquina
         )
 
-        # =====================================================
+        # =================================================
         # AJUSTES DA EMPILHADEIRA
-        # =====================================================
+        # =================================================
 
         titulo_ajustes = QLabel(
             "AJUSTES DA EMPILHADEIRA"
@@ -411,9 +423,9 @@ class CoordinatesPage(QWidget):
             10
         )
 
-        # =====================================================
+        # =================================================
         # Z LEVANTAR
-        # =====================================================
+        # =================================================
 
         bloco_levantar = QVBoxLayout()
 
@@ -441,9 +453,9 @@ class CoordinatesPage(QWidget):
             self.campo_z_levantar
         )
 
-        # =====================================================
+        # =================================================
         # Z APOIAR
-        # =====================================================
+        # =================================================
 
         bloco_apoiar = QVBoxLayout()
 
@@ -483,9 +495,9 @@ class CoordinatesPage(QWidget):
             ajustes
         )
 
-        # =====================================================
+        # =================================================
         # VELOCIDADE DOS EIXOS
-        # =====================================================
+        # =================================================
 
         titulo_velocidade = QLabel(
             "VELOCIDADE DOS EIXOS"
@@ -505,9 +517,9 @@ class CoordinatesPage(QWidget):
             10
         )
 
-        # =====================================================
+        # =================================================
         # VELOCIDADE X
-        # =====================================================
+        # =================================================
 
         bloco_velocidade_x = QVBoxLayout()
 
@@ -548,9 +560,9 @@ class CoordinatesPage(QWidget):
             self.campo_velocidade_x
         )
 
-        # =====================================================
+        # =================================================
         # VELOCIDADE Y
-        # =====================================================
+        # =================================================
 
         bloco_velocidade_y = QVBoxLayout()
 
@@ -591,9 +603,9 @@ class CoordinatesPage(QWidget):
             self.campo_velocidade_y
         )
 
-        # =====================================================
+        # =================================================
         # VELOCIDADE Z
-        # =====================================================
+        # =================================================
 
         bloco_velocidade_z = QVBoxLayout()
 
@@ -650,9 +662,9 @@ class CoordinatesPage(QWidget):
             velocidades
         )
 
-        # =====================================================
+        # =================================================
         # BOTÕES
-        # =====================================================
+        # =================================================
 
         botoes = QHBoxLayout()
 
@@ -688,9 +700,9 @@ class CoordinatesPage(QWidget):
             botoes
         )
 
-        # =====================================================
+        # =================================================
         # CONEXÕES
-        # =====================================================
+        # =================================================
 
         self.bt_desbloquear.clicked.connect(
             self.alternar_bloqueio
@@ -704,9 +716,9 @@ class CoordinatesPage(QWidget):
             self.carregar_coordenadas
         )
 
-        # =====================================================
+        # =================================================
         # ESTADO INICIAL
-        # =====================================================
+        # =================================================
 
         self.carregar_coordenadas()
 
@@ -741,7 +753,9 @@ class CoordinatesPage(QWidget):
         )
 
         campo.setValue(
-            float(valor)
+            float(
+                valor
+            )
         )
 
         return campo
@@ -894,6 +908,26 @@ class CoordinatesPage(QWidget):
         self._spinbox_direcao = 0
 
     # =========================================================
+    # LIMPAR ESTADO DE TOUCH
+    #
+    # Usado quando o toque sai da área desta página,
+    # permitindo que outros widgets, como a Sidebar,
+    # recebam normalmente seus eventos.
+    # =========================================================
+
+    def limpar_estado_touch(self):
+
+        self._touch_ativo = False
+
+        self._touch_arrastando = False
+
+        self._touch_posicao_inicial = QPoint()
+
+        self._touch_posicao_anterior = QPoint()
+
+        self.cancelar_seta_spinbox()
+
+    # =========================================================
     # EVENT FILTER
     # =========================================================
 
@@ -905,9 +939,15 @@ class CoordinatesPage(QWidget):
 
         # =====================================================
         # IGNORAR QUANDO A PÁGINA NÃO ESTÁ VISÍVEL
+        #
+        # É importante NÃO consumir o evento aqui.
+        # Assim a Sidebar e as outras páginas continuam
+        # recebendo seus toques normalmente.
         # =====================================================
 
         if not self.isVisible():
+
+            self.limpar_estado_touch()
 
             return super().eventFilter(
                 obj,
@@ -920,6 +960,8 @@ class CoordinatesPage(QWidget):
         # =====================================================
 
         if QApplication.activeModalWidget() is not None:
+
+            self.limpar_estado_touch()
 
             return super().eventFilter(
                 obj,
@@ -944,9 +986,20 @@ class CoordinatesPage(QWidget):
                 .toPoint()
             )
 
+            # -------------------------------------------------
+            # IMPORTANTE:
+            # Se o toque começar fora do scroll desta página,
+            # não ativamos o estado de touch.
+            #
+            # Isso permite que Sidebar e outros controles
+            # recebam o clique normalmente.
+            # -------------------------------------------------
+
             if not self._ponto_dentro_scroll(
                 ponto
             ):
+
+                self.limpar_estado_touch()
 
                 return super().eventFilter(
                     obj,
@@ -1028,6 +1081,24 @@ class CoordinatesPage(QWidget):
                 event.globalPosition()
                 .toPoint()
             )
+
+            # -------------------------------------------------
+            # SE O DEDO SAIU DO SCROLL
+            #
+            # Interrompe o gesto desta página sem consumir
+            # o evento.
+            # -------------------------------------------------
+
+            if not self._ponto_dentro_scroll(
+                ponto_atual
+            ):
+
+                self.limpar_estado_touch()
+
+                return super().eventFilter(
+                    obj,
+                    event
+                )
 
             deslocamento = (
                 ponto_atual
@@ -1115,13 +1186,33 @@ class CoordinatesPage(QWidget):
                 .toPoint()
             )
 
+            # -------------------------------------------------
+            # GUARDAR ESTADO ANTES DE LIMPAR
+            # -------------------------------------------------
+
             foi_arrasto = (
                 self._touch_arrastando
             )
 
+            spinbox_pendente = (
+                self._spinbox_pendente
+            )
+
+            direcao_pendente = (
+                self._spinbox_direcao
+            )
+
+            # -------------------------------------------------
+            # LIMPAR ESTADO
+            # -------------------------------------------------
+
             self._touch_ativo = False
 
             self._touch_arrastando = False
+
+            self._spinbox_pendente = None
+
+            self._spinbox_direcao = 0
 
             # -------------------------------------------------
             # ARRASTE
@@ -1129,15 +1220,13 @@ class CoordinatesPage(QWidget):
 
             if foi_arrasto:
 
-                self.cancelar_seta_spinbox()
-
                 return True
 
             # -------------------------------------------------
             # CLIQUE NAS SETAS
             # -------------------------------------------------
 
-            if self._spinbox_pendente is not None:
+            if spinbox_pendente is not None:
 
                 spinbox, direcao = (
                     self.detectar_seta_spinbox(
@@ -1147,16 +1236,36 @@ class CoordinatesPage(QWidget):
                 )
 
                 if (
-                    spinbox is self._spinbox_pendente
+                    spinbox is spinbox_pendente
                     and
-                    direcao == self._spinbox_direcao
+                    direcao == direcao_pendente
                 ):
 
-                    self.aplicar_seta_spinbox()
+                    valor = spinbox.value()
 
-                else:
+                    passo = spinbox.singleStep()
 
-                    self.cancelar_seta_spinbox()
+                    novo_valor = (
+                        valor
+                        +
+                        (
+                            passo
+                            *
+                            direcao
+                        )
+                    )
+
+                    if novo_valor > spinbox.maximum():
+
+                        novo_valor = spinbox.maximum()
+
+                    if novo_valor < spinbox.minimum():
+
+                        novo_valor = spinbox.minimum()
+
+                    spinbox.setValue(
+                        novo_valor
+                    )
 
                 return True
 
@@ -1186,27 +1295,34 @@ class CoordinatesPage(QWidget):
                 .toPoint()
             )
 
-            if self._ponto_dentro_scroll(
+            if not self._ponto_dentro_scroll(
                 ponto
             ):
 
-                self._touch_ativo = True
+                self.limpar_estado_touch()
 
-                self._touch_arrastando = False
-
-                self._touch_posicao_inicial = (
-                    ponto
+                return super().eventFilter(
+                    obj,
+                    event
                 )
 
-                self._touch_posicao_anterior = (
-                    ponto
-                )
+            self._touch_ativo = True
 
-                self.cancelar_seta_spinbox()
+            self._touch_arrastando = False
 
-                event.accept()
+            self._touch_posicao_inicial = (
+                ponto
+            )
 
-                return True
+            self._touch_posicao_anterior = (
+                ponto
+            )
+
+            self.cancelar_seta_spinbox()
+
+            event.accept()
+
+            return True
 
         # =====================================================
         # TOUCH UPDATE
@@ -1235,6 +1351,17 @@ class CoordinatesPage(QWidget):
                 .globalPosition()
                 .toPoint()
             )
+
+            if not self._ponto_dentro_scroll(
+                ponto_atual
+            ):
+
+                self.limpar_estado_touch()
+
+                return super().eventFilter(
+                    obj,
+                    event
+                )
 
             deslocamento = (
                 ponto_atual
@@ -1490,7 +1617,9 @@ class CoordinatesPage(QWidget):
         )
 
         self.tabela.setRowCount(
-            len(posicoes)
+            len(
+                posicoes
+            )
         )
 
         for linha, posicao in enumerate(
@@ -1564,7 +1693,9 @@ class CoordinatesPage(QWidget):
         )
 
         self.tabela_maquina.setRowCount(
-            len(self.POSICOES_MAQUINA)
+            len(
+                self.POSICOES_MAQUINA
+            )
         )
 
         for linha, nome in enumerate(
@@ -1679,9 +1810,9 @@ class CoordinatesPage(QWidget):
             )
         )
 
-        # ---------------------------------------------
-        # VALORES PADRÃO
-        # ---------------------------------------------
+        # =====================================================
+        # VALORES
+        # =====================================================
 
         if z_levantar is not None:
 
