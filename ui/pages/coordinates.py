@@ -459,6 +459,10 @@ class CoordinatesPage(QWidget):
             self.editar_celula_maquina
         )
 
+        self.tabela_limites.cellClicked.connect(
+            self.editar_celula_limite
+        )
+
         self.tabela_configuracoes.cellClicked.connect(
             self.editar_celula_configuracao
         )
@@ -680,6 +684,103 @@ class CoordinatesPage(QWidget):
         )
 
         # =================================================
+        # LIMITES DOS EIXOS
+        # =================================================
+
+        titulo_limites = QLabel(
+            "LIMITES DOS EIXOS"
+        )
+
+        titulo_limites.setAlignment(
+            Qt.AlignCenter
+        )
+
+        self.layout_conteudo.addWidget(
+            titulo_limites
+        )
+
+        self.tabela_limites = QTableWidget()
+
+        self.tabela_limites.setColumnCount(
+            3
+        )
+
+        self.tabela_limites.setHorizontalHeaderLabels(
+            [
+                "Eixo",
+                "Mínimo",
+                "Máximo"
+            ]
+        )
+
+        self.tabela_limites.setRowCount(
+            3
+        )
+
+        self.tabela_limites.setEditTriggers(
+            QAbstractItemView.NoEditTriggers
+        )
+
+        self.tabela_limites.setSelectionMode(
+            QAbstractItemView.SingleSelection
+        )
+
+        self.tabela_limites.setVerticalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
+        )
+
+        self.tabela_limites.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
+        )
+
+        self.tabela_limites.horizontalHeader().setSectionResizeMode(
+            0,
+            QHeaderView.Stretch
+        )
+
+        self.tabela_limites.horizontalHeader().setSectionResizeMode(
+            1,
+            QHeaderView.Stretch
+        )
+
+        self.tabela_limites.horizontalHeader().setSectionResizeMode(
+            2,
+            QHeaderView.Stretch
+        )
+
+        # ---------------------------------------------
+        # EIXOS
+        # ---------------------------------------------
+
+        eixos = [
+            "X",
+            "Y",
+            "Z"
+        ]
+
+        for linha, eixo in enumerate(
+            eixos
+        ):
+
+            item = QTableWidgetItem(
+                eixo
+            )
+
+            item.setTextAlignment(
+                Qt.AlignCenter
+            )
+
+            self.tabela_limites.setItem(
+                linha,
+                0,
+                item
+            )
+
+        self.layout_conteudo.addWidget(
+            self.tabela_limites
+        )
+
+        # =================================================
         # AJUSTES
         # =================================================
 
@@ -895,6 +996,7 @@ class CoordinatesPage(QWidget):
 
         self.abrir_edicao(
             item=item,
+            titulo="Alterar coordenada",
             decimais=3,
             minimo=-99999.999,
             maximo=99999.999
@@ -929,10 +1031,79 @@ class CoordinatesPage(QWidget):
 
         self.abrir_edicao(
             item=item,
+            titulo="Alterar posição",
             decimais=3,
             minimo=-99999.999,
             maximo=99999.999
         )
+
+    # =========================================================
+    # EDITAR LIMITE
+    # =========================================================
+
+    def editar_celula_limite(
+        self,
+        linha,
+        coluna
+    ):
+
+        if coluna == 0:
+
+            return
+
+        if not self.garantir_acesso():
+
+            return
+
+        item = self.tabela_limites.item(
+            linha,
+            coluna
+        )
+
+        if item is None:
+
+            return
+
+        eixo_item = self.tabela_limites.item(
+            linha,
+            0
+        )
+
+        if eixo_item is None:
+
+            return
+
+        eixo = eixo_item.text()
+
+        # ---------------------------------------------
+        # MÍNIMO
+        # ---------------------------------------------
+
+        if coluna == 1:
+
+            self.abrir_edicao(
+                item=item,
+                titulo=f"Limite mínimo do eixo {eixo}",
+                decimais=3,
+                minimo=-99999.999,
+                maximo=99999.999
+            )
+
+            return
+
+        # ---------------------------------------------
+        # MÁXIMO
+        # ---------------------------------------------
+
+        if coluna == 2:
+
+            self.abrir_edicao(
+                item=item,
+                titulo=f"Limite máximo do eixo {eixo}",
+                decimais=3,
+                minimo=-99999.999,
+                maximo=99999.999
+            )
 
     # =========================================================
     # EDITAR CONFIGURAÇÃO
@@ -969,6 +1140,7 @@ class CoordinatesPage(QWidget):
 
             self.abrir_edicao(
                 item=item,
+                titulo="Alterar configuração",
                 decimais=3,
                 minimo=-99999.999,
                 maximo=99999.999
@@ -982,6 +1154,7 @@ class CoordinatesPage(QWidget):
 
         self.abrir_edicao(
             item=item,
+            titulo="Alterar velocidade",
             decimais=0,
             minimo=1.0,
             maximo=10000.0
@@ -994,6 +1167,7 @@ class CoordinatesPage(QWidget):
     def abrir_edicao(
         self,
         item,
+        titulo="Alterar valor",
         decimais=3,
         minimo=-99999.999,
         maximo=99999.999
@@ -1016,6 +1190,7 @@ class CoordinatesPage(QWidget):
 
         dialogo = EditValueDialog(
             valor=valor_atual,
+            titulo=titulo,
             decimais=decimais,
             minimo=minimo,
             maximo=maximo,
@@ -1315,6 +1490,101 @@ class CoordinatesPage(QWidget):
             )
 
         # =====================================================
+        # LIMITES DOS EIXOS
+        # =====================================================
+
+        limites = (
+            self.db.listar_limites_eixos()
+        )
+
+        mapa_limites = {}
+
+        for registro in limites:
+
+            eixo = str(
+                registro[0]
+            ).upper()
+
+            minimo = float(
+                registro[1]
+            )
+
+            maximo = float(
+                registro[2]
+            )
+
+            mapa_limites[eixo] = (
+                minimo,
+                maximo
+            )
+
+        eixos = [
+            "X",
+            "Y",
+            "Z"
+        ]
+
+        for linha, eixo in enumerate(
+            eixos
+        ):
+
+            # ---------------------------------------------
+            # EIXO
+            # ---------------------------------------------
+
+            item_eixo = QTableWidgetItem(
+                eixo
+            )
+
+            item_eixo.setTextAlignment(
+                Qt.AlignCenter
+            )
+
+            self.tabela_limites.setItem(
+                linha,
+                0,
+                item_eixo
+            )
+
+            # ---------------------------------------------
+            # VALORES PADRÃO
+            # ---------------------------------------------
+
+            minimo = 0.0
+            maximo = 1000.0
+
+            if eixo in mapa_limites:
+
+                minimo = mapa_limites[eixo][0]
+                maximo = mapa_limites[eixo][1]
+
+            # ---------------------------------------------
+            # MÍNIMO
+            # ---------------------------------------------
+
+            self.tabela_limites.setItem(
+                linha,
+                1,
+                self.criar_item_numero(
+                    minimo,
+                    3
+                )
+            )
+
+            # ---------------------------------------------
+            # MÁXIMO
+            # ---------------------------------------------
+
+            self.tabela_limites.setItem(
+                linha,
+                2,
+                self.criar_item_numero(
+                    maximo,
+                    3
+                )
+            )
+
+        # =====================================================
         # CONFIGURAÇÕES
         # =====================================================
 
@@ -1349,11 +1619,25 @@ class CoordinatesPage(QWidget):
         )
 
         valores_configuracao = [
-            z_levantar if z_levantar is not None else 10.0,
-            z_apoiar if z_apoiar is not None else 10.0,
-            velocidade_x if velocidade_x is not None else 1000.0,
-            velocidade_y if velocidade_y is not None else 1000.0,
-            velocidade_z if velocidade_z is not None else 500.0,
+            z_levantar
+            if z_levantar is not None
+            else 10.0,
+
+            z_apoiar
+            if z_apoiar is not None
+            else 10.0,
+
+            velocidade_x
+            if velocidade_x is not None
+            else 1000.0,
+
+            velocidade_y
+            if velocidade_y is not None
+            else 1000.0,
+
+            velocidade_z
+            if velocidade_z is not None
+            else 500.0,
         ]
 
         for linha, valor in enumerate(
@@ -1411,6 +1695,20 @@ class CoordinatesPage(QWidget):
             altura_maquina + 4
         )
 
+        altura_limites = (
+            self.tabela_limites.horizontalHeader().height()
+        )
+
+        altura_limites += (
+            self.tabela_limites.rowCount()
+            *
+            self.tabela_limites.verticalHeader().defaultSectionSize()
+        )
+
+        self.tabela_limites.setFixedHeight(
+            altura_limites + 4
+        )
+
         altura_configuracoes = (
             self.tabela_configuracoes.horizontalHeader().height()
         )
@@ -1426,6 +1724,104 @@ class CoordinatesPage(QWidget):
         )
 
     # =========================================================
+    # VALIDAR LIMITES
+    # =========================================================
+
+    def validar_limites(self):
+
+        eixos = [
+            "X",
+            "Y",
+            "Z"
+        ]
+
+        valores = {}
+
+        for linha, eixo in enumerate(
+            eixos
+        ):
+
+            item_minimo = self.tabela_limites.item(
+                linha,
+                1
+            )
+
+            item_maximo = self.tabela_limites.item(
+                linha,
+                2
+            )
+
+            if (
+                item_minimo is None
+                or
+                item_maximo is None
+            ):
+
+                QMessageBox.warning(
+                    self,
+                    "Limites inválidos",
+                    (
+                        f"Os limites do eixo {eixo} "
+                        f"não foram preenchidos."
+                    )
+                )
+
+                return None
+
+            try:
+
+                minimo = float(
+                    item_minimo.text()
+                    .strip()
+                    .replace(
+                        ",",
+                        "."
+                    )
+                )
+
+                maximo = float(
+                    item_maximo.text()
+                    .strip()
+                    .replace(
+                        ",",
+                        "."
+                    )
+                )
+
+            except ValueError:
+
+                QMessageBox.warning(
+                    self,
+                    "Limites inválidos",
+                    (
+                        f"Os valores do eixo {eixo} "
+                        f"não são válidos."
+                    )
+                )
+
+                return None
+
+            if minimo >= maximo:
+
+                QMessageBox.warning(
+                    self,
+                    "Limites inválidos",
+                    (
+                        f"No eixo {eixo}, o limite mínimo "
+                        f"deve ser menor que o limite máximo."
+                    )
+                )
+
+                return None
+
+            valores[eixo] = (
+                minimo,
+                maximo
+            )
+
+        return valores
+
+    # =========================================================
     # SALVAR COORDENADAS
     # =========================================================
 
@@ -1438,6 +1834,18 @@ class CoordinatesPage(QWidget):
                 "Acesso bloqueado",
                 "Desbloqueie a edição antes de salvar."
             )
+
+            return
+
+        # =====================================================
+        # VALIDAR LIMITES PRIMEIRO
+        # =====================================================
+
+        valores_limites = (
+            self.validar_limites()
+        )
+
+        if valores_limites is None:
 
             return
 
@@ -1641,9 +2049,9 @@ class CoordinatesPage(QWidget):
 
             return
 
-        # =====================================
-        # LIMITES
-        # =====================================
+        # =====================================================
+        # LIMITES DAS VELOCIDADES
+        # =====================================================
 
         valor_velocidade_x = max(
             1.0,
@@ -1670,7 +2078,40 @@ class CoordinatesPage(QWidget):
         )
 
         # =====================================================
-        # SALVAR
+        # SALVAR LIMITES DOS EIXOS
+        # =====================================================
+
+        for eixo in [
+            "X",
+            "Y",
+            "Z"
+        ]:
+
+            minimo, maximo = valores_limites[
+                eixo
+            ]
+
+            salvo = self.db.salvar_limite_eixo(
+                eixo,
+                minimo,
+                maximo
+            )
+
+            if not salvo:
+
+                QMessageBox.warning(
+                    self,
+                    "Erro ao salvar",
+                    (
+                        f"Não foi possível salvar os "
+                        f"limites do eixo {eixo}."
+                    )
+                )
+
+                return
+
+        # =====================================================
+        # SALVAR CONFIGURAÇÕES
         # =====================================================
 
         self.db.salvar_configuracao_empilhadeira(
@@ -1698,10 +2139,17 @@ class CoordinatesPage(QWidget):
             valor_velocidade_z
         )
 
+        # =====================================================
+        # SUCESSO
+        # =====================================================
+
         QMessageBox.information(
             self,
             "Sucesso",
-            "Coordenadas e velocidades salvas com sucesso."
+            (
+                "Coordenadas, limites e velocidades "
+                "salvos com sucesso."
+            )
         )
 
         self.carregar_coordenadas()

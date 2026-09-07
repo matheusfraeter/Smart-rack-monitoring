@@ -4,7 +4,7 @@
 ---------------------------------------------------------
  Arquivo.....: database.py
  Descrição...: Gerenciamento do banco SQLite
- Versão......: 0.8
+ Versão......: 0.9
 =========================================================
 """
 
@@ -27,6 +27,8 @@ class Database:
         self.criar_posicoes_maquina()
 
         self.criar_configuracoes_empilhadeira()
+
+        self.criar_limites_eixos()
 
 
     # =================================================
@@ -140,6 +142,25 @@ class Database:
             """
         )
 
+        # ---------------------------------------------
+        # LIMITES DOS EIXOS
+        # ---------------------------------------------
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS axis_limits
+            (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                eixo TEXT NOT NULL UNIQUE,
+
+                minimo REAL NOT NULL DEFAULT 0.0,
+
+                maximo REAL NOT NULL DEFAULT 1000.0
+            )
+            """
+        )
+
         conexao.commit()
 
         conexao.close()
@@ -216,7 +237,6 @@ class Database:
         cursor.execute(
             """
             DELETE FROM rack_positions
-
             WHERE coluna > 2
             """
         )
@@ -466,6 +486,80 @@ class Database:
 
 
     # =================================================
+    # CRIAR LIMITES DOS EIXOS
+    #
+    # X / Y / Z
+    # =================================================
+
+    def criar_limites_eixos(self):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+        limites = [
+            (
+                "X",
+                0.0,
+                1000.0
+            ),
+            (
+                "Y",
+                0.0,
+                1000.0
+            ),
+            (
+                "Z",
+                0.0,
+                1000.0
+            )
+        ]
+
+        for eixo, minimo, maximo in limites:
+
+            cursor.execute(
+                """
+                SELECT eixo
+
+                FROM axis_limits
+
+                WHERE eixo = ?
+
+                """,
+                (
+                    eixo,
+                )
+            )
+
+            existe = cursor.fetchone()
+
+            if existe is None:
+
+                cursor.execute(
+                    """
+                    INSERT INTO axis_limits
+                    (
+                        eixo,
+                        minimo,
+                        maximo
+                    )
+
+                    VALUES (?, ?, ?)
+
+                    """,
+                    (
+                        eixo,
+                        minimo,
+                        maximo
+                    )
+                )
+
+        conexao.commit()
+
+        conexao.close()
+
+
+    # =================================================
     # OBTER CONFIGURAÇÃO DA EMPILHADEIRA
     # =================================================
 
@@ -561,6 +655,153 @@ class Database:
             (
                 float(valor),
                 nome
+            )
+        )
+
+        atualizado = (
+            cursor.rowcount > 0
+        )
+
+        conexao.commit()
+
+        conexao.close()
+
+        return atualizado
+
+
+    # =================================================
+    # OBTER LIMITE DE UM EIXO
+    # =================================================
+
+    def obter_limite_eixo(
+        self,
+        eixo
+    ):
+
+        eixo = str(
+            eixo
+        ).upper()
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+        cursor.execute(
+            """
+            SELECT
+                minimo,
+                maximo
+
+            FROM axis_limits
+
+            WHERE eixo = ?
+
+            """,
+            (
+                eixo,
+            )
+        )
+
+        resultado = cursor.fetchone()
+
+        conexao.close()
+
+        if resultado is None:
+
+            return None
+
+        return {
+            "minimo": float(
+                resultado[0]
+            ),
+
+            "maximo": float(
+                resultado[1]
+            )
+        }
+
+
+    # =================================================
+    # LISTAR LIMITES DOS EIXOS
+    # =================================================
+
+    def listar_limites_eixos(self):
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+        cursor.execute(
+            """
+            SELECT
+                eixo,
+                minimo,
+                maximo
+
+            FROM axis_limits
+
+            ORDER BY
+                id
+            """
+        )
+
+        dados = cursor.fetchall()
+
+        conexao.close()
+
+        return dados
+
+
+    # =================================================
+    # SALVAR LIMITE DE UM EIXO
+    # =================================================
+
+    def salvar_limite_eixo(
+        self,
+        eixo,
+        minimo,
+        maximo
+    ):
+
+        eixo = str(
+            eixo
+        ).upper()
+
+        minimo = float(
+            minimo
+        )
+
+        maximo = float(
+            maximo
+        )
+
+        # ---------------------------------------------
+        # VALIDAR INTERVALO
+        # ---------------------------------------------
+
+        if minimo >= maximo:
+
+            return False
+
+        conexao = self.conectar()
+
+        cursor = conexao.cursor()
+
+        cursor.execute(
+            """
+            UPDATE axis_limits
+
+            SET
+                minimo = ?,
+                maximo = ?
+
+            WHERE eixo = ?
+
+            """,
+            (
+                minimo,
+                maximo,
+                eixo
             )
         )
 

@@ -33,6 +33,7 @@ from PySide6.QtGui import (
 )
 
 from movement import Movement
+from database import Database
 
 
 # =========================================================
@@ -304,9 +305,19 @@ class ManualPage(QWidget):
 
         self.mks = mks
 
+        # =================================================
+        # MOVIMENTO
+        # =================================================
+
         self.movimento = Movement(
             self.mks
         )
+
+        # =================================================
+        # BANCO
+        # =================================================
+
+        self.db = Database()
 
         # =================================================
         # DESLOCAMENTO PADRÃO
@@ -356,10 +367,6 @@ class ManualPage(QWidget):
 
     def criar_interface(self):
 
-        # =================================================
-        # LAYOUT EXTERNO
-        # =================================================
-
         layout_externo = QVBoxLayout(
             self
         )
@@ -370,10 +377,6 @@ class ManualPage(QWidget):
             0,
             0
         )
-
-        # =================================================
-        # SCROLL
-        # =================================================
 
         scroll = QScrollArea()
 
@@ -392,10 +395,6 @@ class ManualPage(QWidget):
         scroll.setFrameShape(
             QScrollArea.NoFrame
         )
-
-        # =================================================
-        # CONTEÚDO
-        # =================================================
 
         conteudo = QWidget()
 
@@ -421,10 +420,6 @@ class ManualPage(QWidget):
 
         self.principal_layout = principal
 
-        # =================================================
-        # TÍTULO
-        # =================================================
-
         titulo = QLabel(
             "Controle Manual XYZ"
         )
@@ -442,19 +437,11 @@ class ManualPage(QWidget):
             QSizePolicy.Fixed
         )
 
-        # =================================================
-        # CONTROLE DE DESLOCAMENTO E VELOCIDADE
-        # =================================================
-
         self.passo_box = QHBoxLayout()
 
         self.passo_box.setSpacing(
             6
         )
-
-        # =================================================
-        # DESLOCAMENTO
-        # =================================================
 
         passo_texto = QLabel(
             "Deslocamento"
@@ -485,10 +472,6 @@ class ManualPage(QWidget):
             self.editar_passo
         )
 
-        # =================================================
-        # VELOCIDADE
-        # =================================================
-
         velocidade_texto = QLabel(
             "Velocidade"
         )
@@ -517,10 +500,6 @@ class ManualPage(QWidget):
         self.velocidade_button.clicked.connect(
             self.editar_velocidade
         )
-
-        # =================================================
-        # MONTAR LINHA
-        # =================================================
 
         self.passo_box.addWidget(
             passo_texto
@@ -552,10 +531,6 @@ class ManualPage(QWidget):
 
         self.passo_box.addStretch()
 
-        # =================================================
-        # CAIXA PRINCIPAL
-        # =================================================
-
         self.caixa = QFrame()
 
         self.caixa.setObjectName(
@@ -576,10 +551,6 @@ class ManualPage(QWidget):
         self.controles.setSpacing(
             8
         )
-
-        # =================================================
-        # XY
-        # =================================================
 
         self.xy_box = QFrame()
 
@@ -628,10 +599,6 @@ class ManualPage(QWidget):
             Qt.AlignCenter
         )
 
-        # =================================================
-        # BOTÕES XY
-        # =================================================
-
         self.xp = QPushButton(
             "X+"
         )
@@ -664,10 +631,6 @@ class ManualPage(QWidget):
                 QSizePolicy.Fixed
             )
 
-        # =================================================
-        # DISPOSIÇÃO XY
-        # =================================================
-
         self.grid_xy.addWidget(
             self.xp,
             0,
@@ -699,10 +662,6 @@ class ManualPage(QWidget):
         self.xy_layout.addLayout(
             self.grid_xy
         )
-
-        # =================================================
-        # Z
-        # =================================================
 
         self.z_box = QFrame()
 
@@ -741,10 +700,6 @@ class ManualPage(QWidget):
             z_titulo
         )
 
-        # =================================================
-        # BOTÕES Z
-        # =================================================
-
         self.zp = QPushButton(
             "Z +"
         )
@@ -772,10 +727,6 @@ class ManualPage(QWidget):
                 0,
                 Qt.AlignCenter
             )
-
-        # =================================================
-        # GARFOS
-        # =================================================
 
         self.garfo_box = QFrame()
 
@@ -814,10 +765,6 @@ class ManualPage(QWidget):
             garfo_titulo
         )
 
-        # =================================================
-        # BOTÃO GARFO
-        # =================================================
-
         self.bt_garfo = QPushButton(
             "ACIONAR\nGARFO"
         )
@@ -837,10 +784,6 @@ class ManualPage(QWidget):
             Qt.AlignCenter
         )
 
-        # =================================================
-        # MONTAR OS TRÊS CONTROLES
-        # =================================================
-
         self.controles.addWidget(
             self.xy_box,
             4
@@ -855,10 +798,6 @@ class ManualPage(QWidget):
             self.garfo_box,
             3
         )
-
-        # =================================================
-        # BOTÕES INFERIORES
-        # =================================================
 
         self.botoes = QHBoxLayout()
 
@@ -892,10 +831,6 @@ class ManualPage(QWidget):
         self.botoes.addWidget(
             continuar
         )
-
-        # =================================================
-        # EVENTOS
-        # =================================================
 
         self.xp.clicked.connect(
             self.botao_x_mais
@@ -933,10 +868,6 @@ class ManualPage(QWidget):
             self.reset
         )
 
-        # =================================================
-        # MONTAGEM FINAL
-        # =================================================
-
         principal.addWidget(
             titulo
         )
@@ -954,15 +885,7 @@ class ManualPage(QWidget):
             self.botoes
         )
 
-        # =================================================
-        # ESPAÇO FINAL
-        # =================================================
-
         principal.addStretch()
-
-        # =================================================
-        # CONFIGURAR SCROLL
-        # =================================================
 
         scroll.setWidget(
             conteudo
@@ -971,10 +894,6 @@ class ManualPage(QWidget):
         layout_externo.addWidget(
             scroll
         )
-
-        # =================================================
-        # TAMANHO INICIAL
-        # =================================================
 
         self.atualizar_tamanho_botoes()
 
@@ -1094,10 +1013,6 @@ class ManualPage(QWidget):
         largura = self.width()
         altura = self.height()
 
-        # =================================================
-        # TAMANHO BASE DOS BOTÕES DE MOVIMENTO
-        # =================================================
-
         tamanho_base = int(
             min(
                 62,
@@ -1109,10 +1024,6 @@ class ManualPage(QWidget):
         )
 
         self.tamanho_botao_xy = tamanho_base
-
-        # =================================================
-        # BOTÕES XY
-        # =================================================
 
         largura_movimento = int(
             tamanho_base * 1.25
@@ -1134,10 +1045,6 @@ class ManualPage(QWidget):
                 altura_movimento
             )
 
-        # =================================================
-        # BOTÕES Z
-        # =================================================
-
         self.zp.setFixedSize(
             largura_movimento,
             altura_movimento
@@ -1147,10 +1054,6 @@ class ManualPage(QWidget):
             largura_movimento,
             altura_movimento
         )
-
-        # =================================================
-        # BOTÃO GARFO
-        # =================================================
 
         largura_garfo = int(
             max(
@@ -1168,10 +1071,6 @@ class ManualPage(QWidget):
             altura_garfo
         )
 
-        # =================================================
-        # NÃO FORÇAR TAMANHO DOS BLOCOS
-        # =================================================
-
         self.xy_box.setMinimumWidth(
             0
         )
@@ -1184,10 +1083,6 @@ class ManualPage(QWidget):
             0
         )
 
-        # =================================================
-        # CAMPOS SUPERIORES
-        # =================================================
-
         self.passo_button.setFixedHeight(
             40
         )
@@ -1195,10 +1090,6 @@ class ManualPage(QWidget):
         self.velocidade_button.setFixedHeight(
             40
         )
-
-        # =================================================
-        # STOP / CONTINUAR
-        # =================================================
 
         altura_inferior = int(
             max(
@@ -1217,6 +1108,299 @@ class ManualPage(QWidget):
         self.continuar_button.setFixedHeight(
             altura_inferior
         )
+
+    # =====================================================
+    # OBTER LIMITES DO EIXO
+    # =====================================================
+
+    def obter_limites_eixo(
+        self,
+        eixo
+    ):
+
+        eixo = str(
+            eixo
+        ).upper()
+
+        try:
+
+            limites = (
+                self.db.obter_limite_eixo(
+                    eixo
+                )
+            )
+
+        except Exception as erro:
+
+            print(
+                f">>> ERRO AO OBTER LIMITES DO EIXO "
+                f"{eixo}: {erro}"
+            )
+
+            return None
+
+        if limites is None:
+
+            print(
+                f">>> LIMITES DO EIXO {eixo} "
+                f"NÃO ENCONTRADOS"
+            )
+
+            return None
+
+        try:
+
+            minimo = float(
+                limites["minimo"]
+            )
+
+            maximo = float(
+                limites["maximo"]
+            )
+
+        except (
+            TypeError,
+            ValueError,
+            KeyError
+        ):
+
+            print(
+                f">>> LIMITES DO EIXO {eixo} INVÁLIDOS"
+            )
+
+            return None
+
+        if minimo >= maximo:
+
+            print(
+                f">>> ERRO: LIMITE MÍNIMO DO EIXO "
+                f"{eixo} >= LIMITE MÁXIMO"
+            )
+
+            return None
+
+        return (
+            minimo,
+            maximo
+        )
+
+    # =====================================================
+    # OBTER POSIÇÃO ATUAL
+    # =====================================================
+
+    def obter_posicao_atual(
+        self,
+        eixo
+    ):
+
+        try:
+
+            status = self.mks.ler_status()
+
+        except Exception as erro:
+
+            print(
+                f">>> ERRO AO LER STATUS DA MKS: {erro}"
+            )
+
+            return None
+
+        if not isinstance(
+            status,
+            dict
+        ):
+
+            print(
+                ">>> STATUS DA MKS INVÁLIDO"
+            )
+
+            return None
+
+        try:
+
+            posicao = float(
+                status.get(
+                    eixo.upper()
+                )
+            )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+
+            print(
+                f">>> POSIÇÃO DO EIXO {eixo} "
+                f"INDISPONÍVEL"
+            )
+
+            return None
+
+        return posicao
+
+    # =====================================================
+    # VERIFICAR LIMITES
+    # =====================================================
+
+    def verificar_limites(
+        self,
+        eixo,
+        deslocamento
+    ):
+
+        eixo = str(
+            eixo
+        ).upper()
+
+        limites = self.obter_limites_eixo(
+            eixo
+        )
+
+        if limites is None:
+
+            QMessageBox.warning(
+                self,
+                "Limites indisponíveis",
+                (
+                    f"Não foi possível obter os limites "
+                    f"do eixo {eixo}."
+                )
+            )
+
+            return False
+
+        minimo, maximo = limites
+
+        posicao_atual = self.obter_posicao_atual(
+            eixo
+        )
+
+        if posicao_atual is None:
+
+            QMessageBox.warning(
+                self,
+                "Posição indisponível",
+                (
+                    f"Não foi possível obter a posição "
+                    f"atual do eixo {eixo}."
+                )
+            )
+
+            return False
+
+        deslocamento = float(
+            deslocamento
+        )
+
+        posicao_destino = (
+            posicao_atual
+            +
+            deslocamento
+        )
+
+        print()
+        print(
+            f">>> VERIFICAÇÃO DE LIMITE - EIXO {eixo}"
+        )
+
+        print(
+            f">>> POSIÇÃO ATUAL: "
+            f"{posicao_atual:.3f} mm"
+        )
+
+        print(
+            f">>> DESLOCAMENTO: "
+            f"{deslocamento:.3f} mm"
+        )
+
+        print(
+            f">>> DESTINO: "
+            f"{posicao_destino:.3f} mm"
+        )
+
+        print(
+            f">>> MÍNIMO: "
+            f"{minimo:.3f} mm"
+        )
+
+        print(
+            f">>> MÁXIMO: "
+            f"{maximo:.3f} mm"
+        )
+
+        # ---------------------------------------------
+        # ABAIXO DO MÍNIMO
+        # ---------------------------------------------
+
+        if posicao_destino < minimo:
+
+            print(
+                f">>> MOVIMENTO BLOQUEADO"
+            )
+
+            print(
+                f">>> DESTINO ABAIXO DO MÍNIMO"
+            )
+
+            QMessageBox.warning(
+                self,
+                f"Limite mínimo do eixo {eixo}",
+                (
+                    f"O movimento foi bloqueado.\n\n"
+                    f"Posição atual: "
+                    f"{posicao_atual:.3f} mm\n"
+                    f"Deslocamento: "
+                    f"{deslocamento:.3f} mm\n"
+                    f"Destino: "
+                    f"{posicao_destino:.3f} mm\n"
+                    f"Limite mínimo: "
+                    f"{minimo:.3f} mm"
+                )
+            )
+
+            return False
+
+        # ---------------------------------------------
+        # ACIMA DO MÁXIMO
+        # ---------------------------------------------
+
+        if posicao_destino > maximo:
+
+            print(
+                f">>> MOVIMENTO BLOQUEADO"
+            )
+
+            print(
+                f">>> DESTINO ACIMA DO MÁXIMO"
+            )
+
+            QMessageBox.warning(
+                self,
+                f"Limite máximo do eixo {eixo}",
+                (
+                    f"O movimento foi bloqueado.\n\n"
+                    f"Posição atual: "
+                    f"{posicao_atual:.3f} mm\n"
+                    f"Deslocamento: "
+                    f"{deslocamento:.3f} mm\n"
+                    f"Destino: "
+                    f"{posicao_destino:.3f} mm\n"
+                    f"Limite máximo: "
+                    f"{maximo:.3f} mm"
+                )
+            )
+
+            return False
+
+        # ---------------------------------------------
+        # MOVIMENTO DENTRO DOS LIMITES
+        # ---------------------------------------------
+
+        print(
+            ">>> MOVIMENTO DENTRO DOS LIMITES"
+        )
+
+        return True
 
     # =====================================================
     # BOTÃO X+
@@ -1382,6 +1566,21 @@ class ManualPage(QWidget):
 
             return
 
+        # ---------------------------------------------
+        # VERIFICAR LIMITES
+        # ---------------------------------------------
+
+        if not self.verificar_limites(
+            "X",
+            valor
+        ):
+
+            return
+
+        # ---------------------------------------------
+        # EXECUTAR
+        # ---------------------------------------------
+
         resultado = self.movimento.mover_x(
             valor,
             self.velocidade
@@ -1417,6 +1616,21 @@ class ManualPage(QWidget):
 
             return
 
+        # ---------------------------------------------
+        # VERIFICAR LIMITES
+        # ---------------------------------------------
+
+        if not self.verificar_limites(
+            "Y",
+            valor
+        ):
+
+            return
+
+        # ---------------------------------------------
+        # EXECUTAR
+        # ---------------------------------------------
+
         resultado = self.movimento.mover_y(
             valor,
             self.velocidade
@@ -1451,6 +1665,21 @@ class ManualPage(QWidget):
             )
 
             return
+
+        # ---------------------------------------------
+        # VERIFICAR LIMITES
+        # ---------------------------------------------
+
+        if not self.verificar_limites(
+            "Z",
+            valor
+        ):
+
+            return
+
+        # ---------------------------------------------
+        # EXECUTAR
+        # ---------------------------------------------
 
         resultado = self.movimento.mover_z(
             valor,
