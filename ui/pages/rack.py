@@ -1015,7 +1015,8 @@ class RackPage(QWidget):
 
                 self.atualizar_cor(
                     self.botoes[endereco],
-                    ocupado
+                    ocupado,
+                    pallet
                 )
 
     # =================================================
@@ -1025,13 +1026,16 @@ class RackPage(QWidget):
     def atualizar_cor(
         self,
         botao,
-        ocupado
+        ocupado,
+        pallet
     ):
 
         if ocupado:
 
             botao.setText(
-                "📦"
+                str(pallet)
+                if pallet
+                else "Ocupado"
             )
 
             botao.setStyleSheet("""
@@ -1041,13 +1045,15 @@ class RackPage(QWidget):
 
                     color:white;
 
-                    font-size:28px;
+                    font-size:14px;
 
                     font-weight:bold;
 
                     border:none;
 
                     border-radius:10px;
+
+                    padding:4px;
 
                 }
 
@@ -1061,7 +1067,7 @@ class RackPage(QWidget):
         else:
 
             botao.setText(
-                ""
+                "Vazio"
             )
 
             botao.setStyleSheet("""
@@ -1069,9 +1075,17 @@ class RackPage(QWidget):
 
                     background-color:#16A34A;
 
+                    color:white;
+
+                    font-size:14px;
+
+                    font-weight:bold;
+
                     border:none;
 
                     border-radius:10px;
+
+                    padding:4px;
 
                 }
 
